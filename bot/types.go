@@ -10,7 +10,7 @@ type Plugin interface {
 
 type Message interface {
 	Channel()   *Channel
-	User()      string
+	User()      *User
 	Text()      string
 	Time()      time.Time
 	Processed() bool
@@ -58,7 +58,7 @@ type ResponseHandlerFunc func(Response)
 
 type message struct {
 	channel   *Channel
-	user      string
+	user      *User
 	text      string
 	time      time.Time
 	processed bool
@@ -92,10 +92,10 @@ type response struct {
 
 // Message interface
 func (m *message) Channel()   *Channel  { return m.channel   }
+func (m *message) User()      *User     { return m.user      }
 func (m *message) Text()      string    { return m.text      }
 func (m *message) Time()      time.Time { return m.time      }
 func (m *message) Processed() bool      { return m.processed }
-func (m *message) User()      string    { return m.user      }
 
 // TwitchMessage interface
 func (m *twitchMessage) Command() string   { return m.command }

@@ -57,6 +57,11 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 }
 
 func (bot *Kabukibot) Connect() (chan bool, error) {
+	// setup plugins
+	for _, plugin := range bot.plugins {
+		plugin.Setup(bot, bot.Dispatcher())
+	}
+
 	client := bot.twitchClient
 
 	quitChan, err := client.Connect()
@@ -78,4 +83,8 @@ func (bot *Kabukibot) AddPlugin(plugin Plugin) {
 
 func (bot *Kabukibot) Dispatcher() *Dispatcher {
 	return bot.dispatcher
+}
+
+func (bot *Kabukibot) Configuration() *Configuration {
+	return bot.configuration
 }

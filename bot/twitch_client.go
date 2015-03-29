@@ -52,7 +52,7 @@ func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
 	channel := NewChannel(line.Target())
 	baseMsg := message{
 		channel:   channel,
-		user:      line.Nick,
+		user:      NewUser(line.Nick, channel),
 		text:      line.Text(),
 		time:      line.Time,
 		processed: false,
