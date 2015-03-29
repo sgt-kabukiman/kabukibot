@@ -42,20 +42,20 @@ func NewDispatcher() *Dispatcher {
 	return &Dispatcher{make(map[string][]listenerFunc)}
 }
 
-func (d *Dispatcher) OnEveryMessage(f MessageHandlerFunc) Listener { return d.on("MESSAGE", f)   }
-func (d *Dispatcher) OnTextMessage(f TextHandlerFunc)     Listener { return d.on("TEXT", f)      }
-func (d *Dispatcher) OnTwitchMessage(f TwitchHandlerFunc) Listener { return d.on("TWITCH", f)    }
-func (d *Dispatcher) OnModeMessage(f ModeHandlerFunc)     Listener { return d.on("MODE", f)      }
-func (d *Dispatcher) OnCommand(f CommandHandlerFunc)      Listener { return d.on("COMMAND", f)   }
-func (d *Dispatcher) OnProcessed(f ProcessedHandlerFunc)  Listener { return d.on("PROCESSED", f) }
-func (d *Dispatcher) OnResponse(f ResponseHandlerFunc)    Listener { return d.on("RESPONSE", f)  }
+func (d *Dispatcher) OnEveryMessage(f MessageHandlerFunc)   Listener { return d.on("MESSAGE", f)   }
+func (d *Dispatcher) OnTextMessage(f TextHandlerFunc)       Listener { return d.on("TEXT", f)      }
+func (d *Dispatcher) OnTwitchMessage(f TwitchHandlerFunc)   Listener { return d.on("TWITCH", f)    }
+func (d *Dispatcher) OnModeMessage(f ModeHandlerFunc)       Listener { return d.on("MODE", f)      }
+func (d *Dispatcher) OnCommandMessage(f CommandHandlerFunc) Listener { return d.on("COMMAND", f)   }
+func (d *Dispatcher) OnProcessed(f ProcessedHandlerFunc)    Listener { return d.on("PROCESSED", f) }
+func (d *Dispatcher) OnResponse(f ResponseHandlerFunc)      Listener { return d.on("RESPONSE", f)  }
 
-func (d *Dispatcher) HandleMessage(msg Message)             { d.handle("MESSAGE",   func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
-func (d *Dispatcher) HandleTextMessage(msg TextMessage)     { d.handle("TEXT",      func(listener interface{}) { listener.(TextHandlerFunc)(msg)    }) }
-func (d *Dispatcher) HandleTwitchMessage(msg TwitchMessage) { d.handle("TWITCH",    func(listener interface{}) { listener.(TwitchHandlerFunc)(msg)  }) }
-func (d *Dispatcher) HandleModeMessage(msg ModeMessage)     { d.handle("MODE",      func(listener interface{}) { listener.(ModeHandlerFunc)(msg)    }) }
-func (d *Dispatcher) HandleCommand(msg CommandMessage)      { d.handle("COMMAND",   func(listener interface{}) { listener.(CommandHandlerFunc)(msg) }) }
-func (d *Dispatcher) HandleProcessed(msg Message)           { d.handle("PROCESSED", func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
+func (d *Dispatcher) HandleMessage(msg Message)               { d.handle("MESSAGE",   func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
+func (d *Dispatcher) HandleTextMessage(msg TextMessage)       { d.handle("TEXT",      func(listener interface{}) { listener.(TextHandlerFunc)(msg)    }) }
+func (d *Dispatcher) HandleTwitchMessage(msg TwitchMessage)   { d.handle("TWITCH",    func(listener interface{}) { listener.(TwitchHandlerFunc)(msg)  }) }
+func (d *Dispatcher) HandleModeMessage(msg ModeMessage)       { d.handle("MODE",      func(listener interface{}) { listener.(ModeHandlerFunc)(msg)    }) }
+func (d *Dispatcher) HandleCommandMessage(msg CommandMessage) { d.handle("COMMAND",   func(listener interface{}) { listener.(CommandHandlerFunc)(msg) }) }
+func (d *Dispatcher) HandleProcessed(msg Message)             { d.handle("PROCESSED", func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
 
 // private helpers
 
