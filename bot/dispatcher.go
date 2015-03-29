@@ -1,4 +1,4 @@
-package main
+package bot
 
 // a listener function is just any function (so, actually, `func(msg interface{})`)
 type listenerFunc interface{}

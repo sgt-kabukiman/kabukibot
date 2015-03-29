@@ -1,11 +1,11 @@
-package main
+package bot
 
 import "time"
 
 // interfaces
 
 type Plugin interface {
-
+	Setup(*Kabukibot, *Dispatcher)
 }
 
 type Message interface {
