@@ -1,31 +1,45 @@
 package main
 
-import (
-	"container/list"
-)
+// a listener function is just any function (so, actually, `func(msg interface{})`)
+type listenerFunc interface{}
 
-type ListenerMap map[string]*list.List
+// maps events to lists of listeners
+type listenerMap map[string][]listenerFunc
 
+// the exported interface to the dispatching
 type Dispatcher struct {
-	listeners ListenerMap
+	listeners listenerMap
 }
 
+// the struct returned when adding new listeners;
+// do not store a reference to the list in which this listeners is placed,
+// as the list moved around when listeners are removed.
 type Listener struct {
-	list    *list.List
-	element *list.Element
+	dispatcher *Dispatcher
+	event      string
+	position   int
 }
 
-func (l *Listener) Remove() {
-	if l.element != nil {
-		l.list.Remove(l.element)
-		l.element = nil
-	}
+func (l *Listener) Remove() bool {
+	// if l.dispatcher != nil {
+	// 	list, exists := l.dispatcher.listeners[l.event]
+
+	// 	if exists && l.position >= 0 && l.position < len(list) {
+	// 		l.dispatcher.listeners[l.event] = append(list[:l.position], list[(l.position + 1):]...)
+	// 		l.dispatcher = nil
+
+	// 		return true
+	// 	}
+	// }
+
+	panic("Implement me!")
+	return false
 }
 
-type walker func(handler *list.Element)
+type walker func(listener interface{})
 
 func NewDispatcher() *Dispatcher {
-	return &Dispatcher{make(map[string]*list.List)}
+	return &Dispatcher{make(map[string][]listenerFunc)}
 }
 
 func (d *Dispatcher) OnEveryMessage(f MessageHandlerFunc) Listener { return d.on("MESSAGE", f)   }
@@ -36,59 +50,25 @@ func (d *Dispatcher) OnCommand(f CommandHandlerFunc)      Listener { return d.on
 func (d *Dispatcher) OnProcessed(f ProcessedHandlerFunc)  Listener { return d.on("PROCESSED", f) }
 func (d *Dispatcher) OnResponse(f ResponseHandlerFunc)    Listener { return d.on("RESPONSE", f)  }
 
-func (d *Dispatcher) HandleMessage(msg Message) {
-	d.handle("MESSAGE", func(handler *list.Element) {
-		callback := handler.Value.(MessageHandlerFunc)
-		callback(&msg)
-	})
-}
-
-func (d *Dispatcher) HandleTextMessage(msg TextMessage) {
-	d.handle("TEXT", func(handler *list.Element) {
-		callback := handler.Value.(TextHandlerFunc)
-		callback(&msg)
-	})
-}
-
-func (d *Dispatcher) HandleTwitchMessage(msg TwitchMessage) {
-	d.handle("TWITCH", func(handler *list.Element) {
-		callback := handler.Value.(TwitchHandlerFunc)
-		callback(&msg)
-	})
-}
-
-func (d *Dispatcher) HandleModeMessage(msg ModeMessage) {
-	d.handle("MODE", func(handler *list.Element) {
-		callback := handler.Value.(ModeHandlerFunc)
-		callback(&msg)
-	})
-}
-
-func (d *Dispatcher) HandleCommand(command string, args []string, msg Message) {
-	d.handle("COMMAND", func(handler *list.Element) {
-		callback := handler.Value.(CommandHandlerFunc)
-		callback(command, args, &msg)
-	})
-}
-
-func (d *Dispatcher) HandleProcessed(msg Message) {
-	d.handle("PROCESSED", func(handler *list.Element) {
-		callback := handler.Value.(ProcessedHandlerFunc)
-		callback(&msg)
-	})
-}
+func (d *Dispatcher) HandleMessage(msg Message)             { d.handle("MESSAGE",   func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
+func (d *Dispatcher) HandleTextMessage(msg TextMessage)     { d.handle("TEXT",      func(listener interface{}) { listener.(TextHandlerFunc)(msg)    }) }
+func (d *Dispatcher) HandleTwitchMessage(msg TwitchMessage) { d.handle("TWITCH",    func(listener interface{}) { listener.(TwitchHandlerFunc)(msg)  }) }
+func (d *Dispatcher) HandleModeMessage(msg ModeMessage)     { d.handle("MODE",      func(listener interface{}) { listener.(ModeHandlerFunc)(msg)    }) }
+func (d *Dispatcher) HandleCommand(msg CommandMessage)      { d.handle("COMMAND",   func(listener interface{}) { listener.(CommandHandlerFunc)(msg) }) }
+func (d *Dispatcher) HandleProcessed(msg Message)           { d.handle("PROCESSED", func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
 
 // private helpers
 
-func (d *Dispatcher) on(event string, f interface{}) Listener {
+func (d *Dispatcher) on(event string, f listenerFunc) Listener {
 	l, exists := d.listeners[event]
 
 	if !exists {
-		l = list.New()
-		d.listeners[event] = l
+		l = make([]listenerFunc, 0)
 	}
 
-	return Listener{l, l.PushBack(f)}
+	d.listeners[event] = append(l, f)
+
+	return Listener{d, event, len(d.listeners[event]) - 1}
 }
 
 func (d *Dispatcher) handle(event string, visitor walker) {
@@ -98,7 +78,7 @@ func (d *Dispatcher) handle(event string, visitor walker) {
 		return
 	}
 
-	for handler := l.Front(); handler != nil; handler = handler.Next() {
-		visitor(handler)
+	for _, listener := range l {
+		visitor(listener)
 	}
 }

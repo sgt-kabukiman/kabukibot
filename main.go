@@ -10,14 +10,6 @@ import (
 var bot *Kabukibot
 
 func main() {
-	m := TwitchMessage{}
-
-	func(m Message) {
-		fmt.Println(m)
-	}(m)
-
-	os.Exit(0)
-
 	// load configuration
 	config, err := LoadConfiguration()
 	if err != nil {
