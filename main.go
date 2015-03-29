@@ -25,8 +25,7 @@ func main() {
 	}
 
 	// add plugins
-	testPlugin := plugin.NewTestPlugin()
-	bot.AddPlugin(&testPlugin)
+	bot.AddPlugin(plugin.NewTestPlugin())
 
 	// here we go
 	quit, err := bot.Connect()

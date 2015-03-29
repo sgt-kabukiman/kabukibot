@@ -16,12 +16,7 @@ type TwitchClient struct {
 }
 
 func NewTwitchClient(conn *irc.Conn, d *Dispatcher) *TwitchClient {
-	client := TwitchClient{}
-	client.conn       = conn
-	client.dispatcher = d
-	client.ready      = make(chan bool, 1)
-	client.quit       = make(chan bool, 1)
-
+	client := TwitchClient{conn, d, make(chan bool, 1), make(chan bool, 1)}
 	client.setupInternalHandlers()
 
 	return &client
@@ -32,6 +27,7 @@ func (client *TwitchClient) setupInternalHandlers() {
 	client.conn.HandleFunc(irc.DISCONNECTED, client.onDisconnect)
 	client.conn.HandleFunc(irc.PRIVMSG,      client.onLine)
 	client.conn.HandleFunc(irc.MODE,         client.onLine)
+	client.conn.HandleFunc(irc.ACTION,       client.onLine)
 }
 
 func (client *TwitchClient) Connect() (chan bool, error) {
@@ -62,12 +58,27 @@ func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
 		processed: false,
 	}
 
+	// println("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
+	// println("    Nick = " + line.Nick)
+	// println("   Ident = " + line.Ident)
+	// println("    Host = " + line.Host)
+	// println("     Src = " + line.Src)
+	// println("     Cmd = " + line.Cmd)
+	// println("     Raw = " + line.Raw)
+	// fmt.Printf("    Args = %v\n", line.Args)
+	// println("Target() = " + line.Target())
+	// println("  Text() = " + line.Text())
+	// println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+
 	if line.Cmd == "MODE" {
 		client.handleMessage(&modeMessage{
 			baseMsg,
 			line.Args[1],
 			line.Args[2],
 		})
+	} else if line.Cmd == "ACTION" {
+		baseMsg.text = "/me " + baseMsg.text
+		client.handleMessage(&baseMsg)
 	} else if line.Nick == "jtv" {
 		parts   := strings.SplitN(baseMsg.text, " ", 3)
 		command := strings.ToLower(parts[0])
@@ -123,5 +134,5 @@ func (client *TwitchClient) processPossibleCommand(msg Message) {
 	}
 
 	cmd := commandMessage{*baseMsg, command, args}
-	client.dispatcher.HandleCommand(&cmd)
+	client.dispatcher.HandleCommandMessage(&cmd)
 }
