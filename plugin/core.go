@@ -20,30 +20,25 @@ func (plugin *CorePlugin) Setup(bot *bot.Kabukibot, d *bot.Dispatcher) {
 	d.OnTextMessage(plugin.printLine)
 }
 
-func (plugin* CorePlugin) onText(msg bot.TextMessage) {
-	// var
-	// 	user     = message.getUser(),
-	// 	channel  = message.getChannel(),
-	// 	username = user.getName(),
-	// 	mngr     = this.userMngr;
+func (plugin *CorePlugin) Load(channel *bot.Channel, bot *bot.Kabukibot, d *bot.Dispatcher) {}
+func (plugin *CorePlugin) Unload(channel *bot.Channel, bot *bot.Kabukibot, d *bot.Dispatcher) {}
 
-	user := msg.User()
-	// channel := msg.Channel()
+func (plugin* CorePlugin) onText(msg bot.TextMessage) {
+	user  := msg.User()
+	cn    := msg.Channel()
+	state := cn.State
 
 	user.IsBot         = plugin.config.Account.Username == user.Name
 	user.IsOperator    = plugin.config.Operator == user.Name
-	user.IsSubscriber  = false
-	user.IsTurbo       = false
-	user.IsTwitchAdmin = false
-	user.IsTwitchStaff = false
+	user.IsBroadcaster = user.Name == cn.Name
+	user.IsModerator   = cn.IsModerator(user.Name)
+	user.IsSubscriber  = state.Subscriber
+	user.IsTurbo       = state.Turbo
+	user.IsTwitchAdmin = state.Admin
+	user.IsTwitchStaff = state.Staff
+	user.EmoteSet      = state.EmoteSet
 
-	// user.setSubscriber(mngr.takeSubscriber(channel, username));
-	// user.setTurbo(mngr.takeTurboUser(username));
-	// user.setTwitchStaff(mngr.isTwitchStaff(username));
-	// user.setTwitchAdmin(mngr.isTwitchAdmin(username));
-	// user.setEmoteSets(mngr.takeEmoteSets(username));
-	// user.setOperator(mngr.isOperator(username));
-	// user.setBot(username === this.botName);
+	state.Clear()
 }
 
 func (plugin* CorePlugin) printLine(msg bot.TextMessage) {

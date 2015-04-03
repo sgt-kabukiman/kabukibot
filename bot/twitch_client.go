@@ -2,7 +2,7 @@ package bot
 
 import (
 	"time"
-	// "fmt"
+	"fmt"
 	"strings"
 	"regexp"
 	irc "github.com/fluffle/goirc/client"
@@ -12,12 +12,21 @@ type TwitchClient struct {
 	conn       *irc.Conn
 	queue      *SendQueue
 	dispatcher *Dispatcher
+	channels   map[string]*Channel
 	ready      chan bool
 	quit       chan bool
 }
 
 func NewTwitchClient(conn *irc.Conn, d *Dispatcher, delay time.Duration) *TwitchClient {
-	client := TwitchClient{conn, NewSendQueue(delay), d, make(chan bool, 1), make(chan bool, 1)}
+	client := TwitchClient{
+		conn,
+		NewSendQueue(delay),
+		d,
+		make(map[string]*Channel),
+		make(chan bool, 1),
+		make(chan bool, 1),
+	}
+
 	client.setupInternalHandlers()
 
 	return &client
@@ -29,9 +38,19 @@ func (client *TwitchClient) setupInternalHandlers() {
 	client.conn.HandleFunc(irc.PRIVMSG,      client.onLine)
 	client.conn.HandleFunc(irc.MODE,         client.onLine)
 	client.conn.HandleFunc(irc.ACTION,       client.onLine)
+	client.conn.HandleFunc(irc.JOIN,         client.onJoin)
+	client.conn.HandleFunc(irc.PART,         client.onPart)
+}
+
+func (client *TwitchClient) Channel(name string) (c *Channel, ok bool) {
+	c, ok = client.channels[strings.TrimLeft(name, "#")]
+	return
 }
 
 func (client *TwitchClient) Connect() (chan bool, error) {
+	// start working on our outgoing queue
+	go client.queue.Worker()
+
 	err := client.conn.Connect()
 	if err != nil {
 		return nil, err
@@ -40,12 +59,25 @@ func (client *TwitchClient) Connect() (chan bool, error) {
 	return client.quit, nil
 }
 
-func (client *TwitchClient) Join(channel string) {
-	client.queue.Push(func() { client.conn.Join(channel) })
+func (client *TwitchClient) Join(channel *Channel) {
+	_, ok := client.Channel(channel.Name)
+	if !ok {
+		client.channels[channel.Name] = channel
+
+		client.queue.Push(func() {
+			client.conn.Join(channel.IrcName())
+		})
+	}
 }
 
-func (client *TwitchClient) Part(channel string) {
-	client.queue.Push(func () { client.conn.Part(channel) })
+func (client *TwitchClient) Part(channel *Channel) {
+	_, ok := client.Channel(channel.Name)
+	if ok {
+		client.queue.Push(func () {
+			client.conn.Part(channel.IrcName())
+			delete(client.channels, channel.Name)
+		})
+	}
 }
 
 func (client *TwitchClient) onConnect(conn *irc.Conn, line *irc.Line) {
@@ -57,8 +89,26 @@ func (client *TwitchClient) onDisconnect(conn *irc.Conn, line *irc.Line) {
 	client.quit <- true
 }
 
+func (client *TwitchClient) onJoin(conn *irc.Conn, line *irc.Line) {
+	channel, ok := client.Channel(line.Target())
+	if ok {
+		client.dispatcher.HandleJoin(channel)
+	}
+}
+
+func (client *TwitchClient) onPart(conn *irc.Conn, line *irc.Line) {
+	channel, ok := client.Channel(line.Target())
+	if ok {
+		client.dispatcher.HandlePart(channel)
+	}
+}
+
 func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
-	channel := NewChannel(line.Target())
+	channel, ok := client.Channel(line.Target())
+	if !ok {
+		return
+	}
+
 	baseMsg := message{
 		channel:   channel,
 		user:      NewUser(line.Nick, channel),
@@ -67,17 +117,7 @@ func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
 		processed: false,
 	}
 
-	// println("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
-	// println("    Nick = " + line.Nick)
-	// println("   Ident = " + line.Ident)
-	// println("    Host = " + line.Host)
-	// println("     Src = " + line.Src)
-	// println("     Cmd = " + line.Cmd)
-	// println("     Raw = " + line.Raw)
-	// fmt.Printf("    Args = %v\n", line.Args)
-	// println("Target() = " + line.Target())
-	// println("  Text() = " + line.Text())
-	// println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+	debugLine(line)
 
 	if line.Cmd == "MODE" {
 		client.handleMessage(&modeMessage{
@@ -122,6 +162,17 @@ func (client *TwitchClient) handleMessage(msg Message) {
 	}
 
 	client.dispatcher.HandleProcessed(msg)
+}
+
+func debugLine(line *irc.Line) {
+	println("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
+	println("    Nick = " + line.Nick)
+	println("     Cmd = " + line.Cmd)
+	println("     Raw = " + line.Raw)
+	fmt.Printf("    Args = %v\n", line.Args)
+	println("Target() = " + line.Target())
+	println("  Text() = " + line.Text())
+	println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 }
 
 var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)

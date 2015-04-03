@@ -6,6 +6,8 @@ import "time"
 
 type Plugin interface {
 	Setup(*Kabukibot, *Dispatcher)
+	Load(*Channel, *Kabukibot, *Dispatcher)
+	Unload(*Channel, *Kabukibot, *Dispatcher)
 }
 
 type Message interface {
@@ -55,6 +57,7 @@ type ModeHandlerFunc func(ModeMessage)
 type CommandHandlerFunc func(CommandMessage)
 type ProcessedHandlerFunc func(Message)
 type ResponseHandlerFunc func(Response)
+type JoinHandlerFunc func(*Channel)
 
 type message struct {
 	channel   *Channel

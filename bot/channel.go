@@ -13,6 +13,7 @@ type ChannelState struct {
 type Channel struct {
 	Name  string
 	State ChannelState
+	mods  []string
 }
 
 func NewChannel(name string) *Channel {
@@ -22,7 +23,7 @@ func NewChannel(name string) *Channel {
 		false,
 		false,
 		make([]int, 0),
-	}}
+	}, make([]string, 0)}
 }
 
 func (c *Channel) IrcName() string {
@@ -38,5 +39,44 @@ func (s *ChannelState) Clear() {
 	s.Turbo      = false
 	s.Staff      = false
 	s.Admin      = false
-	s.EmoteSet   = make([]int, 0)
+
+	if len(s.EmoteSet) > 0 {
+		s.EmoteSet = make([]int, 0)
+	}
+}
+
+func (c *Channel) findModerator(user string) int {
+	for idx, u := range c.mods {
+		if user == u {
+			return idx
+		}
+	}
+
+	return -1
+}
+
+func (c *Channel) IsModerator(user string) bool {
+	return c.findModerator(user) != -1
+}
+
+func (c *Channel) AddModerator(user string) bool {
+	pos := c.findModerator(user)
+
+	if pos == -1 {
+		c.mods = append(c.mods, user)
+		return true
+	}
+
+	return false
+}
+
+func (c *Channel) RemoveModerator(user string) bool {
+	pos := c.findModerator(user)
+
+	if pos != -1 {
+		c.mods = append(c.mods[:pos], c.mods[(pos + 1):]...)
+		return true
+	}
+
+	return false
 }

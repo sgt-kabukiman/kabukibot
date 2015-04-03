@@ -17,21 +17,24 @@ func main() {
 	}
 
 	// build the bot
-	bot, err := bot.NewKabukibot(config)
+	kabukibot, err := bot.NewKabukibot(config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	// add plugins
-	bot.AddPlugin(plugin.NewCorePlugin())
+	kabukibot.AddPlugin(plugin.NewCorePlugin())
 
 	// here we go
-	quit, err := bot.Connect()
+	quit, err := kabukibot.Connect()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	kabukibot.Join(bot.NewChannel("kabukibot"))
+	kabukibot.Join(bot.NewChannel("kabukibotdev"))
 
 	// wait for disconnect
 	<-quit

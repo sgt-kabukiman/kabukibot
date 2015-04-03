@@ -5,11 +5,13 @@ type User struct {
 	Channel       *Channel
 	IsBot         bool
 	IsOperator    bool
+	IsBroadcaster bool
+	IsModerator   bool
 	IsSubscriber  bool
 	IsTurbo       bool
 	IsTwitchAdmin bool
 	IsTwitchStaff bool
-	EmoteSets     []int
+	EmoteSet      []int
 }
 
 func NewUser(name string, cnl *Channel) *User {
@@ -29,20 +31,12 @@ func (u *User) Prefix() string {
 
 	if u.IsBot           { prefix += "%" }
 	if u.IsOperator      { prefix += "$" }
-	if u.IsBroadcaster() { prefix += "&" }
-	if u.IsModerator()   { prefix += "@" }
+	if u.IsBroadcaster   { prefix += "&" }
+	if u.IsModerator     { prefix += "@" }
 	if u.IsSubscriber    { prefix += "+" }
 	if u.IsTurbo         { prefix += "~" }
 	if u.IsTwitchAdmin   { prefix += "!" }
 	if u.IsTwitchStaff   { prefix += "!" }
 
 	return prefix
-}
-
-func (u *User) IsModerator() bool {
-	return false // u.channel.isInThere
-}
-
-func (u *User) IsBroadcaster() bool {
-	return u.Name == u.Channel.Name
 }
