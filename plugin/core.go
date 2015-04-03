@@ -1,5 +1,8 @@
 package plugin
 
+import "fmt"
+import "strings"
+import "strconv"
 import "github.com/sgt-kabukiman/kabukibot/bot"
 
 type CorePlugin struct {
@@ -18,12 +21,13 @@ func (plugin *CorePlugin) Setup(bot *bot.Kabukibot, d *bot.Dispatcher) {
 
 	d.OnTextMessage(plugin.onText)
 	d.OnTextMessage(plugin.printLine)
+	d.OnTwitchMessage(plugin.onTwitch)
 }
 
 func (plugin *CorePlugin) Load(channel *bot.Channel, bot *bot.Kabukibot, d *bot.Dispatcher) {}
 func (plugin *CorePlugin) Unload(channel *bot.Channel, bot *bot.Kabukibot, d *bot.Dispatcher) {}
 
-func (plugin* CorePlugin) onText(msg bot.TextMessage) {
+func (plugin *CorePlugin) onText(msg bot.TextMessage) {
 	user  := msg.User()
 	cn    := msg.Channel()
 	state := cn.State
@@ -41,6 +45,45 @@ func (plugin* CorePlugin) onText(msg bot.TextMessage) {
 	state.Clear()
 }
 
+func (plugin *CorePlugin) onTwitch(msg bot.TwitchMessage) {
+	cn := msg.Channel()
+
+	switch msg.Command() {
+	case "specialuser":
+		args := msg.Args()
+
+		switch args[1] {
+		case "subscriber":
+			cn.State.Subscriber = true
+		case "turbo":
+			cn.State.Turbo = true
+		case "staff":
+			cn.State.Staff = true
+		case "admin":
+			cn.State.Admin = true
+		}
+
+	case "emoteset":
+		args := msg.Args()
+		list := args[1]
+
+		// trim "[" and "]"
+		list = list[1:len(list)-1]
+
+		codes := strings.Split(list, ",")
+		ids   := make([]int, len(codes))
+
+		for idx, code := range codes {
+			converted, err := strconv.Atoi(code)
+			if err == nil {
+				ids[idx] = converted
+			}
+		}
+
+		cn.State.EmoteSet = ids
+	}
+}
+
 func (plugin* CorePlugin) printLine(msg bot.TextMessage) {
-	println(msg.User().Prefix() + msg.User().Name + " said '" + msg.Text() + "'")
+	fmt.Printf("[#%v] %v: %v\n", msg.Channel().Name, msg.User().Name, msg.Text())
 }
