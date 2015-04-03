@@ -80,6 +80,12 @@ func (client *TwitchClient) Part(channel *Channel) {
 	}
 }
 
+func (client *TwitchClient) Privmsg(target string, text string) {
+	client.queue.Push(func() {
+		client.conn.Privmsg(target, text)
+	})
+}
+
 func (client *TwitchClient) onConnect(conn *irc.Conn, line *irc.Line) {
 	conn.Raw("TWITCHCLIENT 3")
 	client.ready <- true
@@ -116,8 +122,6 @@ func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
 		time:      line.Time,
 		processed: false,
 	}
-
-	debugLine(line)
 
 	if line.Cmd == "MODE" {
 		client.handleMessage(&modeMessage{
@@ -162,17 +166,6 @@ func (client *TwitchClient) handleMessage(msg Message) {
 	}
 
 	client.dispatcher.HandleProcessed(msg)
-}
-
-func debugLine(line *irc.Line) {
-	println("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
-	println("    Nick = " + line.Nick)
-	println("     Cmd = " + line.Cmd)
-	println("     Raw = " + line.Raw)
-	fmt.Printf("    Args = %v\n", line.Args)
-	println("Target() = " + line.Target())
-	println("  Text() = " + line.Text())
-	println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 }
 
 var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)

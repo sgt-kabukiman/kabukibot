@@ -6,6 +6,15 @@ import "time"
 
 type Plugin interface {
 	Setup(*Kabukibot, *Dispatcher)
+}
+
+type GlobalPlugin interface {
+	Plugin
+}
+
+type ChannelPlugin interface {
+	Plugin
+
 	Load(*Channel, *Kabukibot, *Dispatcher)
 	Unload(*Channel, *Kabukibot, *Dispatcher)
 }

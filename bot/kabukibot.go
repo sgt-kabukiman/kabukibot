@@ -102,15 +102,25 @@ func (bot *Kabukibot) Part(channel *Channel) {
 	bot.twitchClient.Part(channel)
 }
 
+func (bot *Kabukibot) Say(channel *Channel, text string) {
+	bot.twitchClient.Privmsg(channel.IrcName(), text)
+}
+
 func (bot *Kabukibot) onJoin(channel *Channel) {
 	for _, plugin := range bot.plugins {
-		plugin.Load(channel, bot, bot.dispatcher)
+		switch p := plugin.(type) {
+		case ChannelPlugin:
+			p.Load(channel, bot, bot.dispatcher)
+		}
 	}
 }
 
 func (bot *Kabukibot) onPart(channel *Channel) {
 	for _, plugin := range bot.plugins {
-		plugin.Unload(channel, bot, bot.dispatcher)
+		switch p := plugin.(type) {
+		case ChannelPlugin:
+			p.Unload(channel, bot, bot.dispatcher)
+		}
 	}
 }
 

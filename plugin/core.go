@@ -24,9 +24,6 @@ func (plugin *CorePlugin) Setup(bot *bot.Kabukibot, d *bot.Dispatcher) {
 	d.OnTwitchMessage(plugin.onTwitch)
 }
 
-func (plugin *CorePlugin) Load(channel *bot.Channel, bot *bot.Kabukibot, d *bot.Dispatcher) {}
-func (plugin *CorePlugin) Unload(channel *bot.Channel, bot *bot.Kabukibot, d *bot.Dispatcher) {}
-
 func (plugin *CorePlugin) onText(msg bot.TextMessage) {
 	user  := msg.User()
 	cn    := msg.Channel()
@@ -85,5 +82,5 @@ func (plugin *CorePlugin) onTwitch(msg bot.TwitchMessage) {
 }
 
 func (plugin* CorePlugin) printLine(msg bot.TextMessage) {
-	fmt.Printf("[#%v] %v: %v\n", msg.Channel().Name, msg.User().Name, msg.Text())
+	fmt.Printf("[#%v] %v%v: %v\n", msg.Channel().Name, msg.User().Prefix(), msg.User().Name, msg.Text())
 }
