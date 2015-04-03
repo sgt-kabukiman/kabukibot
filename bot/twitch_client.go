@@ -1,7 +1,7 @@
 package bot
 
 import (
-	// "time"
+	"time"
 	// "fmt"
 	"strings"
 	"regexp"
@@ -10,13 +10,14 @@ import (
 
 type TwitchClient struct {
 	conn       *irc.Conn
+	queue      *SendQueue
 	dispatcher *Dispatcher
 	ready      chan bool
 	quit       chan bool
 }
 
-func NewTwitchClient(conn *irc.Conn, d *Dispatcher) *TwitchClient {
-	client := TwitchClient{conn, d, make(chan bool, 1), make(chan bool, 1)}
+func NewTwitchClient(conn *irc.Conn, d *Dispatcher, delay time.Duration) *TwitchClient {
+	client := TwitchClient{conn, NewSendQueue(delay), d, make(chan bool, 1), make(chan bool, 1)}
 	client.setupInternalHandlers()
 
 	return &client
@@ -37,6 +38,14 @@ func (client *TwitchClient) Connect() (chan bool, error) {
 	}
 
 	return client.quit, nil
+}
+
+func (client *TwitchClient) Join(channel string) {
+	client.queue.Push(func() { client.conn.Join(channel) })
+}
+
+func (client *TwitchClient) Part(channel string) {
+	client.queue.Push(func () { client.conn.Part(channel) })
 }
 
 func (client *TwitchClient) onConnect(conn *irc.Conn, line *irc.Line) {

@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"time"
 	"net"
 	"fmt"
 	"strconv"
@@ -14,7 +15,7 @@ type Kabukibot struct {
 	dispatcher    *Dispatcher
 	configuration *Configuration
 	plugins       []Plugin
-	channels      []Channel
+	channels      map[string]*Channel
 }
 
 type debugLogger struct{}
@@ -43,7 +44,7 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	dispatcher := NewDispatcher()
 
 	// setup our TwitchClient wrapper
-	twitchClient := NewTwitchClient(ircClient, dispatcher)
+	twitchClient := NewTwitchClient(ircClient, dispatcher, 2*time.Second)
 
 	// create the bot
 	bot := Kabukibot{}
@@ -51,7 +52,7 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.dispatcher    = dispatcher
 	bot.twitchClient  = twitchClient
 	bot.plugins       = make([]Plugin, 0)
-	bot.channels      = make([]Channel, 0)
+	bot.channels      = make(map[string]*Channel)
 
 	return &bot, nil
 }
@@ -71,14 +72,14 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 
 	// wait for the ready signal, after TWITCHCLIENT has been sent
 	<-client.ready
-	client.conn.Join("#kabukibot")
-	client.conn.Join("#kabukibotdev")
 
 	return quitChan, nil
 }
 
 func (bot *Kabukibot) AddPlugin(plugin Plugin) {
 	bot.plugins = append(bot.plugins, plugin)
+
+	plugin.Setup(bot, bot.dispatcher)
 }
 
 func (bot *Kabukibot) Dispatcher() *Dispatcher {
@@ -87,4 +88,20 @@ func (bot *Kabukibot) Dispatcher() *Dispatcher {
 
 func (bot *Kabukibot) Configuration() *Configuration {
 	return bot.configuration
+}
+
+func (bot *Kabukibot) Join(channel *Channel) {
+	_, ok := bot.channels[channel.Name]
+	if !ok {
+		bot.channels[channel.Name] = channel
+		bot.twitchClient.Join(channel.IrcName())
+	}
+}
+
+func (bot *Kabukibot) Part(channel *Channel) {
+	_, ok := bot.channels[channel.Name]
+	if ok {
+		bot.twitchClient.Part(channel.IrcName())
+		delete(bot.channels, channel.Name)
+	}
 }
