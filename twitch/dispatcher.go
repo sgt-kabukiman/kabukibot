@@ -1,4 +1,4 @@
-package bot
+package twitch
 
 // a listener function is just any function (so, actually, `func(msg interface{})`)
 type listenerFunc interface{}
@@ -52,14 +52,14 @@ func (d *Dispatcher) OnResponse(f ResponseHandlerFunc)      Listener { return d.
 func (d *Dispatcher) OnJoin(f JoinHandlerFunc)              Listener { return d.on("JOIN", f)      }
 func (d *Dispatcher) OnPart(f JoinHandlerFunc)              Listener { return d.on("PART", f)      }
 
-func (d *Dispatcher) HandleMessage(msg Message)               { d.handle("MESSAGE",   func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
-func (d *Dispatcher) HandleTextMessage(msg TextMessage)       { d.handle("TEXT",      func(listener interface{}) { listener.(TextHandlerFunc)(msg)    }) }
-func (d *Dispatcher) HandleTwitchMessage(msg TwitchMessage)   { d.handle("TWITCH",    func(listener interface{}) { listener.(TwitchHandlerFunc)(msg)  }) }
-func (d *Dispatcher) HandleModeMessage(msg ModeMessage)       { d.handle("MODE",      func(listener interface{}) { listener.(ModeHandlerFunc)(msg)    }) }
-func (d *Dispatcher) HandleCommandMessage(msg CommandMessage) { d.handle("COMMAND",   func(listener interface{}) { listener.(CommandHandlerFunc)(msg) }) }
-func (d *Dispatcher) HandleProcessed(msg Message)             { d.handle("PROCESSED", func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
-func (d *Dispatcher) HandleJoin(c *Channel)                   { d.handle("JOIN",      func(listener interface{}) { listener.(JoinHandlerFunc)(c)      }) }
-func (d *Dispatcher) HandlePart(c *Channel)                   { d.handle("PART",      func(listener interface{}) { listener.(JoinHandlerFunc)(c)      }) }
+func (d *Dispatcher) handleMessage(msg Message)               { d.handle("MESSAGE",   func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
+func (d *Dispatcher) handleTextMessage(msg TextMessage)       { d.handle("TEXT",      func(listener interface{}) { listener.(TextHandlerFunc)(msg)    }) }
+func (d *Dispatcher) handleTwitchMessage(msg TwitchMessage)   { d.handle("TWITCH",    func(listener interface{}) { listener.(TwitchHandlerFunc)(msg)  }) }
+func (d *Dispatcher) handleModeMessage(msg ModeMessage)       { d.handle("MODE",      func(listener interface{}) { listener.(ModeHandlerFunc)(msg)    }) }
+func (d *Dispatcher) handleCommandMessage(msg CommandMessage) { d.handle("COMMAND",   func(listener interface{}) { listener.(CommandHandlerFunc)(msg) }) }
+func (d *Dispatcher) handleProcessed(msg Message)             { d.handle("PROCESSED", func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
+func (d *Dispatcher) handleJoin(c *Channel)                   { d.handle("JOIN",      func(listener interface{}) { listener.(JoinHandlerFunc)(c)      }) }
+func (d *Dispatcher) handlePart(c *Channel)                   { d.handle("PART",      func(listener interface{}) { listener.(JoinHandlerFunc)(c)      }) }
 
 // private helpers
 

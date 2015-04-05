@@ -1,4 +1,4 @@
-package bot
+package twitch
 
 type User struct {
 	Name          string

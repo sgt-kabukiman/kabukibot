@@ -1,4 +1,4 @@
-package bot
+package twitch
 
 import "strings"
 
@@ -17,7 +17,7 @@ type Channel struct {
 }
 
 func NewChannel(name string) *Channel {
-	return &Channel{strings.TrimLeft(name, "#"), ChannelState{
+	return &Channel{strings.ToLower(strings.TrimLeft(name, "#")), ChannelState{
 		false,
 		false,
 		false,
@@ -59,6 +59,8 @@ func (c *Channel) IsModerator(user string) bool {
 	return c.findModerator(user) != -1
 }
 
+// Adds a moderator to the channel.
+// Returns true if the user was not yet added before, else false.
 func (c *Channel) AddModerator(user string) bool {
 	pos := c.findModerator(user)
 

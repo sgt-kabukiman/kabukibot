@@ -4,6 +4,7 @@ import "fmt"
 import "strings"
 import "strconv"
 import "github.com/sgt-kabukiman/kabukibot/bot"
+import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 type CorePlugin struct {
 	bot    *bot.Kabukibot
@@ -15,7 +16,7 @@ func NewCorePlugin() *CorePlugin {
 	return &CorePlugin{}
 }
 
-func (plugin *CorePlugin) Setup(bot *bot.Kabukibot, d *bot.Dispatcher) {
+func (plugin *CorePlugin) Setup(bot *bot.Kabukibot, d *twitch.Dispatcher) {
 	plugin.bot    = bot
 	plugin.config = bot.Configuration()
 
@@ -24,7 +25,7 @@ func (plugin *CorePlugin) Setup(bot *bot.Kabukibot, d *bot.Dispatcher) {
 	d.OnTwitchMessage(plugin.onTwitch)
 }
 
-func (plugin *CorePlugin) onText(msg bot.TextMessage) {
+func (plugin *CorePlugin) onText(msg twitch.TextMessage) {
 	user  := msg.User()
 	cn    := msg.Channel()
 	state := cn.State
@@ -42,7 +43,7 @@ func (plugin *CorePlugin) onText(msg bot.TextMessage) {
 	state.Clear()
 }
 
-func (plugin *CorePlugin) onTwitch(msg bot.TwitchMessage) {
+func (plugin *CorePlugin) onTwitch(msg twitch.TwitchMessage) {
 	cn := msg.Channel()
 
 	switch msg.Command() {
@@ -81,6 +82,6 @@ func (plugin *CorePlugin) onTwitch(msg bot.TwitchMessage) {
 	}
 }
 
-func (plugin* CorePlugin) printLine(msg bot.TextMessage) {
+func (plugin* CorePlugin) printLine(msg twitch.TextMessage) {
 	fmt.Printf("[#%v] %v%v: %v\n", msg.Channel().Name, msg.User().Prefix(), msg.User().Name, msg.Text())
 }

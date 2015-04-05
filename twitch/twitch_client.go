@@ -1,20 +1,19 @@
-package bot
+package twitch
 
 import (
 	"time"
-	"fmt"
 	"strings"
 	"regexp"
 	irc "github.com/fluffle/goirc/client"
 )
 
 type TwitchClient struct {
-	conn       *irc.Conn
-	queue      *SendQueue
-	dispatcher *Dispatcher
-	channels   map[string]*Channel
-	ready      chan bool
-	quit       chan bool
+	conn         *irc.Conn
+	queue        SendQueue
+	dispatcher   *Dispatcher
+	channels     map[string]*Channel
+	ReadySignal  chan bool
+	QuitSignal   chan bool
 }
 
 func NewTwitchClient(conn *irc.Conn, d *Dispatcher, delay time.Duration) *TwitchClient {
@@ -56,7 +55,7 @@ func (client *TwitchClient) Connect() (chan bool, error) {
 		return nil, err
 	}
 
-	return client.quit, nil
+	return client.QuitSignal, nil
 }
 
 func (client *TwitchClient) Join(channel *Channel) {
@@ -88,24 +87,24 @@ func (client *TwitchClient) Privmsg(target string, text string) {
 
 func (client *TwitchClient) onConnect(conn *irc.Conn, line *irc.Line) {
 	conn.Raw("TWITCHCLIENT 3")
-	client.ready <- true
+	client.ReadySignal <- true
 }
 
 func (client *TwitchClient) onDisconnect(conn *irc.Conn, line *irc.Line) {
-	client.quit <- true
+	client.QuitSignal <- true
 }
 
 func (client *TwitchClient) onJoin(conn *irc.Conn, line *irc.Line) {
 	channel, ok := client.Channel(line.Target())
 	if ok {
-		client.dispatcher.HandleJoin(channel)
+		client.dispatcher.handleJoin(channel)
 	}
 }
 
 func (client *TwitchClient) onPart(conn *irc.Conn, line *irc.Line) {
 	channel, ok := client.Channel(line.Target())
 	if ok {
-		client.dispatcher.HandlePart(channel)
+		client.dispatcher.handlePart(channel)
 	}
 }
 
@@ -153,19 +152,19 @@ func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
 }
 
 func (client *TwitchClient) handleMessage(msg Message) {
-	client.dispatcher.HandleMessage(msg)
+	client.dispatcher.handleMessage(msg)
 
 	switch message := msg.(type) {
 	case TwitchMessage:
-		client.dispatcher.HandleTwitchMessage(message)
+		client.dispatcher.handleTwitchMessage(message)
 	case ModeMessage:
-		client.dispatcher.HandleModeMessage(message)
+		client.dispatcher.handleModeMessage(message)
 	case Message:
-		client.dispatcher.HandleTextMessage(message)
+		client.dispatcher.handleTextMessage(message)
 		client.processPossibleCommand(message)
 	}
 
-	client.dispatcher.HandleProcessed(msg)
+	client.dispatcher.handleProcessed(msg)
 }
 
 var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)
@@ -187,5 +186,5 @@ func (client *TwitchClient) processPossibleCommand(msg Message) {
 	}
 
 	cmd := commandMessage{*baseMsg, command, args}
-	client.dispatcher.HandleCommandMessage(&cmd)
+	client.dispatcher.handleCommandMessage(&cmd)
 }

@@ -7,12 +7,13 @@ import (
 	"strconv"
 
 	irc "github.com/fluffle/goirc/client"
-	logging "github.com/fluffle/goirc/logging"
+	// logging "github.com/fluffle/goirc/logging"
+	twitch "github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
 type Kabukibot struct {
-	twitchClient  *TwitchClient
-	dispatcher    *Dispatcher
+	twitchClient  *twitch.TwitchClient
+	dispatcher    *twitch.Dispatcher
 	configuration *Configuration
 	plugins       []Plugin
 }
@@ -26,7 +27,7 @@ func (log *debugLogger) Error(format string, args ...interface{}) { fmt.Printf("
 
 func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// log everything
-	logging.SetLogger(&debugLogger{})
+	// logging.SetLogger(&debugLogger{})
 
 	// setup the IRC client
 	cfg := irc.NewConfig(config.Account.Username)
@@ -40,10 +41,10 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	ircClient := irc.Client(cfg)
 
 	// we need an event dispatcher
-	dispatcher := NewDispatcher()
+	dispatcher := twitch.NewDispatcher()
 
 	// setup our TwitchClient wrapper
-	twitchClient := NewTwitchClient(ircClient, dispatcher, 2*time.Second)
+	twitchClient := twitch.NewTwitchClient(ircClient, dispatcher, 2*time.Second)
 
 	// create the bot
 	bot := Kabukibot{}
@@ -67,22 +68,22 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 
 	client := bot.twitchClient
 
-	quitChan, err := client.Connect()
+	quitSignal, err := client.Connect()
 	if err != nil {
 		return nil, err
 	}
 
 	// wait for the ready signal, after TWITCHCLIENT has been sent
-	<-client.ready
+	<-client.ReadySignal
 
-	return quitChan, nil
+	return quitSignal, nil
 }
 
 func (bot *Kabukibot) AddPlugin(plugin Plugin) {
 	bot.plugins = append(bot.plugins, plugin)
 }
 
-func (bot *Kabukibot) Dispatcher() *Dispatcher {
+func (bot *Kabukibot) Dispatcher() *twitch.Dispatcher {
 	return bot.dispatcher
 }
 
@@ -90,23 +91,23 @@ func (bot *Kabukibot) Configuration() *Configuration {
 	return bot.configuration
 }
 
-func (bot *Kabukibot) Channel(name string) (c *Channel, ok bool) {
+func (bot *Kabukibot) Channel(name string) (c *twitch.Channel, ok bool) {
 	return bot.twitchClient.Channel(name)
 }
 
-func (bot *Kabukibot) Join(channel *Channel) {
+func (bot *Kabukibot) Join(channel *twitch.Channel) {
 	bot.twitchClient.Join(channel)
 }
 
-func (bot *Kabukibot) Part(channel *Channel) {
+func (bot *Kabukibot) Part(channel *twitch.Channel) {
 	bot.twitchClient.Part(channel)
 }
 
-func (bot *Kabukibot) Say(channel *Channel, text string) {
+func (bot *Kabukibot) Say(channel *twitch.Channel, text string) {
 	bot.twitchClient.Privmsg(channel.IrcName(), text)
 }
 
-func (bot *Kabukibot) onJoin(channel *Channel) {
+func (bot *Kabukibot) onJoin(channel *twitch.Channel) {
 	for _, plugin := range bot.plugins {
 		switch p := plugin.(type) {
 		case ChannelPlugin:
@@ -115,7 +116,7 @@ func (bot *Kabukibot) onJoin(channel *Channel) {
 	}
 }
 
-func (bot *Kabukibot) onPart(channel *Channel) {
+func (bot *Kabukibot) onPart(channel *twitch.Channel) {
 	for _, plugin := range bot.plugins {
 		switch p := plugin.(type) {
 		case ChannelPlugin:
@@ -124,7 +125,7 @@ func (bot *Kabukibot) onPart(channel *Channel) {
 	}
 }
 
-func (bot *Kabukibot) onModeMessage(msg ModeMessage) {
+func (bot *Kabukibot) onModeMessage(msg twitch.ModeMessage) {
 	cn := msg.Channel()
 
 	if msg.Mode() == "+o" {

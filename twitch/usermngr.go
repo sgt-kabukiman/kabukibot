@@ -1,4 +1,4 @@
-package bot
+package twitch
 
 type UserManager interface {
 	IsOperator(username string) bool
