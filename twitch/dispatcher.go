@@ -7,7 +7,22 @@ type listenerFunc interface{}
 type listenerMap map[string][]listenerFunc
 
 // the exported interface to the dispatching
-type Dispatcher struct {
+type Dispatcher interface {
+	AddListener(event string, f listenerFunc) Listener
+	TriggerEvent(event string, visitor walker)
+
+	OnTextMessage(f TextHandlerFunc)     Listener
+	OnTwitchMessage(f TwitchHandlerFunc) Listener
+	OnJoin(f JoinHandlerFunc)            Listener
+	OnPart(f JoinHandlerFunc)            Listener
+
+	HandleTextMessage(msg TextMessage)
+	HandleTwitchMessage(msg TwitchMessage)
+	HandleJoin(c *Channel)
+	HandlePart(c *Channel)
+}
+
+type dispatcher struct {
 	listeners listenerMap
 }
 
@@ -15,7 +30,7 @@ type Dispatcher struct {
 // do not store a reference to the list in which this listeners is placed,
 // as the list moved around when listeners are removed.
 type Listener struct {
-	dispatcher *Dispatcher
+	dispatcher Dispatcher
 	event      string
 	position   int
 }
@@ -38,32 +53,23 @@ func (l *Listener) Remove() bool {
 
 type walker func(listener interface{})
 
-func NewDispatcher() *Dispatcher {
-	return &Dispatcher{make(map[string][]listenerFunc)}
+func NewDispatcher() Dispatcher {
+	return &dispatcher{make(map[string][]listenerFunc)}
 }
 
-func (d *Dispatcher) OnEveryMessage(f MessageHandlerFunc)   Listener { return d.on("MESSAGE", f)   }
-func (d *Dispatcher) OnTextMessage(f TextHandlerFunc)       Listener { return d.on("TEXT", f)      }
-func (d *Dispatcher) OnTwitchMessage(f TwitchHandlerFunc)   Listener { return d.on("TWITCH", f)    }
-func (d *Dispatcher) OnModeMessage(f ModeHandlerFunc)       Listener { return d.on("MODE", f)      }
-func (d *Dispatcher) OnCommandMessage(f CommandHandlerFunc) Listener { return d.on("COMMAND", f)   }
-func (d *Dispatcher) OnProcessed(f ProcessedHandlerFunc)    Listener { return d.on("PROCESSED", f) }
-func (d *Dispatcher) OnResponse(f ResponseHandlerFunc)      Listener { return d.on("RESPONSE", f)  }
-func (d *Dispatcher) OnJoin(f JoinHandlerFunc)              Listener { return d.on("JOIN", f)      }
-func (d *Dispatcher) OnPart(f JoinHandlerFunc)              Listener { return d.on("PART", f)      }
+func (d *dispatcher) OnTextMessage(f TextHandlerFunc)     Listener { return d.AddListener("TEXT", f)   }
+func (d *dispatcher) OnTwitchMessage(f TwitchHandlerFunc) Listener { return d.AddListener("TWITCH", f) }
+func (d *dispatcher) OnJoin(f JoinHandlerFunc)            Listener { return d.AddListener("JOIN", f)   }
+func (d *dispatcher) OnPart(f JoinHandlerFunc)            Listener { return d.AddListener("PART", f)   }
 
-func (d *Dispatcher) handleMessage(msg Message)               { d.handle("MESSAGE",   func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
-func (d *Dispatcher) handleTextMessage(msg TextMessage)       { d.handle("TEXT",      func(listener interface{}) { listener.(TextHandlerFunc)(msg)    }) }
-func (d *Dispatcher) handleTwitchMessage(msg TwitchMessage)   { d.handle("TWITCH",    func(listener interface{}) { listener.(TwitchHandlerFunc)(msg)  }) }
-func (d *Dispatcher) handleModeMessage(msg ModeMessage)       { d.handle("MODE",      func(listener interface{}) { listener.(ModeHandlerFunc)(msg)    }) }
-func (d *Dispatcher) handleCommandMessage(msg CommandMessage) { d.handle("COMMAND",   func(listener interface{}) { listener.(CommandHandlerFunc)(msg) }) }
-func (d *Dispatcher) handleProcessed(msg Message)             { d.handle("PROCESSED", func(listener interface{}) { listener.(MessageHandlerFunc)(msg) }) }
-func (d *Dispatcher) handleJoin(c *Channel)                   { d.handle("JOIN",      func(listener interface{}) { listener.(JoinHandlerFunc)(c)      }) }
-func (d *Dispatcher) handlePart(c *Channel)                   { d.handle("PART",      func(listener interface{}) { listener.(JoinHandlerFunc)(c)      }) }
+func (d *dispatcher) HandleTextMessage(msg TextMessage)     { d.TriggerEvent("TEXT",   func(listener interface{}) { listener.(TextHandlerFunc)(msg)   }) }
+func (d *dispatcher) HandleTwitchMessage(msg TwitchMessage) { d.TriggerEvent("TWITCH", func(listener interface{}) { listener.(TwitchHandlerFunc)(msg) }) }
+func (d *dispatcher) HandleJoin(c *Channel)                 { d.TriggerEvent("JOIN",   func(listener interface{}) { listener.(JoinHandlerFunc)(c)     }) }
+func (d *dispatcher) HandlePart(c *Channel)                 { d.TriggerEvent("PART",   func(listener interface{}) { listener.(JoinHandlerFunc)(c)     }) }
 
 // private helpers
 
-func (d *Dispatcher) on(event string, f listenerFunc) Listener {
+func (d *dispatcher) AddListener(event string, f listenerFunc) Listener {
 	l, exists := d.listeners[event]
 
 	if !exists {
@@ -75,7 +81,7 @@ func (d *Dispatcher) on(event string, f listenerFunc) Listener {
 	return Listener{d, event, len(d.listeners[event]) - 1}
 }
 
-func (d *Dispatcher) handle(event string, visitor walker) {
+func (d *dispatcher) TriggerEvent(event string, visitor walker) {
 	l, exists := d.listeners[event]
 
 	if !exists {

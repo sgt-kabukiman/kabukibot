@@ -2,7 +2,6 @@ package plugin
 
 import "strings"
 import "github.com/sgt-kabukiman/kabukibot/bot"
-import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 type EchoPlugin struct {
 	bot    *bot.Kabukibot
@@ -13,17 +12,17 @@ func NewEchoPlugin() *EchoPlugin {
 	return &EchoPlugin{}
 }
 
-func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot, d *twitch.Dispatcher) {
+func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 	plugin.bot    = bot
 	plugin.prefix = bot.Configuration().CommandPrefix
 
-	d.OnCommandMessage(plugin.onCommand)
+	d.OnCommand(plugin.onCommand)
 }
 
-func (plugin *EchoPlugin) onCommand(msg twitch.CommandMessage) {
-	cmd := msg.Command()
+func (plugin *EchoPlugin) onCommand(cmd bot.Command) {
+	command := cmd.Command()
 
-	if (cmd == plugin.prefix + "say" || cmd == plugin.prefix + "echo") && msg.User().IsOperator {
-		plugin.bot.Say(msg.Channel(), strings.Join(msg.Args(), " "))
+	if (command == plugin.prefix + "say" || command == plugin.prefix + "echo") && plugin.bot.IsOperator(cmd.User().Name) {
+		plugin.bot.Say(cmd.Channel(), strings.Join(cmd.Args(), " "))
 	}
 }

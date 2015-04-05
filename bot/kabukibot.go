@@ -3,8 +3,9 @@ package bot
 import (
 	"time"
 	"net"
-	"fmt"
 	"strconv"
+	"strings"
+	"regexp"
 
 	irc "github.com/fluffle/goirc/client"
 	// logging "github.com/fluffle/goirc/logging"
@@ -13,17 +14,10 @@ import (
 
 type Kabukibot struct {
 	twitchClient  *twitch.TwitchClient
-	dispatcher    *twitch.Dispatcher
+	dispatcher    Dispatcher
 	configuration *Configuration
 	plugins       []Plugin
 }
-
-type debugLogger struct{}
-
-func (log *debugLogger) Debug(format string, args ...interface{}) { fmt.Printf("[DBG] " + format + "\n", args...) }
-func (log *debugLogger) Info(format string, args ...interface{})  { fmt.Printf("[INF] " + format + "\n", args...) }
-func (log *debugLogger) Warn(format string, args ...interface{})  { fmt.Printf("[WRN] " + format + "\n", args...) }
-func (log *debugLogger) Error(format string, args ...interface{}) { fmt.Printf("[ERR] " + format + "\n", args...) }
 
 func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// log everything
@@ -40,8 +34,8 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 
 	ircClient := irc.Client(cfg)
 
-	// we need an event dispatcher
-	dispatcher := twitch.NewDispatcher()
+	// we need our own dispatcher to handle custom events
+	dispatcher := NewDispatcher()
 
 	// setup our TwitchClient wrapper
 	twitchClient := twitch.NewTwitchClient(ircClient, dispatcher, 2*time.Second)
@@ -53,9 +47,9 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.twitchClient  = twitchClient
 	bot.plugins       = make([]Plugin, 0)
 
-	dispatcher.OnModeMessage(bot.onModeMessage)
 	dispatcher.OnJoin(bot.onJoin)
 	dispatcher.OnPart(bot.onPart)
+	dispatcher.OnTextMessage(bot.detectCommand)
 
 	return &bot, nil
 }
@@ -83,7 +77,7 @@ func (bot *Kabukibot) AddPlugin(plugin Plugin) {
 	bot.plugins = append(bot.plugins, plugin)
 }
 
-func (bot *Kabukibot) Dispatcher() *twitch.Dispatcher {
+func (bot *Kabukibot) Dispatcher() Dispatcher {
 	return bot.dispatcher
 }
 
@@ -107,6 +101,14 @@ func (bot *Kabukibot) Say(channel *twitch.Channel, text string) {
 	bot.twitchClient.Privmsg(channel.IrcName(), text)
 }
 
+func (bot *Kabukibot) IsBot(username string) bool {
+	return bot.configuration.Account.Username == username
+}
+
+func (bot *Kabukibot) IsOperator(username string) bool {
+	return bot.configuration.Operator == username
+}
+
 func (bot *Kabukibot) onJoin(channel *twitch.Channel) {
 	for _, plugin := range bot.plugins {
 		switch p := plugin.(type) {
@@ -125,12 +127,25 @@ func (bot *Kabukibot) onPart(channel *twitch.Channel) {
 	}
 }
 
-func (bot *Kabukibot) onModeMessage(msg twitch.ModeMessage) {
-	cn := msg.Channel()
+var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)
+var argSplitter  = regexp.MustCompile(`\s+`)
 
-	if msg.Mode() == "+o" {
-		cn.AddModerator(msg.Subject())
-	} else if msg.Mode() == "-o" {
-		cn.RemoveModerator(msg.Subject())
+func (bot *Kabukibot) detectCommand(msg twitch.TextMessage) {
+	match := commandRegex.FindStringSubmatch(msg.Text())
+	if len(match) == 0 {
+		return
 	}
+
+	cmd       := strings.ToLower(match[1])
+	argString := strings.TrimSpace(match[2])
+	args      := make([]string, 0)
+
+	if len(argString) > 0 {
+		args = argSplitter.Split(argString, -1)
+	}
+
+	c := command{msg, cmd, args}
+	bot.dispatcher.HandleCommand(&c)
 }
+
+
