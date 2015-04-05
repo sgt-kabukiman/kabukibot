@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// add plugins
-	kabukibot.AddPlugin(plugin.NewCorePlugin())
+	kabukibot.AddPlugin(plugin.NewConsoleOutputPlugin())
 	kabukibot.AddPlugin(plugin.NewEchoPlugin())
 
 	// here we go

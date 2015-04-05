@@ -4,17 +4,17 @@ import "fmt"
 import "github.com/sgt-kabukiman/kabukibot/bot"
 import "github.com/sgt-kabukiman/kabukibot/twitch"
 
-type CorePlugin struct {}
+type ConsoleOutputPlugin struct {}
 
-func NewCorePlugin() *CorePlugin {
-	return &CorePlugin{}
+func NewConsoleOutputPlugin() *ConsoleOutputPlugin {
+	return &ConsoleOutputPlugin{}
 }
 
-func (plugin *CorePlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
+func (plugin *ConsoleOutputPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 	d.OnTextMessage(plugin.printLine)
 }
 
-func (plugin* CorePlugin) printLine(msg twitch.TextMessage) {
+func (plugin* ConsoleOutputPlugin) printLine(msg twitch.TextMessage) {
 	user := msg.User()
 
 	fmt.Printf("[#%v] %v%v: %v\n", msg.Channel().Name, userPrefix(user), user.Name, msg.Text())
