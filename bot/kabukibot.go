@@ -15,6 +15,8 @@ import (
 type Kabukibot struct {
 	twitchClient  *twitch.TwitchClient
 	dispatcher    Dispatcher
+	chanMngr      *ChannelManager
+	database      *DatabaseStruct
 	configuration *Configuration
 	plugins       []Plugin
 }
@@ -40,11 +42,16 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// setup our TwitchClient wrapper
 	twitchClient := twitch.NewTwitchClient(ircClient, dispatcher, 2*time.Second)
 
+	// hello database
+	db := NewDatabase()
+
 	// create the bot
 	bot := Kabukibot{}
 	bot.configuration = config
 	bot.dispatcher    = dispatcher
 	bot.twitchClient  = twitchClient
+	bot.chanMngr      = NewChannelManager(db)
+	bot.database      = db
 	bot.plugins       = make([]Plugin, 0)
 
 	dispatcher.OnJoin(bot.onJoin)
@@ -55,6 +62,12 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 }
 
 func (bot *Kabukibot) Connect() (chan bool, error) {
+	// connect to database
+	err := bot.database.Connect(bot.configuration.Database.DSN)
+	if err != nil {
+		return nil, err
+	}
+
 	// setup plugins
 	for _, plugin := range bot.plugins {
 		plugin.Setup(bot, bot.Dispatcher())
@@ -69,6 +82,9 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 
 	// wait for the ready signal, after TWITCHCLIENT has been sent
 	<-client.ReadySignal
+
+	// join all of the channels
+	bot.joinInitialChannels()
 
 	return quitSignal, nil
 }
@@ -85,8 +101,12 @@ func (bot *Kabukibot) Configuration() *Configuration {
 	return bot.configuration
 }
 
+func (bot *Kabukibot) Channels() *channelMap {
+	return bot.chanMngr.Channels()
+}
+
 func (bot *Kabukibot) Channel(name string) (c *twitch.Channel, ok bool) {
-	return bot.twitchClient.Channel(name)
+	return bot.chanMngr.Channel(name)
 }
 
 func (bot *Kabukibot) Join(channel *twitch.Channel) {
@@ -124,6 +144,20 @@ func (bot *Kabukibot) onPart(channel *twitch.Channel) {
 		case ChannelPlugin:
 			p.Unload(channel, bot, bot.dispatcher)
 		}
+	}
+}
+
+func (bot *Kabukibot) joinInitialChannels() {
+	mngr := bot.chanMngr
+
+	// load all previously joined channels
+	mngr.loadChannels()
+
+	// this only needs to be done in an empty database: join ourselves later
+	mngr.addChannel(bot.configuration.Account.Username)
+
+	for _, channel := range *mngr.Channels() {
+		bot.Join(channel)
 	}
 }
 

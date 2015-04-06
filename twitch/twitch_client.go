@@ -12,6 +12,7 @@ type TwitchClient struct {
 	queue        SendQueue
 	dispatcher   Dispatcher
 	channels     map[string]*Channel
+	me           string
 	ReadySignal  chan bool
 	QuitSignal   chan bool
 }
@@ -22,6 +23,7 @@ func NewTwitchClient(conn *irc.Conn, d Dispatcher, delay time.Duration) *TwitchC
 		NewSendQueue(delay),
 		d,
 		make(map[string]*Channel),
+		conn.Me().Nick,
 		make(chan bool, 1),
 		make(chan bool, 1),
 	}
@@ -44,6 +46,10 @@ func (client *TwitchClient) setupInternalHandlers() {
 func (client *TwitchClient) Channel(name string) (c *Channel, ok bool) {
 	c, ok = client.channels[strings.TrimLeft(name, "#")]
 	return
+}
+
+func (client *TwitchClient) Channels() map[string]*Channel {
+	return client.channels
 }
 
 func (client *TwitchClient) Connect() (chan bool, error) {
@@ -95,13 +101,24 @@ func (client *TwitchClient) onDisconnect(conn *irc.Conn, line *irc.Line) {
 }
 
 func (client *TwitchClient) onJoin(conn *irc.Conn, line *irc.Line) {
+	// only react to when *we* join a channel
+	if line.Nick != client.me {
+		return
+	}
+
 	channel, ok := client.Channel(line.Target())
 	if ok {
+		println("Joined " + channel.IrcName())
 		client.dispatcher.HandleJoin(channel)
 	}
 }
 
 func (client *TwitchClient) onPart(conn *irc.Conn, line *irc.Line) {
+	// only react to when *we* part a channel
+	if line.Nick != client.me {
+		return
+	}
+
 	channel, ok := client.Channel(line.Target())
 	if ok {
 		client.dispatcher.HandlePart(channel)

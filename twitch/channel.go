@@ -16,8 +16,12 @@ type Channel struct {
 	mods  []string
 }
 
+func NormaliseChannelName(name string) string {
+	return strings.ToLower(strings.TrimLeft(name, "#"))
+}
+
 func NewChannel(name string) *Channel {
-	return &Channel{strings.ToLower(strings.TrimLeft(name, "#")), ChannelState{
+	return &Channel{NormaliseChannelName(name), ChannelState{
 		false,
 		false,
 		false,

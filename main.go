@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
-	"github.com/sgt-kabukiman/kabukibot/twitch"
 	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
@@ -34,9 +33,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	kabukibot.Join(twitch.NewChannel("kabukibot"))
-	kabukibot.Join(twitch.NewChannel("kabukibotdev"))
 
 	// wait for disconnect
 	<-quit

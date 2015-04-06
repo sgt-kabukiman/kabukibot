@@ -14,11 +14,7 @@ type Configuration struct {
 		Password string
 	}
 	Database      struct {
-		Host     string
-		Port     int
-		Username string
-		Password string
-		Database string
+		DSN string
 	}
 	IRC           struct {
 		Host string
