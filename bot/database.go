@@ -25,3 +25,7 @@ func (self *DatabaseStruct) Connect(dsn string) (error) {
 func (self *DatabaseStruct) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	return self.db.Query(query, args...)
 }
+
+func (self *DatabaseStruct) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return self.db.Exec(query, args...)
+}

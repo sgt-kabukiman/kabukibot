@@ -54,7 +54,7 @@ func (self *channelManager) addChannel(channel *twitch.Channel) {
 		return
 	}
 
-	_, err := self.db.Query("INSERT INTO channel VALUES (?)", name)
+	_, err := self.db.Exec("INSERT INTO channel VALUES (?)", name)
 	if err != nil {
 		log.Fatal("Could not add channel #" + name + " to the database: " + err.Error())
 	}
@@ -70,7 +70,7 @@ func (self *channelManager) removeChannel(channel *twitch.Channel) {
 		return
 	}
 
-	_, err := self.db.Query("DELETE FROM channel WHERE name = ?", name)
+	_, err := self.db.Exec("DELETE FROM channel WHERE name = ?", name)
 	if err != nil {
 		log.Fatal("Could not remove channel #" + name + " from the database: " + err.Error())
 	}
