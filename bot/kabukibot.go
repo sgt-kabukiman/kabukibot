@@ -15,6 +15,7 @@ import (
 type Kabukibot struct {
 	twitchClient  *twitch.TwitchClient
 	dispatcher    Dispatcher
+	acl           *ACL
 	chanMngr      *channelManager
 	database      *DatabaseStruct
 	configuration *Configuration
@@ -50,6 +51,7 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.configuration = config
 	bot.dispatcher    = dispatcher
 	bot.twitchClient  = twitchClient
+	bot.acl           = NewACL(&bot, db)
 	bot.chanMngr      = NewChannelManager(db)
 	bot.database      = db
 	bot.plugins       = make([]Plugin, 0)
@@ -97,6 +99,10 @@ func (bot *Kabukibot) Dispatcher() Dispatcher {
 	return bot.dispatcher
 }
 
+func (bot *Kabukibot) ACL() *ACL {
+	return bot.acl
+}
+
 func (bot *Kabukibot) Configuration() *Configuration {
 	return bot.configuration
 }
@@ -130,6 +136,7 @@ func (bot *Kabukibot) IsOperator(username string) bool {
 }
 
 func (bot *Kabukibot) onJoin(channel *twitch.Channel) {
+	bot.acl.loadChannelData(channel.Name)
 	bot.chanMngr.addChannel(channel)
 
 	for _, plugin := range bot.plugins {
@@ -149,6 +156,7 @@ func (bot *Kabukibot) onPart(channel *twitch.Channel) {
 	}
 
 	bot.chanMngr.removeChannel(channel)
+	bot.acl.unloadChannelData(channel.Name)
 }
 
 func (bot *Kabukibot) joinInitialChannels() {
