@@ -15,7 +15,7 @@ import (
 type Kabukibot struct {
 	twitchClient  *twitch.TwitchClient
 	dispatcher    Dispatcher
-	chanMngr      *ChannelManager
+	chanMngr      *channelManager
 	database      *DatabaseStruct
 	configuration *Configuration
 	plugins       []Plugin
@@ -130,6 +130,8 @@ func (bot *Kabukibot) IsOperator(username string) bool {
 }
 
 func (bot *Kabukibot) onJoin(channel *twitch.Channel) {
+	bot.chanMngr.addChannel(channel)
+
 	for _, plugin := range bot.plugins {
 		switch p := plugin.(type) {
 		case ChannelPlugin:
@@ -145,6 +147,8 @@ func (bot *Kabukibot) onPart(channel *twitch.Channel) {
 			p.Unload(channel, bot, bot.dispatcher)
 		}
 	}
+
+	bot.chanMngr.removeChannel(channel)
 }
 
 func (bot *Kabukibot) joinInitialChannels() {
@@ -154,7 +158,7 @@ func (bot *Kabukibot) joinInitialChannels() {
 	mngr.loadChannels()
 
 	// this only needs to be done in an empty database: join ourselves later
-	mngr.addChannel(bot.configuration.Account.Username)
+	mngr.addChannel(twitch.NewChannel(bot.configuration.Account.Username))
 
 	for _, channel := range *mngr.Channels() {
 		bot.Join(channel)

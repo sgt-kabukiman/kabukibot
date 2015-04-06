@@ -48,8 +48,8 @@ func (client *TwitchClient) Channel(name string) (c *Channel, ok bool) {
 	return
 }
 
-func (client *TwitchClient) Channels() map[string]*Channel {
-	return client.channels
+func (client *TwitchClient) Channels() *map[string]*Channel {
+	return &client.channels
 }
 
 func (client *TwitchClient) Connect() (chan bool, error) {
