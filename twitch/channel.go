@@ -30,6 +30,11 @@ func NewChannel(name string) *Channel {
 	}, make([]string, 0)}
 }
 
+// satisfy Stringer interface
+func (c *Channel) String() string {
+	return c.Name
+}
+
 func (c *Channel) IrcName() string {
 	return "#" + c.Name
 }

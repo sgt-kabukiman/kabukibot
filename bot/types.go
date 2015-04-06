@@ -32,6 +32,7 @@ type GlobalPlugin interface {
 type ChannelPlugin interface {
 	Plugin
 
+	Key() string
 	Load(*twitch.Channel, *Kabukibot, Dispatcher)
 	Unload(*twitch.Channel, *Kabukibot, Dispatcher)
 }

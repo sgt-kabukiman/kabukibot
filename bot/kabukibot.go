@@ -17,9 +17,9 @@ type Kabukibot struct {
 	dispatcher    Dispatcher
 	acl           *ACL
 	chanMngr      *channelManager
+	pluginMngr    *pluginManager
 	database      *DatabaseStruct
 	configuration *Configuration
-	plugins       []Plugin
 }
 
 func NewKabukibot(config *Configuration) (*Kabukibot, error) {
@@ -53,8 +53,8 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.twitchClient  = twitchClient
 	bot.acl           = NewACL(&bot, db)
 	bot.chanMngr      = NewChannelManager(db)
+	bot.pluginMngr    = NewPluginManager(&bot, dispatcher, db)
 	bot.database      = db
-	bot.plugins       = make([]Plugin, 0)
 
 	dispatcher.OnJoin(bot.onJoin)
 	dispatcher.OnPart(bot.onPart)
@@ -71,10 +71,9 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 	}
 
 	// setup plugins
-	for _, plugin := range bot.plugins {
-		plugin.Setup(bot, bot.Dispatcher())
-	}
+	bot.pluginMngr.setup()
 
+	// connect to Twitch
 	client := bot.twitchClient
 
 	quitSignal, err := client.Connect()
@@ -92,7 +91,7 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 }
 
 func (bot *Kabukibot) AddPlugin(plugin Plugin) {
-	bot.plugins = append(bot.plugins, plugin)
+	bot.pluginMngr.registerPlugin(plugin)
 }
 
 func (bot *Kabukibot) Dispatcher() Dispatcher {
@@ -138,23 +137,11 @@ func (bot *Kabukibot) IsOperator(username string) bool {
 func (bot *Kabukibot) onJoin(channel *twitch.Channel) {
 	bot.acl.loadChannelData(channel.Name)
 	bot.chanMngr.addChannel(channel)
-
-	for _, plugin := range bot.plugins {
-		switch p := plugin.(type) {
-		case ChannelPlugin:
-			p.Load(channel, bot, bot.dispatcher)
-		}
-	}
+	bot.pluginMngr.setupChannel(channel)
 }
 
 func (bot *Kabukibot) onPart(channel *twitch.Channel) {
-	for _, plugin := range bot.plugins {
-		switch p := plugin.(type) {
-		case ChannelPlugin:
-			p.Unload(channel, bot, bot.dispatcher)
-		}
-	}
-
+	bot.pluginMngr.teardownChannel(channel)
 	bot.chanMngr.removeChannel(channel)
 	bot.acl.unloadChannelData(channel.Name)
 }

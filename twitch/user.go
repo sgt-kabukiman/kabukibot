@@ -15,3 +15,8 @@ type User struct {
 func NewUser(name string, cn *Channel) *User {
 	return &User{Name: name, Channel: cn}
 }
+
+// satisfy Stringer interface
+func (u *User) String() string {
+	return u.Name
+}
