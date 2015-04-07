@@ -132,8 +132,8 @@ func (self *pluginManager) RemovePluginFromChannel(channel *twitch.Channel, plug
 func (self *pluginManager) registerPlugin(plugin Plugin) {
 	self.plugins = append(self.plugins, plugin)
 
-	asserted, err := plugin.(ChannelPlugin)
-	if !err {
+	asserted, ok := plugin.(ChannelPlugin)
+	if ok {
 		self.pluginMap[asserted.Key()] = asserted
 	}
 }
