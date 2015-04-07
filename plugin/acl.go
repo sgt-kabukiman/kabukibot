@@ -3,6 +3,7 @@ package plugin
 import "strings"
 import "regexp"
 import "github.com/sgt-kabukiman/kabukibot/bot"
+import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 type ACLPlugin struct {
 	bot    *bot.Kabukibot
@@ -44,7 +45,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 
 	// send the list of available permissions
 	if c == p+"permissions" {
-		permissions := plugin.getPermissions(channel.Name)
+		permissions := plugin.getPermissions(channel)
 
 		if len(permissions) == 0 {
 			plugin.bot.Say(channel, "There are no permissions available to be configured.")
@@ -64,7 +65,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 
 	// check the permission
 	permission  := strings.ToLower(permRegex.ReplaceAllString(args[0], ""))
-	permissions := plugin.getPermissions(channel.Name)
+	permissions := plugin.getPermissions(channel)
 
 	if len(permission) == 0 {
 		plugin.bot.Say(channel, "invalid permission given.")
@@ -162,6 +163,15 @@ func (plugin *ACLPlugin) handleAllowDeny(command string, permission string, args
 	}
 }
 
-func (plugin *ACLPlugin) getPermissions(channel string) []string {
-	return []string{"foo", "bar", "blub"}
+func (plugin *ACLPlugin) getPermissions(channel *twitch.Channel) []string {
+	plugins := plugin.bot.PluginManager().LoadedPlugins(channel)
+	result  := make([]string, 0)
+
+	for _, plugin := range plugins {
+		for _, perm := range plugin.Permissions() {
+			result = append(result, perm)
+		}
+	}
+
+	return result
 }
