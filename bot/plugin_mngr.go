@@ -99,7 +99,7 @@ func (self *PluginManager) AddPluginToChannel(channel *twitch.Channel, pluginKey
 		return false
 	}
 
-	_, err := self.db.Exec("INSERT INTO plugin VALUES (channel, plugin)", channel.Name, pluginKey)
+	_, err := self.db.Exec("INSERT INTO plugin (channel, plugin) VALUES (?, ?)", channel.Name, pluginKey)
 	if err != nil {
 		log.Fatal("Could not add plugin to the database: " + err.Error())
 	}
