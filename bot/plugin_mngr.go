@@ -9,7 +9,7 @@ type pluginMap  map[string]ChannelPlugin
 type channelPluginList []ChannelPlugin
 type channelPluginMap  map[string]channelPluginList
 
-type pluginManager struct {
+type PluginManager struct {
 	db         *DatabaseStruct
 	bot        *Kabukibot
 	dispatcher Dispatcher
@@ -18,8 +18,8 @@ type pluginManager struct {
 	loaded     channelPluginMap
 }
 
-func NewPluginManager(bot *Kabukibot, dispatcher Dispatcher, db *DatabaseStruct) *pluginManager {
-	return &pluginManager{
+func NewPluginManager(bot *Kabukibot, dispatcher Dispatcher, db *DatabaseStruct) *PluginManager {
+	return &PluginManager{
 		db,
 		bot,
 		dispatcher,
@@ -29,15 +29,15 @@ func NewPluginManager(bot *Kabukibot, dispatcher Dispatcher, db *DatabaseStruct)
 	}
 }
 
-func (self *pluginManager) Plugins() *pluginList {
+func (self *PluginManager) Plugins() *pluginList {
 	return &self.plugins
 }
 
-func (self *pluginManager) PluginMap() *pluginMap {
+func (self *PluginManager) PluginMap() *pluginMap {
 	return &self.pluginMap
 }
 
-func (self *pluginManager) PluginKeys() []string {
+func (self *PluginManager) PluginKeys() []string {
 	list := make([]string, len(self.pluginMap))
 	idx  := 0
 
@@ -49,12 +49,12 @@ func (self *pluginManager) PluginKeys() []string {
 	return list
 }
 
-func (self *pluginManager) Plugin(key string) (c ChannelPlugin, ok bool) {
+func (self *PluginManager) Plugin(key string) (c ChannelPlugin, ok bool) {
 	c, ok = self.pluginMap[key]
 	return
 }
 
-func (self *pluginManager) LoadedPlugins(channel *twitch.Channel) channelPluginList {
+func (self *PluginManager) LoadedPlugins(channel *twitch.Channel) channelPluginList {
 	list, ok := self.loaded[channel.Name]
 	if !ok {
 		list = make(channelPluginList, 0)
@@ -63,7 +63,7 @@ func (self *pluginManager) LoadedPlugins(channel *twitch.Channel) channelPluginL
 	return list
 }
 
-func (self *pluginManager) LoadedPluginKeys(channel *twitch.Channel) []string {
+func (self *PluginManager) LoadedPluginKeys(channel *twitch.Channel) []string {
 	list   := self.LoadedPlugins(channel)
 	result := make([]string, len(list))
 
@@ -74,7 +74,7 @@ func (self *pluginManager) LoadedPluginKeys(channel *twitch.Channel) []string {
 	return result
 }
 
-func (self *pluginManager) IsLoaded(channel *twitch.Channel, plugin string) bool {
+func (self *PluginManager) IsLoaded(channel *twitch.Channel, plugin string) bool {
 	list, ok := self.loaded[channel.Name]
 	if !ok {
 		return false
@@ -89,7 +89,7 @@ func (self *pluginManager) IsLoaded(channel *twitch.Channel, plugin string) bool
 	return false
 }
 
-func (self *pluginManager) AddPluginToChannel(channel *twitch.Channel, pluginKey string) bool {
+func (self *PluginManager) AddPluginToChannel(channel *twitch.Channel, pluginKey string) bool {
 	_, ok := self.pluginMap[pluginKey]
 	if !ok {
 		return false
@@ -109,7 +109,7 @@ func (self *pluginManager) AddPluginToChannel(channel *twitch.Channel, pluginKey
 	return true
 }
 
-func (self *pluginManager) RemovePluginFromChannel(channel *twitch.Channel, pluginKey string) bool {
+func (self *PluginManager) RemovePluginFromChannel(channel *twitch.Channel, pluginKey string) bool {
 	_, ok := self.pluginMap[pluginKey]
 	if !ok {
 		return false
@@ -129,7 +129,7 @@ func (self *pluginManager) RemovePluginFromChannel(channel *twitch.Channel, plug
 	return true
 }
 
-func (self *pluginManager) registerPlugin(plugin Plugin) {
+func (self *PluginManager) registerPlugin(plugin Plugin) {
 	self.plugins = append(self.plugins, plugin)
 
 	asserted, ok := plugin.(ChannelPlugin)
@@ -138,13 +138,13 @@ func (self *pluginManager) registerPlugin(plugin Plugin) {
 	}
 }
 
-func (self *pluginManager) setup() {
+func (self *PluginManager) setup() {
 	for _, plugin := range self.plugins {
 		plugin.Setup(self.bot, self.dispatcher)
 	}
 }
 
-func (self *pluginManager) setupChannel(channel *twitch.Channel) {
+func (self *PluginManager) setupChannel(channel *twitch.Channel) {
 	// already loaded?
 	_, ok := self.loaded[channel.Name]
 	if ok {
@@ -182,13 +182,13 @@ func (self *pluginManager) setupChannel(channel *twitch.Channel) {
 	}
 }
 
-func (self *pluginManager) teardownChannel(channel *twitch.Channel) {
+func (self *PluginManager) teardownChannel(channel *twitch.Channel) {
 	for _, key := range self.LoadedPluginKeys(channel) {
 		self.unloadPlugin(channel, key)
 	}
 }
 
-func (self *pluginManager) loadPlugin(channel *twitch.Channel, key string) {
+func (self *PluginManager) loadPlugin(channel *twitch.Channel, key string) {
 	// unknown plugin
 	plugin, ok := self.pluginMap[key]
 	if !ok {
@@ -203,7 +203,7 @@ func (self *pluginManager) loadPlugin(channel *twitch.Channel, key string) {
 	self.loaded[channel.Name] = append(self.loaded[channel.Name], plugin)
 }
 
-func (self *pluginManager) unloadPlugin(channel *twitch.Channel, key string) {
+func (self *PluginManager) unloadPlugin(channel *twitch.Channel, key string) {
 	// unknown plugin
 	plugin, ok := self.pluginMap[key]
 	if !ok {
