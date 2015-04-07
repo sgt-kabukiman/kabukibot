@@ -27,6 +27,7 @@ func main() {
 	kabukibot.AddPlugin(plugin.NewConsoleOutputPlugin())
 	kabukibot.AddPlugin(plugin.NewEchoPlugin())
 	kabukibot.AddPlugin(plugin.NewACLPlugin())
+	kabukibot.AddPlugin(plugin.NewPluginControlPlugin())
 
 	// here we go
 	quit, err := kabukibot.Connect()

@@ -33,6 +33,7 @@ type ChannelPlugin interface {
 	Plugin
 
 	Key() string
+	Permissions() []string
 	Load(*twitch.Channel, *Kabukibot, Dispatcher)
 	Unload(*twitch.Channel, *Kabukibot, Dispatcher)
 }
