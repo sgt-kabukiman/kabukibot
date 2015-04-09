@@ -7,8 +7,8 @@ import "github.com/sgt-kabukiman/kabukibot/twitch"
 type Dispatcher interface {
 	twitch.Dispatcher
 
-	OnCommand(f CommandHandlerFunc) twitch.Listener
-	HandleCommand(cmd Command)
+	OnCommand(CommandHandlerFunc, *twitch.Channel) *twitch.Listener
+	HandleCommand(Command)
 }
 
 type dispatcher struct {
@@ -23,13 +23,13 @@ func NewDispatcher() Dispatcher {
 }
 
 // Add listener for a command (a message starting with "!___").
-func (d *dispatcher) OnCommand(f CommandHandlerFunc) twitch.Listener {
-	return d.AddListener("BOT.CMD", f)
+func (d *dispatcher) OnCommand(f CommandHandlerFunc, c *twitch.Channel) *twitch.Listener {
+	return d.AddListener("BOT.CMD", c, f)
 }
 
 // Trigger a command event and fire all registered listeners in order.
 func (d *dispatcher) HandleCommand(cmd Command) {
-	d.TriggerEvent("BOT.CMD", func(listener interface{}) {
+	d.TriggerEvent("BOT.CMD", cmd.Channel(), func(listener interface{}) {
 		listener.(CommandHandlerFunc)(cmd)
 	})
 }

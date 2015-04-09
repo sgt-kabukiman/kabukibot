@@ -24,7 +24,7 @@ func (plugin *PluginControlPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 	plugin.acl    = bot.ACL()
 	plugin.prefix = bot.Configuration().CommandPrefix
 
-	d.OnCommand(plugin.onCommand)
+	d.OnCommand(plugin.onCommand, nil)
 }
 
 func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {

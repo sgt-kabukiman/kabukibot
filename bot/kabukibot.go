@@ -56,9 +56,9 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.pluginMngr    = NewPluginManager(&bot, dispatcher, db)
 	bot.database      = db
 
-	dispatcher.OnJoin(bot.onJoin)
-	dispatcher.OnPart(bot.onPart)
-	dispatcher.OnTextMessage(bot.detectCommand)
+	dispatcher.OnJoin(bot.onJoin, nil)
+	dispatcher.OnPart(bot.onPart, nil)
+	dispatcher.OnTextMessage(bot.detectCommand, nil)
 
 	return &bot, nil
 }

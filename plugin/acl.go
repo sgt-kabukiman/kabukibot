@@ -20,7 +20,7 @@ func (plugin *ACLPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 	plugin.acl    = bot.ACL()
 	plugin.prefix = bot.Configuration().CommandPrefix
 
-	d.OnCommand(plugin.onCommand)
+	d.OnCommand(plugin.onCommand, nil)
 }
 
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)

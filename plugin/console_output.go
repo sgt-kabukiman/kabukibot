@@ -11,7 +11,7 @@ func NewConsoleOutputPlugin() *ConsoleOutputPlugin {
 }
 
 func (plugin *ConsoleOutputPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	d.OnTextMessage(plugin.printLine)
+	d.OnTextMessage(plugin.printLine, nil)
 }
 
 func (plugin* ConsoleOutputPlugin) printLine(msg twitch.TextMessage) {

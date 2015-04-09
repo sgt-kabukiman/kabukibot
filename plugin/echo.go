@@ -16,7 +16,7 @@ func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 	plugin.bot    = bot
 	plugin.prefix = bot.Configuration().CommandPrefix
 
-	d.OnCommand(plugin.onCommand)
+	d.OnCommand(plugin.onCommand, nil)
 }
 
 func (plugin *EchoPlugin) onCommand(cmd bot.Command) {
