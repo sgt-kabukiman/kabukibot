@@ -126,6 +126,14 @@ func (bot *Kabukibot) Part(channel *twitch.Channel) {
 	bot.twitchClient.Part(channel)
 }
 
+func (bot *Kabukibot) Respond(msg twitch.Message, text string) {
+	bot.twitchClient.Privmsg(msg.Channel().IrcName(), text)
+}
+
+func (bot *Kabukibot) RespondToAll(msg twitch.Message, text string) {
+	bot.twitchClient.Privmsg(msg.Channel().IrcName(), text)
+}
+
 func (bot *Kabukibot) Say(channel *twitch.Channel, text string) {
 	bot.twitchClient.Privmsg(channel.IrcName(), text)
 }
