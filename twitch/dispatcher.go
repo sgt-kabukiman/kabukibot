@@ -33,9 +33,17 @@ type Dispatcher interface {
 	HandlePart(*Channel)
 }
 
+type triggerQueueItem struct {
+	event   string
+	channel *Channel
+	visitor walker
+}
+
 type dispatcher struct {
-	listeners  listenerMap
-	listenerID int // increments with each new listener being added
+	listeners    listenerMap
+	listenerID   int // increments with each new listener being added
+	lock         bool
+	triggerQueue []triggerQueueItem
 }
 
 func (self *Listener) Remove() {
@@ -73,7 +81,7 @@ func (l *Listener) Equals(m *Listener) bool {
 type walker func(interface{})
 
 func NewDispatcher() Dispatcher {
-	return &dispatcher{make(listenerMap), 0}
+	return &dispatcher{make(listenerMap), 0, false, make([]triggerQueueItem, 0)}
 }
 
 func (d *dispatcher) OnTextMessage(f TextHandlerFunc, c *Channel)     *Listener { return d.AddListener("TEXT", c, f)   }
@@ -136,12 +144,35 @@ func (d *dispatcher) AddListener(event string, c *Channel, f listenerFunc) *List
 }
 
 func (d *dispatcher) TriggerEvent(event string, c *Channel, visitor walker) {
-	// trigger all listeners for the channel-less case ("message")
-	d.runListeners(event, visitor)
+	// put this trigger request on the queue of events to churn
+	d.triggerQueue = append(d.triggerQueue, triggerQueueItem{event, c, visitor})
 
-	if c != nil {
-		d.runListeners(event + "#" + c.Name, visitor)
+	// if we are already working on the trigger queue in another stack level,
+	// quit and let us return to that at a later time.
+	if (d.lock) {
+		return
 	}
+
+	d.lock = true
+
+	// execute event listeners for the current event and then continue to
+	// execute all piled up triggers that are fired by the listeners.
+
+	for len(d.triggerQueue) > 0 {
+		// pop the first item of the queue
+		item          := d.triggerQueue[0]
+		d.triggerQueue = d.triggerQueue[1:]
+
+		// trigger all listeners for the channel-less case ("message")
+		d.runListeners(item.event, item.visitor)
+
+		if item.channel != nil {
+			d.runListeners(item.event + "#" + item.channel.Name, item.visitor)
+		}
+	}
+
+	// release lock again, so the next call will start to working on the queue
+	d.lock = false
 }
 
 // private helpers
