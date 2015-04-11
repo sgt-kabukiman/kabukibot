@@ -1,10 +1,60 @@
 package bot
 
 import "fmt"
+import "os"
 
-type debugLogger struct{}
+const (
+	LOG_LEVEL_DEBUG   = 1
+	LOG_LEVEL_INFO    = 2
+	LOG_LEVEL_WARNING = 3
+	LOG_LEVEL_ERROR   = 4
+)
 
-func (log *debugLogger) Debug(format string, args ...interface{}) { fmt.Printf("[DBG] " + format + "\n", args...) }
-func (log *debugLogger) Info(format string, args ...interface{})  { fmt.Printf("[INF] " + format + "\n", args...) }
-func (log *debugLogger) Warn(format string, args ...interface{})  { fmt.Printf("[WRN] " + format + "\n", args...) }
-func (log *debugLogger) Error(format string, args ...interface{}) { fmt.Printf("[ERR] " + format + "\n", args...) }
+type Logger interface {
+	SetLevel(int)
+
+	Debug(string, ...interface{})
+	Info(string, ...interface{})
+	Warning(string, ...interface{})
+	Error(string, ...interface{})
+	Fatal(string, ...interface{})
+}
+
+type logger struct {
+	level int
+}
+
+func NewLogger(level int) Logger {
+	return &logger{level}
+}
+
+func (self *logger) SetLevel(level int)   {
+	self.level = level
+}
+
+func (self *logger) Debug(format string, args ...interface{})   {
+	self.printLine(LOG_LEVEL_DEBUG, "[dbg] " + format, args...)
+}
+
+func (self *logger) Info(format string, args ...interface{})   {
+	self.printLine(LOG_LEVEL_INFO, "[inf] " + format, args...)
+}
+
+func (self *logger) Warning(format string, args ...interface{})   {
+	self.printLine(LOG_LEVEL_WARNING, "[wrn] " + format, args...)
+}
+
+func (self *logger) Error(format string, args ...interface{})   {
+	self.printLine(LOG_LEVEL_ERROR, "[err] " + format, args...)
+}
+
+func (self *logger) Fatal(format string, args ...interface{})   {
+	self.printLine(LOG_LEVEL_ERROR, "[ftl] " + format, args...)
+	os.Exit(1)
+}
+
+func (self *logger) printLine(level int, format string, args ...interface{}) {
+	if level >= self.level {
+		fmt.Printf(format + "\n", args...)
+	}
+}

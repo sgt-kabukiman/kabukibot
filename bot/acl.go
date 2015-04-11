@@ -19,12 +19,13 @@ type channelPermMap map[string]permissionMap
 
 type ACL struct {
 	bot         *Kabukibot
+	log         Logger
 	db          *DatabaseStruct
 	permissions channelPermMap
 }
 
-func NewACL(bot *Kabukibot, db *DatabaseStruct) *ACL {
-	return &ACL{bot, db, make(channelPermMap)}
+func NewACL(bot *Kabukibot, log Logger, db *DatabaseStruct) *ACL {
+	return &ACL{bot, log, db, make(channelPermMap)}
 }
 
 func ACLGroups() []string {
@@ -129,6 +130,8 @@ func (self *ACL) Allow(channel string, userIdent string, permission string) bool
 		log.Fatal("Could not add ACL entry to the database: " + err.Error())
 	}
 
+	self.log.Debug("Allowed %s for %s in #%s.", permission, userIdent, channel)
+
 	return true
 }
 
@@ -173,6 +176,8 @@ func (self *ACL) Deny(channel string, userIdent string, permission string) bool 
 		log.Fatal("Could not delete ACL entry from the database: " + err.Error())
 	}
 
+	self.log.Debug("Denied %s for %s in #%s.", permission, userIdent, channel)
+
 	return true
 }
 
@@ -198,17 +203,20 @@ func (self *ACL) DeletePermission(channel string, permission string) {
 	if err != nil {
 		log.Fatal("Could not delete ACL entries from the database: " + err.Error())
 	}
+
+	self.log.Debug("Removed all %s permissions for #%s.", permission, channel)
 }
 
 func (self *ACL) loadChannelData(channel string) {
 	rows, err := self.db.Query("SELECT permission, user_ident FROM acl WHERE channel = ?", channel)
 	if err != nil {
-		log.Fatal("Could not query ACL data: " + err.Error())
+		self.log.Fatal("Could not query ACL data: %s", err.Error())
 	}
 	defer rows.Close()
 
 	newPermMap := make(permissionMap)
 	lastPerm   := ""
+	rowCount   := 0
 
 	var newUserList usernameList
 
@@ -229,6 +237,7 @@ func (self *ACL) loadChannelData(channel string) {
 		}
 
 		newUserList = append(newUserList, userIdent)
+		rowCount    = rowCount + 1
 	}
 
 	if err := rows.Err(); err != nil {
@@ -240,11 +249,14 @@ func (self *ACL) loadChannelData(channel string) {
 	}
 
 	self.permissions[channel] = newPermMap
+
+	self.log.Debug("Loaded %d ACL entries for #%s.", rowCount, channel)
 }
 
 func (self *ACL) unloadChannelData(channel string) {
 	_, ok := self.permissions[channel]
 	if ok {
 		delete(self.permissions, channel)
+		self.log.Debug("Unloaded ACL data for #%s.", channel)
 	}
 }

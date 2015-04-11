@@ -15,6 +15,7 @@ import (
 type Kabukibot struct {
 	twitchClient  *twitch.TwitchClient
 	dispatcher    Dispatcher
+	logger        Logger
 	acl           *ACL
 	chanMngr      *channelManager
 	pluginMngr    *PluginManager
@@ -51,8 +52,9 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot := Kabukibot{}
 	bot.configuration = config
 	bot.dispatcher    = dispatcher
+	bot.logger        = NewLogger(LOG_LEVEL_DEBUG)
 	bot.twitchClient  = twitchClient
-	bot.acl           = NewACL(&bot, db)
+	bot.acl           = NewACL(&bot, bot.logger, db)
 	bot.chanMngr      = NewChannelManager(db)
 	bot.pluginMngr    = NewPluginManager(&bot, dispatcher, db)
 	bot.dictionary    = NewDictionary(db)
@@ -73,14 +75,17 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 	}
 
 	// load dictionary elements
+	bot.logger.Debug("Loading dictionary...")
 	bot.dictionary.load()
 
 	// setup plugins
+	bot.logger.Debug("Setting up plugins...")
 	bot.pluginMngr.setup()
 
 	// connect to Twitch
 	client := bot.twitchClient
 
+	bot.logger.Info("Connecting to %s:%d...", bot.configuration.IRC.Host, bot.configuration.IRC.Port)
 	quitSignal, err := client.Connect()
 	if err != nil {
 		return nil, err
@@ -88,6 +93,7 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 
 	// wait for the ready signal, after TWITCHCLIENT has been sent
 	<-client.ReadySignal
+	bot.logger.Info("Connection established.")
 
 	// join all of the channels
 	bot.joinInitialChannels()
