@@ -18,6 +18,7 @@ type Kabukibot struct {
 	acl           *ACL
 	chanMngr      *channelManager
 	pluginMngr    *PluginManager
+	dictionary    *Dictionary
 	database      *DatabaseStruct
 	configuration *Configuration
 }
@@ -54,6 +55,7 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.acl           = NewACL(&bot, db)
 	bot.chanMngr      = NewChannelManager(db)
 	bot.pluginMngr    = NewPluginManager(&bot, dispatcher, db)
+	bot.dictionary    = NewDictionary(db)
 	bot.database      = db
 
 	dispatcher.OnJoin(bot.onJoin, nil)
@@ -69,6 +71,9 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// load dictionary elements
+	bot.dictionary.load()
 
 	// setup plugins
 	bot.pluginMngr.setup()
@@ -108,6 +113,10 @@ func (bot *Kabukibot) Configuration() *Configuration {
 
 func (bot *Kabukibot) PluginManager() *PluginManager {
 	return bot.pluginMngr
+}
+
+func (bot *Kabukibot) Dictionary() *Dictionary {
+	return bot.dictionary
 }
 
 func (bot *Kabukibot) Channels() *channelMap {
