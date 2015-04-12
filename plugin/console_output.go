@@ -1,11 +1,11 @@
 package plugin
 
-import "fmt"
 import "github.com/sgt-kabukiman/kabukibot/bot"
 import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 type ConsoleOutputPlugin struct {
 	bot *bot.Kabukibot
+	log bot.Logger
 	me  string
 }
 
@@ -13,42 +13,52 @@ func NewConsoleOutputPlugin() *ConsoleOutputPlugin {
 	return &ConsoleOutputPlugin{}
 }
 
-func (plugin *ConsoleOutputPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot = bot
-	plugin.me  = bot.Configuration().Account.Username
+func (self *ConsoleOutputPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
+	self.bot = bot
+	self.log = bot.Logger()
+	self.me  = bot.Configuration().Account.Username
 
-	d.OnTextMessage(plugin.printLine, nil)
-	d.OnResponse(plugin.onResponse, nil)
+	d.OnTextMessage(self.onText, nil)
+	d.OnTwitchMessage(self.onTwitch, nil)
+	d.OnResponse(self.onResponse, nil)
 }
 
-func (plugin* ConsoleOutputPlugin) printLine(msg twitch.TextMessage) {
+func (self* ConsoleOutputPlugin) onText(msg twitch.TextMessage) {
 	user := msg.User()
 
-	fmt.Printf("[#%v] %v%v: %v\n", msg.Channel().Name, userPrefix(user), user.Name, msg.Text())
+	self.log.Info("[#%s] %s%s: %s", msg.Channel().Name, self.userPrefix(user), user.Name, msg.Text())
 }
 
-func (plugin* ConsoleOutputPlugin) onResponse(r bot.Response) {
-	fmt.Printf("[#%v] %%%v: %v\n", r.Channel().Name, plugin.me, r.Text())
-}
+func (self* ConsoleOutputPlugin) onTwitch(msg twitch.TwitchMessage) {
+	switch msg.Command() {
+	case "clearchat":
+		args := msg.Args()
 
-func getChar(flag bool, sign string) string {
-	if (flag) {
-		return sign
+		if len(args) > 0 {
+			self.log.Info("[#%s] <%s has been timed out>", msg.Channel().Name, args[1])
+		} else {
+			self.log.Info("[#%s] <chat has been cleared>", msg.Channel().Name)
+		}
+
+	case "subscriber":
+		self.log.Info("[#%s] <%s just subscribed!>", msg.Channel().Name, msg.Args()[0])
 	}
-
-	return ""
 }
 
-func userPrefix(u *twitch.User) string {
+func (self* ConsoleOutputPlugin) onResponse(r bot.Response) {
+	self.log.Info("[#%s] %%%s: %s", r.Channel().Name, self.me, r.Text())
+}
+
+func (self* ConsoleOutputPlugin) userPrefix(u *twitch.User) string {
 	prefix := ""
 
-	// if u.IsOperator      { prefix += "$" }
-	if u.IsBroadcaster   { prefix += "&" }
-	if u.IsModerator     { prefix += "@" }
-	if u.IsSubscriber    { prefix += "+" }
-	if u.IsTurbo         { prefix += "~" }
-	if u.IsTwitchAdmin   { prefix += "!" }
-	if u.IsTwitchStaff   { prefix += "!" }
+	if self.bot.IsOperator(u.Name) { prefix += "$" }
+	if u.IsBroadcaster             { prefix += "&" }
+	if u.IsModerator               { prefix += "@" }
+	if u.IsSubscriber              { prefix += "+" }
+	if u.IsTurbo                   { prefix += "~" }
+	if u.IsTwitchAdmin             { prefix += "!" }
+	if u.IsTwitchStaff             { prefix += "!" }
 
 	return prefix
 }

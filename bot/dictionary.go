@@ -1,17 +1,16 @@
 package bot
 
-import "log"
-
 type dict map[string]string
 
 // The Dictionary is a glorified string/string map that's kept in sync with a database table.
 type Dictionary struct {
 	db   *DatabaseStruct
+	log  Logger
 	data dict
 }
 
-func NewDictionary(db *DatabaseStruct) *Dictionary {
-	return &Dictionary{db, make(dict)}
+func NewDictionary(db *DatabaseStruct, log Logger) *Dictionary {
+	return &Dictionary{db, log, make(dict)}
 }
 
 func (self *Dictionary) Keys() []string {
@@ -33,8 +32,10 @@ func (self *Dictionary) Add(key string, value string) *Dictionary {
 
 		_, err := self.db.Exec("INSERT INTO dictionary (keyname, value) VALUES (?, ?)", key, value)
 		if err != nil {
-			log.Fatal("Could not add dictionary entry '" + key + "' to the database: " + err.Error())
+			self.log.Fatal("Could not add dictionary entry '" + key + "' to the database: " + err.Error())
 		}
+
+		self.log.Debug("Added dictionary entry '%s' as '%s'.", key, value)
 	}
 
 	return self
@@ -48,8 +49,10 @@ func (self *Dictionary) Set(key string, value string) *Dictionary {
 
 	_, err := self.db.Exec("UPDATE dictionary SET value = ? WHERE keyname = ?", value, key)
 	if err != nil {
-		log.Fatal("Could not update dictionary entry '" + key + "' in the database: " + err.Error())
+		self.log.Fatal("Could not update dictionary entry '" + key + "' in the database: " + err.Error())
 	}
+
+	self.log.Debug("Updated dictionary entry '%s' with '%s'.", key, value)
 
 	return self
 }
@@ -75,8 +78,10 @@ func (self *Dictionary) Delete(key string) *Dictionary {
 
 		_, err := self.db.Exec("DELETE FROM dictionary WHERE keyname = ?", key)
 		if err != nil {
-			log.Fatal("Could not remove dictionary entry '" + key + "' from the database: " + err.Error())
+			self.log.Fatal("Could not remove dictionary entry '" + key + "' from the database: " + err.Error())
 		}
+
+		self.log.Debug("Deleted dictionary entry '%s'.", key)
 	}
 
 	return self
@@ -85,20 +90,25 @@ func (self *Dictionary) Delete(key string) *Dictionary {
 func (self *Dictionary) load() {
 	rows, err := self.db.Query("SELECT * FROM dictionary")
 	if err != nil {
-		log.Fatal("Could not query the dictionary: " + err.Error())
+		self.log.Fatal("Could not query the dictionary: " + err.Error())
 	}
 	defer rows.Close()
+
+	rowCount := 0
 
 	for rows.Next() {
 		var key, value string
 		if err := rows.Scan(&key, &value); err != nil {
-			log.Fatal(err)
+			self.log.Fatal("%s", err.Error())
 		}
 
 		self.data[key] = value
+		rowCount       = rowCount + 1
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		self.log.Fatal("%s", err.Error())
 	}
+
+	self.log.Debug("Loaded %d dictionary entries.", rowCount)
 }

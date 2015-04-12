@@ -45,6 +45,9 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// setup our TwitchClient wrapper
 	twitchClient := twitch.NewTwitchClient(ircClient, dispatcher, 2*time.Second)
 
+	// create logger
+	logger := NewLogger(LOG_LEVEL_DEBUG)
+
 	// hello database
 	db := NewDatabase()
 
@@ -52,12 +55,12 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot := Kabukibot{}
 	bot.configuration = config
 	bot.dispatcher    = dispatcher
-	bot.logger        = NewLogger(LOG_LEVEL_DEBUG)
+	bot.logger        = logger
 	bot.twitchClient  = twitchClient
-	bot.acl           = NewACL(&bot, bot.logger, db)
+	bot.acl           = NewACL(&bot, logger, db)
 	bot.chanMngr      = NewChannelManager(db)
 	bot.pluginMngr    = NewPluginManager(&bot, dispatcher, db)
-	bot.dictionary    = NewDictionary(db)
+	bot.dictionary    = NewDictionary(db, logger)
 	bot.database      = db
 
 	dispatcher.OnJoin(bot.onJoin, nil)
@@ -107,6 +110,10 @@ func (bot *Kabukibot) AddPlugin(plugin Plugin) {
 
 func (bot *Kabukibot) Dispatcher() Dispatcher {
 	return bot.dispatcher
+}
+
+func (bot *Kabukibot) Logger() Logger {
+	return bot.logger
 }
 
 func (bot *Kabukibot) ACL() *ACL {
