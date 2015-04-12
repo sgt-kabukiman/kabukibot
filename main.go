@@ -29,6 +29,7 @@ func main() {
 	kabukibot.AddPlugin(plugin.NewACLPlugin())
 	kabukibot.AddPlugin(plugin.NewPluginControlPlugin())
 	kabukibot.AddPlugin(plugin.NewDictionaryControlPlugin())
+	kabukibot.AddPlugin(plugin.NewJoinPlugin())
 
 	// here we go
 	quit, err := kabukibot.Connect()
