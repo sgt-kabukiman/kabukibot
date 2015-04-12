@@ -6,25 +6,30 @@ import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 type channelMap map[string]*twitch.Channel
 
-type channelManager struct {
+type ChannelManager struct {
 	db       *DatabaseStruct
 	channels channelMap
 }
 
-func NewChannelManager(db *DatabaseStruct) *channelManager {
-	return &channelManager{db, make(channelMap)}
+func NewChannelManager(db *DatabaseStruct) *ChannelManager {
+	return &ChannelManager{db, make(channelMap)}
 }
 
-func (self *channelManager) Channels() *channelMap {
+func (self *ChannelManager) Channels() *channelMap {
 	return &self.channels
 }
 
-func (self *channelManager) Channel(name string) (c *twitch.Channel, ok bool) {
+func (self *ChannelManager) Joined(name string) (ok bool) {
+	_, ok = self.Channel(name)
+	return
+}
+
+func (self *ChannelManager) Channel(name string) (c *twitch.Channel, ok bool) {
 	c, ok = self.channels[strings.TrimLeft(name, "#")]
 	return
 }
 
-func (self *channelManager) loadChannels() {
+func (self *ChannelManager) loadChannels() {
 	rows, err := self.db.Query("SELECT * FROM channel")
 	if err != nil {
 		log.Fatal("Could not query the channels: " + err.Error())
@@ -46,7 +51,7 @@ func (self *channelManager) loadChannels() {
 	}
 }
 
-func (self *channelManager) addChannel(channel *twitch.Channel) {
+func (self *ChannelManager) addChannel(channel *twitch.Channel) {
 	name := channel.Name
 
 	_, ok := self.channels[name]
@@ -62,7 +67,7 @@ func (self *channelManager) addChannel(channel *twitch.Channel) {
 	self.channels[name] = channel
 }
 
-func (self *channelManager) removeChannel(channel *twitch.Channel) {
+func (self *ChannelManager) removeChannel(channel *twitch.Channel) {
 	name := channel.Name
 
 	_, ok := self.channels[name]

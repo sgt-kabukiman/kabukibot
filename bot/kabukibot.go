@@ -17,7 +17,7 @@ type Kabukibot struct {
 	dispatcher    Dispatcher
 	logger        Logger
 	acl           *ACL
-	chanMngr      *channelManager
+	chanMngr      *ChannelManager
 	pluginMngr    *PluginManager
 	dictionary    *Dictionary
 	database      *DatabaseStruct
@@ -126,6 +126,10 @@ func (bot *Kabukibot) Configuration() *Configuration {
 
 func (bot *Kabukibot) PluginManager() *PluginManager {
 	return bot.pluginMngr
+}
+
+func (bot *Kabukibot) ChannelManager() *ChannelManager {
+	return bot.chanMngr
 }
 
 func (bot *Kabukibot) Dictionary() *Dictionary {
