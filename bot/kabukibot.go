@@ -25,9 +25,6 @@ type Kabukibot struct {
 }
 
 func NewKabukibot(config *Configuration) (*Kabukibot, error) {
-	// log everything
-	// logging.SetLogger(&debugLogger{})
-
 	// setup the IRC client
 	cfg := irc.NewConfig(config.Account.Username)
 
@@ -47,6 +44,9 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 
 	// create logger
 	logger := NewLogger(LOG_LEVEL_DEBUG)
+
+	// log everything
+	// logging.SetLogger(logger)
 
 	// hello database
 	db := NewDatabase()

@@ -35,7 +35,7 @@ func (self* ConsoleOutputPlugin) onTwitch(msg twitch.TwitchMessage) {
 		args := msg.Args()
 
 		if len(args) > 0 {
-			self.log.Info("[#%s] <%s has been timed out>", msg.Channel().Name, args[1])
+			self.log.Info("[#%s] <%s has been timed out>", msg.Channel().Name, args[0])
 		} else {
 			self.log.Info("[#%s] <chat has been cleared>", msg.Channel().Name)
 		}
