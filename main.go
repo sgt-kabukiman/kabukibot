@@ -31,6 +31,7 @@ func main() {
 	kabukibot.AddPlugin(plugin.NewDictionaryControlPlugin())
 	kabukibot.AddPlugin(plugin.NewJoinPlugin())
 	kabukibot.AddPlugin(plugin.NewPingPlugin())
+	kabukibot.AddPlugin(plugin.NewSubHypePlugin())
 
 	// here we go
 	quit, err := kabukibot.Connect()
