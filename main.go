@@ -25,12 +25,12 @@ func main() {
 
 	// add plugins
 	kabukibot.AddPlugin(plugin.NewConsoleOutputPlugin())
-	kabukibot.AddPlugin(plugin.NewEchoPlugin())
+	kabukibot.AddPlugin(plugin.NewPingPlugin())
+	kabukibot.AddPlugin(plugin.NewJoinPlugin())
 	kabukibot.AddPlugin(plugin.NewACLPlugin())
 	kabukibot.AddPlugin(plugin.NewPluginControlPlugin())
+	kabukibot.AddPlugin(plugin.NewEchoPlugin())
 	kabukibot.AddPlugin(plugin.NewDictionaryControlPlugin())
-	kabukibot.AddPlugin(plugin.NewJoinPlugin())
-	kabukibot.AddPlugin(plugin.NewPingPlugin())
 	kabukibot.AddPlugin(plugin.NewSubHypePlugin())
 
 	// here we go
