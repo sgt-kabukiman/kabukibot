@@ -153,10 +153,12 @@ func (bot *Kabukibot) Part(channel *twitch.Channel) {
 }
 
 func (bot *Kabukibot) Respond(msg twitch.Message, text string) {
+	msg.SetProcessed(true)
 	bot.twitchClient.Privmsg(msg.Channel().IrcName(), text)
 }
 
 func (bot *Kabukibot) RespondToAll(msg twitch.Message, text string) {
+	msg.SetProcessed(true)
 	bot.twitchClient.Privmsg(msg.Channel().IrcName(), text)
 }
 

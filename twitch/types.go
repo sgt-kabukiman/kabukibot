@@ -8,6 +8,7 @@ type Message interface {
 	Text()      string
 	Time()      time.Time
 	Processed() bool
+	SetProcessed(bool)
 }
 
 type TextMessage interface {
@@ -48,6 +49,10 @@ func (m *message) User()      *User     { return m.user      }
 func (m *message) Text()      string    { return m.text      }
 func (m *message) Time()      time.Time { return m.time      }
 func (m *message) Processed() bool      { return m.processed }
+
+func (m *message) SetProcessed(processed bool) {
+	m.processed = processed
+}
 
 // TwitchMessage interface
 func (m *twitchMessage) Command() string   { return m.command }
