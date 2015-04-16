@@ -28,6 +28,8 @@ func (plugin *PluginControlPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 }
 
 func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
+	if cmd.Processed() { return }
+
 	c := cmd.Command()
 	p := plugin.prefix
 

@@ -34,6 +34,8 @@ func (self *SubHypePlugin) Load(c *twitch.Channel, bot *bot.Kabukibot, d bot.Dis
 }
 
 func (self *SubHypePlugin) onCommand(cmd bot.Command) {
+	if cmd.Processed() { return }
+
 	if cmd.Command() != "submsg" {
 		return
 	}

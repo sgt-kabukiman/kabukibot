@@ -20,6 +20,8 @@ func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 }
 
 func (plugin *EchoPlugin) onCommand(cmd bot.Command) {
+	if cmd.Processed() { return }
+
 	command := cmd.Command()
 
 	if (command == plugin.prefix + "say" || command == plugin.prefix + "echo") && plugin.bot.IsOperator(cmd.User().Name) {

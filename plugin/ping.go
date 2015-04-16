@@ -19,6 +19,8 @@ func (plugin *PingPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 }
 
 func (plugin *PingPlugin) onCommand(cmd bot.Command) {
+	if cmd.Processed() { return }
+
 	command := cmd.Command()
 
 	if command == plugin.prefix + "ping" && plugin.bot.IsOperator(cmd.User().Name) {

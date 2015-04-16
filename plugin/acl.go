@@ -26,6 +26,8 @@ func (plugin *ACLPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
 func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
+	if cmd.Processed() { return }
+
 	c := cmd.Command()
 	p := plugin.prefix
 

@@ -136,6 +136,10 @@ func (bot *Kabukibot) Dictionary() *Dictionary {
 	return bot.dictionary
 }
 
+func (bot *Kabukibot) Database() *DatabaseStruct {
+	return bot.database
+}
+
 func (bot *Kabukibot) Channels() *channelMap {
 	return bot.chanMngr.Channels()
 }
@@ -166,12 +170,20 @@ func (bot *Kabukibot) Say(channel *twitch.Channel, text string) {
 	bot.twitchClient.Privmsg(channel.IrcName(), text)
 }
 
+func (bot *Kabukibot) BotUsername() string {
+	return bot.configuration.Account.Username
+}
+
+func (bot *Kabukibot) OpUsername() string {
+	return bot.configuration.Operator
+}
+
 func (bot *Kabukibot) IsBot(username string) bool {
-	return bot.configuration.Account.Username == username
+	return bot.BotUsername() == username
 }
 
 func (bot *Kabukibot) IsOperator(username string) bool {
-	return bot.configuration.Operator == username
+	return bot.OpUsername() == username
 }
 
 func (bot *Kabukibot) onJoin(channel *twitch.Channel) {

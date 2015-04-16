@@ -23,6 +23,8 @@ func (self *JoinPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 }
 
 func (self *JoinPlugin) onCommand(cmd bot.Command) {
+	if cmd.Processed() { return }
+
 	switch cmd.Command() {
 		case self.prefix + "join":  self.handleJoin(cmd)
 		case self.prefix + "part":  fallthrough

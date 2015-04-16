@@ -23,6 +23,8 @@ func (self *DictionaryControlPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher)
 }
 
 func (self *DictionaryControlPlugin) onCommand(cmd bot.Command) {
+	if cmd.Processed() { return }
+
 	// op-only
 	if !self.bot.IsOperator(cmd.User().Name) {
 		return
