@@ -32,6 +32,7 @@ func main() {
 	kabukibot.AddPlugin(plugin.NewPluginControlPlugin())
 	kabukibot.AddPlugin(plugin.NewEchoPlugin())
 	kabukibot.AddPlugin(plugin.NewDictionaryControlPlugin())
+	kabukibot.AddPlugin(plugin.NewBanhammerBotPlugin())
 	kabukibot.AddPlugin(plugin.NewSubHypePlugin())
 
 	// here we go
