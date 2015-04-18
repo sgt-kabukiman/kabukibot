@@ -20,6 +20,7 @@ type Configuration struct {
 		Host string
 		Port int
 	}
+	Plugins       map[string]interface{}
 }
 
 func LoadConfiguration() (*Configuration, error) {
