@@ -154,6 +154,5 @@ func (self *SpeedrunComPlugin) updateDictionary(key string, game string, categor
 
 	text += fmt.Sprintf(" by %s, <reldate>%s</reldate>", record.Player, time.Unix(int64(date), 0).Format("2 Jan. 2006"))
 
-	// self.dict.Set(key, text)
-	fmt.Printf("%s = %s\n", key, text)
+	self.dict.Set(key, text)
 }
