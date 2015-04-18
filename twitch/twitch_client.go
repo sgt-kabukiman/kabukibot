@@ -224,11 +224,11 @@ func updateChannelState(msg *twitchMessage) {
 		list = list[1:len(list)-1]
 
 		codes := strings.Split(list, ",")
-		ids   := make([]int, len(codes))
+		ids   := make([]int, 0)
 
 		for idx, code := range codes {
 			converted, err := strconv.Atoi(code)
-			if err == nil {
+			if err == nil && converted > 0 {
 				ids[idx] = converted
 			}
 		}

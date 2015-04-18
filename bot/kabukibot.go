@@ -19,6 +19,7 @@ type Kabukibot struct {
 	acl           *ACL
 	chanMngr      *ChannelManager
 	pluginMngr    *PluginManager
+	emoteMngr     EmoteManager
 	dictionary    *Dictionary
 	database      *DatabaseStruct
 	configuration *Configuration
@@ -60,6 +61,7 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.acl           = NewACL(&bot, logger, db)
 	bot.chanMngr      = NewChannelManager(db)
 	bot.pluginMngr    = NewPluginManager(&bot, dispatcher, db)
+	bot.emoteMngr     = NewEmoteManager()
 	bot.dictionary    = NewDictionary(db, logger)
 	bot.database      = db
 
@@ -76,6 +78,9 @@ func (bot *Kabukibot) Connect() (chan bool, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// start updating emotes in the background
+	go bot.emoteUpdater()
 
 	// load dictionary elements
 	bot.logger.Debug("Loading dictionary...")
@@ -130,6 +135,10 @@ func (bot *Kabukibot) PluginManager() *PluginManager {
 
 func (bot *Kabukibot) ChannelManager() *ChannelManager {
 	return bot.chanMngr
+}
+
+func (bot *Kabukibot) EmoteManager() EmoteManager {
+	return bot.emoteMngr
 }
 
 func (bot *Kabukibot) Dictionary() *Dictionary {
@@ -233,4 +242,15 @@ func (bot *Kabukibot) detectCommand(msg twitch.TextMessage) {
 	bot.dispatcher.HandleCommand(&c)
 }
 
+func (bot *Kabukibot) emoteUpdater() {
+	for {
+		bot.logger.Debug("Updating emoticons...")
+		err := bot.emoteMngr.UpdateEmotes()
+		if err != nil {
+			bot.logger.Error(err.Error())
+		}
+		bot.logger.Debug("Emotes updated successfully.")
 
+		<-time.After(3*time.Minute)
+	}
+}
