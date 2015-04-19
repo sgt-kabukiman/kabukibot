@@ -18,6 +18,43 @@ type EmoteManager interface {
 
 type emoteList []string
 
+func (self *emoteList) sync(other emoteList) {
+	// removes emotes no longer available
+
+	for i := len(*self)-1; i >= 0; i-- {
+		found := false
+		emote := (*self)[i]
+
+		for _, e := range other {
+			if e == emote {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			*self = append((*self)[:i], (*self)[(i+1):]...)
+		}
+	}
+
+	// look for newly added emotes
+
+	for _, emote := range other {
+		found := false
+
+		for _, e := range *self {
+			if e == emote {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			*self = append(*self, emote)
+		}
+	}
+}
+
 type emoteManager struct {
 	emotes struct {
 		global       emoteList
@@ -41,15 +78,15 @@ type twitchEmoticons struct {
 
 func NewEmoteManager() EmoteManager {
 	em := emoteManager{}
+	em.emotes.subscribers  = make(map[int]*emoteList)
+	em.emotes.frankerfacez = make(map[string]*emoteList)
+
 	em.reset()
 
 	return &em
 }
 
 func (self *emoteManager) reset() {
-	self.emotes.subscribers  = make(map[int]*emoteList)
-	self.emotes.frankerfacez = make(map[string]*emoteList)
-
 	self.regexes.channels    = make(map[string]*regexp.Regexp)
 	self.regexes.subscribers = make(map[string]*regexp.Regexp)
 }
@@ -187,6 +224,8 @@ func (self *emoteManager) UpdateEmotes() error {
 
 	// stamp("fetched ffz emotes")
 
+	self.reset()
+
 	return err
 }
 
@@ -204,9 +243,13 @@ func (self *emoteManager) updateTwitchEmotes() error {
 		return fmt.Errorf("Received invalid JSON for Twitch emotes.")
 	}
 
-	isIrregular := regexp.MustCompile(`[?$\[\]()\\;]`)
+	// Build up a structure matching the one stored in self, so we can then
+	// compare and up the version in self accordingly. The newly constructed
+	// struct is then discarded.
 
-	self.reset()
+	isIrregular    := regexp.MustCompile(`[?$\[\]()\\;]`)
+	newGlobals     := make(emoteList, 0, len(self.emotes.global))
+	newSubscribers := make(map[int]*emoteList)
 
 	for _, emoteStruct := range emoteData.Emoticons {
 		emoteCode := emoteStruct.Regex
@@ -221,20 +264,53 @@ func (self *emoteManager) updateTwitchEmotes() error {
 			var list *emoteList
 
 			if emoteSetID == nil {
-				list = &self.emotes.global
+				list = &newGlobals
 			} else {
-				l, exists := self.emotes.subscribers[*emoteSetID]
+				l, exists := newSubscribers[*emoteSetID]
 				if exists {
 					list = l
 				} else {
-					newList := make(emoteList, 0)
+					capacity := 0
+					oldList, hasOldList := self.emotes.subscribers[*emoteSetID]
+					if hasOldList {
+						capacity = len(*oldList)
+					}
 
-					self.emotes.subscribers[*emoteSetID] = &newList
+					newList := make(emoteList, 0, capacity)
+
+					newSubscribers[*emoteSetID] = &newList
 					list = &newList
 				}
 			}
 
 			*list = append(*list, emoteCode)
+		}
+	}
+
+	// Now we can compare. First we look for removed elements.
+
+	self.emotes.global.sync(newGlobals)
+
+	// and now the same dance for subscriber emoticons
+
+	for setID, emotes := range self.emotes.subscribers {
+		newList, hasNewList := newSubscribers[setID]
+
+		if !hasNewList {
+			delete(self.emotes.subscribers, setID)
+			continue
+		}
+
+		emotes.sync(*newList)
+	}
+
+	// look for newly added emote sets
+
+	for setID, setList := range newSubscribers {
+		_, exists := self.emotes.subscribers[setID]
+		if !exists {
+			self.emotes.subscribers[setID] = setList
+			continue
 		}
 	}
 
@@ -248,32 +324,66 @@ func (self *emoteManager) updateFrankerFaceZEmotes() error {
 		return fmt.Errorf("Could not fetch FFZ emotes: %s", err.Error())
 	}
 
-	self.emotes.frankerfacez = make(map[string]*emoteList)
-
 	// read text file line by line
 	defer response.Body.Close()
 
-	scanner  := bufio.NewScanner(response.Body)
-	lastChan := ""
+	scanner   := bufio.NewScanner(response.Body)
+	lastChan  := ""
+	newEmotes := make(emoteList, 0)
+	updated   := make([]string, 0, len(self.emotes.frankerfacez))
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
 		if string(line[0]) == "." {
-			*self.emotes.frankerfacez[lastChan] = append(*self.emotes.frankerfacez[lastChan], line[1:])
+			newEmotes = append(newEmotes, line[1:])
 		} else {
-			_, exists := self.emotes.frankerfacez[line]
-			if !exists {
-				newList := make(emoteList, 0)
-				self.emotes.frankerfacez[line] = &newList
+			// we just completed reading a complete channel, so let's sync it
+			if len(lastChan) > 0 {
+				emotes, exists := self.emotes.frankerfacez[lastChan]
+
+				if !exists {
+					self.emotes.frankerfacez[lastChan] = &newEmotes
+				} else {
+					emotes.sync(newEmotes)
+				}
 			}
 
-			lastChan = line
+			lastChan  = line
+			updated   = append(updated, line)
+			newEmotes = make(emoteList, 0)
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return err
+	}
+
+	// syncup the last channel
+
+	emotes, exists := self.emotes.frankerfacez[lastChan]
+
+	if !exists {
+		self.emotes.frankerfacez[lastChan] = &newEmotes
+	} else {
+		emotes.sync(newEmotes)
+	}
+
+	// look for removed channels
+
+	for channel, _ := range self.emotes.frankerfacez {
+		found := false
+
+		for _, c := range updated {
+			if c == channel {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			delete(self.emotes.frankerfacez, channel)
+		}
 	}
 
 	return nil
