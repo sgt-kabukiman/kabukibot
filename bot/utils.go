@@ -7,11 +7,11 @@ import "strings"
 import "time"
 
 const (
-	ONE_SECOND =  1
+	ONE_SECOND = 1
 	ONE_MINUTE = 60 * ONE_SECOND
 	ONE_HOUR   = 60 * ONE_MINUTE
 	ONE_DAY    = 24 * ONE_HOUR
-	ONE_WEEK   =  7 * ONE_DAY
+	ONE_WEEK   = 7 * ONE_DAY
 )
 
 func twodigit(n int) string {
@@ -45,13 +45,13 @@ func SecondsToTimeCompact(seconds int) string {
 }
 
 func secondsToTime(seconds int, compact bool) string {
-	weeks   := seconds / ONE_WEEK
+	weeks := seconds / ONE_WEEK
 	seconds -= (weeks * ONE_WEEK)
 
-	days    := seconds / ONE_DAY
+	days := seconds / ONE_DAY
 	seconds -= (days * ONE_DAY)
 
-	hours   := seconds / ONE_HOUR
+	hours := seconds / ONE_HOUR
 	seconds -= (hours * ONE_HOUR)
 
 	minutes := seconds / ONE_MINUTE
@@ -60,26 +60,46 @@ func secondsToTime(seconds int, compact bool) string {
 	list := make([]string, 0)
 
 	if compact {
-		if                  weeks > 0   { list = append(list, twodigit(weeks)   + "w") }
-		if len(list) > 0 || days > 0    { list = append(list, twodigit(days)    + "d") }
-		if len(list) > 0 || hours > 0   { list = append(list, twodigit(hours)   + "h") }
-		if len(list) > 0 || minutes > 0 { list = append(list, twodigit(minutes) + "m") }
-		if len(list) > 0 || seconds > 0 { list = append(list, twodigit(seconds) + "s") }
+		if weeks > 0 {
+			list = append(list, twodigit(weeks)+"w")
+		}
+		if len(list) > 0 || days > 0 {
+			list = append(list, twodigit(days)+"d")
+		}
+		if len(list) > 0 || hours > 0 {
+			list = append(list, twodigit(hours)+"h")
+		}
+		if len(list) > 0 || minutes > 0 {
+			list = append(list, twodigit(minutes)+"m")
+		}
+		if len(list) > 0 || seconds > 0 {
+			list = append(list, twodigit(seconds)+"s")
+		}
 
 		return strings.Join(list, ":")
 	}
 
-	if weeks > 0   { list = append(list, plural(weeks,   "week"))   }
-	if days > 0    { list = append(list, plural(days,    "day"))    }
-	if hours > 0   { list = append(list, plural(hours,   "hour"))   }
-	if minutes > 0 { list = append(list, plural(minutes, "minute")) }
-	if seconds > 0 { list = append(list, plural(seconds, "second")) }
+	if weeks > 0 {
+		list = append(list, plural(weeks, "week"))
+	}
+	if days > 0 {
+		list = append(list, plural(days, "day"))
+	}
+	if hours > 0 {
+		list = append(list, plural(hours, "hour"))
+	}
+	if minutes > 0 {
+		list = append(list, plural(minutes, "minute"))
+	}
+	if seconds > 0 {
+		list = append(list, plural(seconds, "second"))
+	}
 
 	return HumanJoin(list, ", ")
 }
 
 func SecondsToRunTime(seconds float32) string {
-	hours   := int(seconds / ONE_HOUR)
+	hours := int(seconds / ONE_HOUR)
 	seconds -= float32(hours * ONE_HOUR)
 
 	minutes := int(seconds / ONE_MINUTE)
@@ -87,9 +107,15 @@ func SecondsToRunTime(seconds float32) string {
 
 	list := make([]string, 0)
 
-	if                  hours > 0   { list = append(list, twodigit(hours))        }
-	if len(list) > 0 || minutes > 0 { list = append(list, twodigit(minutes))      }
-	if len(list) > 0 || seconds > 0 { list = append(list, twodigit(int(seconds))) }
+	if hours > 0 {
+		list = append(list, twodigit(hours))
+	}
+	if len(list) > 0 || minutes > 0 {
+		list = append(list, twodigit(minutes))
+	}
+	if len(list) > 0 || seconds > 0 {
+		list = append(list, twodigit(int(seconds)))
+	}
 
 	runtime := strings.TrimPrefix(strings.Join(list, ":"), "0")
 
@@ -97,7 +123,7 @@ func SecondsToRunTime(seconds float32) string {
 
 	if seconds > 0.0001 {
 		seconds *= 1000 // 0.12345 => 123.45
-		seconds  = float32(math.Floor(float64(seconds + 0.5)))
+		seconds = float32(math.Floor(float64(seconds + 0.5)))
 		runtime += fmt.Sprintf(".%d", int(seconds))
 	}
 
@@ -112,8 +138,11 @@ func HumanJoin(list []string, glue string) string {
 	l := len(list)
 
 	switch l {
-		case 0:  return ""
-		case 1:  return list[0]
-		default: return strings.Join(list[:(l-1)], glue) + " and " + list[l-1]
+	case 0:
+		return ""
+	case 1:
+		return list[0]
+	default:
+		return strings.Join(list[:(l-1)], glue) + " and " + list[l-1]
 	}
 }

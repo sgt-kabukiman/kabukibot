@@ -16,20 +16,20 @@ func NewConsoleOutputPlugin() *ConsoleOutputPlugin {
 func (self *ConsoleOutputPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 	self.bot = bot
 	self.log = bot.Logger()
-	self.me  = bot.Configuration().Account.Username
+	self.me = bot.Configuration().Account.Username
 
 	d.OnTextMessage(self.onText, nil)
 	d.OnTwitchMessage(self.onTwitch, nil)
 	d.OnResponse(self.onResponse, nil)
 }
 
-func (self* ConsoleOutputPlugin) onText(msg twitch.TextMessage) {
+func (self *ConsoleOutputPlugin) onText(msg twitch.TextMessage) {
 	user := msg.User()
 
 	self.log.Info("[#%s] %s%s: %s", msg.Channel().Name, self.userPrefix(user), user.Name, msg.Text())
 }
 
-func (self* ConsoleOutputPlugin) onTwitch(msg twitch.TwitchMessage) {
+func (self *ConsoleOutputPlugin) onTwitch(msg twitch.TwitchMessage) {
 	switch msg.Command() {
 	case "clearchat":
 		args := msg.Args()
@@ -45,20 +45,34 @@ func (self* ConsoleOutputPlugin) onTwitch(msg twitch.TwitchMessage) {
 	}
 }
 
-func (self* ConsoleOutputPlugin) onResponse(r bot.Response) {
+func (self *ConsoleOutputPlugin) onResponse(r bot.Response) {
 	self.log.Info("[#%s] %%%s: %s", r.Channel().Name, self.me, r.Text())
 }
 
-func (self* ConsoleOutputPlugin) userPrefix(u *twitch.User) string {
+func (self *ConsoleOutputPlugin) userPrefix(u *twitch.User) string {
 	prefix := ""
 
-	if self.bot.IsOperator(u.Name) { prefix += "$" }
-	if u.IsBroadcaster             { prefix += "&" }
-	if u.IsModerator               { prefix += "@" }
-	if u.IsSubscriber              { prefix += "+" }
-	if u.IsTurbo                   { prefix += "~" }
-	if u.IsTwitchAdmin             { prefix += "!" }
-	if u.IsTwitchStaff             { prefix += "!" }
+	if self.bot.IsOperator(u.Name) {
+		prefix += "$"
+	}
+	if u.IsBroadcaster {
+		prefix += "&"
+	}
+	if u.IsModerator {
+		prefix += "@"
+	}
+	if u.IsSubscriber {
+		prefix += "+"
+	}
+	if u.IsTurbo {
+		prefix += "~"
+	}
+	if u.IsTwitchAdmin {
+		prefix += "!"
+	}
+	if u.IsTwitchStaff {
+		prefix += "!"
+	}
 
 	return prefix
 }

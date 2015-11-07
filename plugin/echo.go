@@ -13,18 +13,20 @@ func NewEchoPlugin() *EchoPlugin {
 }
 
 func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot    = bot
+	plugin.bot = bot
 	plugin.prefix = bot.Configuration().CommandPrefix
 
 	d.OnCommand(plugin.onCommand, nil)
 }
 
 func (plugin *EchoPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() { return }
+	if cmd.Processed() {
+		return
+	}
 
 	command := cmd.Command()
 
-	if (command == plugin.prefix + "say" || command == plugin.prefix + "echo") && plugin.bot.IsOperator(cmd.User().Name) {
+	if (command == plugin.prefix+"say" || command == plugin.prefix+"echo") && plugin.bot.IsOperator(cmd.User().Name) {
 		plugin.bot.Say(cmd.Channel(), strings.Join(cmd.Args(), " "))
 	}
 }

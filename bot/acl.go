@@ -13,8 +13,8 @@ const (
 	ACL_TWITCH_ADMINS = "$admins"
 )
 
-type usernameList   []string
-type permissionMap  map[string]usernameList
+type usernameList []string
+type permissionMap map[string]usernameList
 type channelPermMap map[string]permissionMap
 
 type ACL struct {
@@ -29,7 +29,7 @@ func NewACL(bot *Kabukibot, log Logger, db *DatabaseStruct) *ACL {
 }
 
 func ACLGroups() []string {
-	return []string{ACL_ALL, ACL_MODERATORS, ACL_SUBSCRIBERS, ACL_TURBO_USERS, ACL_TWITCH_STAFF, ACL_TWITCH_ADMINS};
+	return []string{ACL_ALL, ACL_MODERATORS, ACL_SUBSCRIBERS, ACL_TURBO_USERS, ACL_TWITCH_STAFF, ACL_TWITCH_ADMINS}
 }
 
 func (self *ACL) AllowedUsers(channel string, permission string) *usernameList {
@@ -75,13 +75,20 @@ func (self *ACL) IsAllowed(user *twitch.User, permission string) bool {
 		allowed := false
 
 		switch ident {
-			case ACL_ALL:           allowed = true
- 			case ACL_MODERATORS:    allowed = user.IsModerator
- 			case ACL_SUBSCRIBERS:   allowed = user.IsSubscriber
- 			case ACL_TURBO_USERS:   allowed = user.IsTurbo
- 			case ACL_TWITCH_STAFF:  allowed = user.IsTwitchStaff
- 			case ACL_TWITCH_ADMINS: allowed = user.IsTwitchAdmin
- 			default:                allowed = user.Name == ident
+		case ACL_ALL:
+			allowed = true
+		case ACL_MODERATORS:
+			allowed = user.IsModerator
+		case ACL_SUBSCRIBERS:
+			allowed = user.IsSubscriber
+		case ACL_TURBO_USERS:
+			allowed = user.IsTurbo
+		case ACL_TWITCH_STAFF:
+			allowed = user.IsTwitchStaff
+		case ACL_TWITCH_ADMINS:
+			allowed = user.IsTwitchAdmin
+		default:
+			allowed = user.Name == ident
 		}
 
 		if allowed {
@@ -161,7 +168,7 @@ func (self *ACL) Deny(channel string, userIdent string, permission string) bool 
 
 	// remove element or kill list alltogether if this was the last user
 	if len(userList) > 1 {
-		self.permissions[channel][permission] = append(userList[:idx], userList[(idx + 1):]...)
+		self.permissions[channel][permission] = append(userList[:idx], userList[(idx+1):]...)
 	} else {
 		delete(self.permissions[channel], permission)
 
@@ -215,8 +222,8 @@ func (self *ACL) loadChannelData(channel string) {
 	defer rows.Close()
 
 	newPermMap := make(permissionMap)
-	lastPerm   := ""
-	rowCount   := 0
+	lastPerm := ""
+	rowCount := 0
 
 	var newUserList usernameList
 
@@ -233,11 +240,11 @@ func (self *ACL) loadChannelData(channel string) {
 			}
 
 			newUserList = make(usernameList, 0)
-			lastPerm    = permission
+			lastPerm = permission
 		}
 
 		newUserList = append(newUserList, userIdent)
-		rowCount    = rowCount + 1
+		rowCount = rowCount + 1
 	}
 
 	if err := rows.Err(); err != nil {

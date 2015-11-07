@@ -3,7 +3,7 @@ package plugin
 import "github.com/sgt-kabukiman/kabukibot/bot"
 import "github.com/sgt-kabukiman/kabukibot/twitch"
 
-type listenerList   []*twitch.Listener
+type listenerList []*twitch.Listener
 type channelKeysMap map[string]listenerList
 
 type channelPlugin struct {

@@ -22,10 +22,10 @@ type Dispatcher interface {
 
 	TriggerEvent(string, *Channel, walker)
 
-	OnTextMessage(TextHandlerFunc, *Channel)     *Listener
+	OnTextMessage(TextHandlerFunc, *Channel) *Listener
 	OnTwitchMessage(TwitchHandlerFunc, *Channel) *Listener
-	OnJoin(JoinHandlerFunc, *Channel)            *Listener
-	OnPart(JoinHandlerFunc, *Channel)            *Listener
+	OnJoin(JoinHandlerFunc, *Channel) *Listener
+	OnPart(JoinHandlerFunc, *Channel) *Listener
 
 	HandleTextMessage(TextMessage)
 	HandleTwitchMessage(TwitchMessage)
@@ -84,10 +84,18 @@ func NewDispatcher() Dispatcher {
 	return &dispatcher{make(listenerMap), 0, false, make([]triggerQueueItem, 0)}
 }
 
-func (d *dispatcher) OnTextMessage(f TextHandlerFunc, c *Channel)     *Listener { return d.AddListener("TEXT", c, f)   }
-func (d *dispatcher) OnTwitchMessage(f TwitchHandlerFunc, c *Channel) *Listener { return d.AddListener("TWITCH", c, f) }
-func (d *dispatcher) OnJoin(f JoinHandlerFunc, c *Channel)            *Listener { return d.AddListener("JOIN", c, f)   }
-func (d *dispatcher) OnPart(f JoinHandlerFunc, c *Channel)            *Listener { return d.AddListener("PART", c, f)   }
+func (d *dispatcher) OnTextMessage(f TextHandlerFunc, c *Channel) *Listener {
+	return d.AddListener("TEXT", c, f)
+}
+func (d *dispatcher) OnTwitchMessage(f TwitchHandlerFunc, c *Channel) *Listener {
+	return d.AddListener("TWITCH", c, f)
+}
+func (d *dispatcher) OnJoin(f JoinHandlerFunc, c *Channel) *Listener {
+	return d.AddListener("JOIN", c, f)
+}
+func (d *dispatcher) OnPart(f JoinHandlerFunc, c *Channel) *Listener {
+	return d.AddListener("PART", c, f)
+}
 
 func (d *dispatcher) HandleTextMessage(msg TextMessage) {
 	d.TriggerEvent("TEXT", msg.Channel(), func(listener interface{}) {
@@ -138,7 +146,7 @@ func (d *dispatcher) AddListener(event string, c *Channel, f listenerFunc) *List
 	}
 
 	d.listeners[fullEventName] = append(list, listener)
-	d.listenerID               = d.listenerID + 1
+	d.listenerID = d.listenerID + 1
 
 	return &listener
 }
@@ -149,7 +157,7 @@ func (d *dispatcher) TriggerEvent(event string, c *Channel, visitor walker) {
 
 	// if we are already working on the trigger queue in another stack level,
 	// quit and let us return to that at a later time.
-	if (d.lock) {
+	if d.lock {
 		return
 	}
 
@@ -160,14 +168,14 @@ func (d *dispatcher) TriggerEvent(event string, c *Channel, visitor walker) {
 
 	for len(d.triggerQueue) > 0 {
 		// pop the first item of the queue
-		item          := d.triggerQueue[0]
+		item := d.triggerQueue[0]
 		d.triggerQueue = d.triggerQueue[1:]
 
 		// trigger all listeners for the channel-less case ("message")
 		d.runListeners(item.event, item.visitor)
 
 		if item.channel != nil {
-			d.runListeners(item.event + "#" + item.channel.Name, item.visitor)
+			d.runListeners(item.event+"#"+item.channel.Name, item.visitor)
 		}
 	}
 

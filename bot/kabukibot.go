@@ -1,11 +1,11 @@
 package bot
 
 import (
-	"time"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
-	"regexp"
+	"time"
 
 	irc "github.com/fluffle/goirc/client"
 	// logging "github.com/fluffle/goirc/logging"
@@ -29,11 +29,11 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// setup the IRC client
 	cfg := irc.NewConfig(config.Account.Username)
 
-	cfg.SSL     = false
-	cfg.Pass    = config.Account.Password
-	cfg.Server  = net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
+	cfg.SSL = false
+	cfg.Pass = config.Account.Password
+	cfg.Server = net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
 	cfg.NewNick = func(n string) string { return n + "^" }
-	cfg.Flood   = true // means no flood protection
+	cfg.Flood = true // means no flood protection
 
 	ircClient := irc.Client(cfg)
 
@@ -55,15 +55,15 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// create the bot
 	bot := Kabukibot{}
 	bot.configuration = config
-	bot.dispatcher    = dispatcher
-	bot.logger        = logger
-	bot.twitchClient  = twitchClient
-	bot.acl           = NewACL(&bot, logger, db)
-	bot.chanMngr      = NewChannelManager(db)
-	bot.pluginMngr    = NewPluginManager(&bot, dispatcher, db)
-	bot.emoteMngr     = NewEmoteManager()
-	bot.dictionary    = NewDictionary(db, logger)
-	bot.database      = db
+	bot.dispatcher = dispatcher
+	bot.logger = logger
+	bot.twitchClient = twitchClient
+	bot.acl = NewACL(&bot, logger, db)
+	bot.chanMngr = NewChannelManager(db)
+	bot.pluginMngr = NewPluginManager(&bot, dispatcher, db)
+	bot.emoteMngr = NewEmoteManager()
+	bot.dictionary = NewDictionary(db, logger)
+	bot.database = db
 
 	dispatcher.OnJoin(bot.onJoin, nil)
 	dispatcher.OnPart(bot.onPart, nil)
@@ -222,7 +222,7 @@ func (bot *Kabukibot) joinInitialChannels() {
 }
 
 var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)
-var argSplitter  = regexp.MustCompile(`\s+`)
+var argSplitter = regexp.MustCompile(`\s+`)
 
 func (bot *Kabukibot) detectCommand(msg twitch.TextMessage) {
 	match := commandRegex.FindStringSubmatch(msg.Text())
@@ -230,9 +230,9 @@ func (bot *Kabukibot) detectCommand(msg twitch.TextMessage) {
 		return
 	}
 
-	cmd       := strings.ToLower(match[1])
+	cmd := strings.ToLower(match[1])
 	argString := strings.TrimSpace(match[2])
-	args      := make([]string, 0)
+	args := make([]string, 0)
 
 	if len(argString) > 0 {
 		args = argSplitter.Split(argString, -1)
@@ -245,12 +245,20 @@ func (bot *Kabukibot) detectCommand(msg twitch.TextMessage) {
 func (bot *Kabukibot) emoteUpdater() {
 	for {
 		bot.logger.Debug("Updating emoticons...")
-		err := bot.emoteMngr.UpdateEmotes()
+
+		chans := bot.Channels()
+		channels := make([]string, 0, len(*chans))
+
+		for name, _ := range *chans {
+			channels = append(channels, name)
+		}
+
+		err := bot.emoteMngr.UpdateEmotes(channels)
 		if err != nil {
 			bot.logger.Error(err.Error())
 		}
 		bot.logger.Debug("Emotes updated successfully.")
 
-		<-time.After(3*time.Minute)
+		<-time.After(3 * time.Minute)
 	}
 }

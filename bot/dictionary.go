@@ -15,11 +15,11 @@ func NewDictionary(db *DatabaseStruct, log Logger) *Dictionary {
 
 func (self *Dictionary) Keys() []string {
 	list := make([]string, len(self.data))
-	idx  := 0
+	idx := 0
 
 	for key, _ := range self.data {
 		list[idx] = key
-		idx       = idx + 1
+		idx = idx + 1
 	}
 
 	return list
@@ -103,7 +103,7 @@ func (self *Dictionary) load() {
 		}
 
 		self.data[key] = value
-		rowCount       = rowCount + 1
+		rowCount = rowCount + 1
 	}
 
 	if err := rows.Err(); err != nil {

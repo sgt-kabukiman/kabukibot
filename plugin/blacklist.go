@@ -18,10 +18,10 @@ func NewBlacklistPlugin() *BlacklistPlugin {
 }
 
 func (self *BlacklistPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot    = bot
-	self.db     = bot.Database()
-	self.log    = bot.Logger()
-	self.users  = make([]string, 0)
+	self.bot = bot
+	self.db = bot.Database()
+	self.log = bot.Logger()
+	self.users = make([]string, 0)
 	self.prefix = bot.Configuration().CommandPrefix
 
 	self.loadBlacklist()
@@ -71,7 +71,7 @@ func (self *BlacklistPlugin) onCommand(cmd bot.Command) {
 	// sanitise username
 
 	username := args[0]
-	cleaner  := regexp.MustCompile(`[^a-z0-9]`)
+	cleaner := regexp.MustCompile(`[^a-z0-9]`)
 
 	username = cleaner.ReplaceAllString(strings.ToLower(username), "")
 
@@ -94,9 +94,9 @@ func (self *BlacklistPlugin) onCommand(cmd bot.Command) {
 		}
 
 		if self.blacklist(username) {
-			self.bot.Respond(cmd, username + " has been blacklisted.")
+			self.bot.Respond(cmd, username+" has been blacklisted.")
 		} else {
-			self.bot.Respond(cmd, username + " is already on the blacklist.")
+			self.bot.Respond(cmd, username+" is already on the blacklist.")
 		}
 
 		return
@@ -105,9 +105,9 @@ func (self *BlacklistPlugin) onCommand(cmd bot.Command) {
 	// perform unblacklisting
 
 	if self.unblacklist(username) {
-		self.bot.Respond(cmd, username + " has been un-blacklisted.")
+		self.bot.Respond(cmd, username+" has been un-blacklisted.")
 	} else {
-		self.bot.Respond(cmd, username + " is not blacklisted.")
+		self.bot.Respond(cmd, username+" is not blacklisted.")
 	}
 }
 

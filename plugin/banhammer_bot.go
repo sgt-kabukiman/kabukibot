@@ -22,15 +22,15 @@ func (self *BanhammerBotPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 }
 
 func (self *BanhammerBotPlugin) Load(c *twitch.Channel, bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.addChannelListeners(c, listenerList{ d.OnTwitchMessage(self.onTwitchMessage, c) })
+	self.addChannelListeners(c, listenerList{d.OnTwitchMessage(self.onTwitchMessage, c)})
 }
 
-func (self* BanhammerBotPlugin) onTwitchMessage(msg twitch.TwitchMessage) {
+func (self *BanhammerBotPlugin) onTwitchMessage(msg twitch.TwitchMessage) {
 	if msg.Command() == "clearchat" {
 		args := msg.Args()
 
 		if len(args) > 0 {
-			self.bot.Respond(msg, "Notification: " + args[0])
+			self.bot.Respond(msg, "Notification: "+args[0])
 		} else {
 			self.bot.Respond(msg, "Notification: chat has been cleared")
 		}

@@ -19,16 +19,18 @@ func NewPluginControlPlugin() *PluginControlPlugin {
 }
 
 func (plugin *PluginControlPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot    = bot
-	plugin.mngr   = bot.PluginManager()
-	plugin.acl    = bot.ACL()
+	plugin.bot = bot
+	plugin.mngr = bot.PluginManager()
+	plugin.acl = bot.ACL()
 	plugin.prefix = bot.Configuration().CommandPrefix
 
 	d.OnCommand(plugin.onCommand, nil)
 }
 
 func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() { return }
+	if cmd.Processed() {
+		return
+	}
 
 	c := cmd.Command()
 	p := plugin.prefix
@@ -46,7 +48,7 @@ func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
 	}
 
 	channel := cmd.Channel()
-	args    := cmd.Args()
+	args := cmd.Args()
 
 	// send the list of available permissions
 	if c == p+"plugins" {
@@ -56,14 +58,14 @@ func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
 
 	// everything from now on requires at last a plugin key as the first parameter
 	if len(args) == 0 {
-		plugin.bot.Say(channel, "no plugin name given. See !" + p + "plugins for a list of available plugins.")
+		plugin.bot.Say(channel, "no plugin name given. See !"+p+"plugins for a list of available plugins.")
 		return
 	}
 
 	// check the plugin
 	pluginKey := strings.ToLower(args[0])
-	allKeys   := plugin.getPluginKeys()
-	found     := false
+	allKeys := plugin.getPluginKeys()
+	found := false
 
 	for _, key := range allKeys {
 		if key == pluginKey {
@@ -73,11 +75,11 @@ func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
 	}
 
 	if !found {
-		plugin.bot.Say(channel, "invalid plugin (" + pluginKey + ") given.")
+		plugin.bot.Say(channel, "invalid plugin ("+pluginKey+") given.")
 		return
 	}
 
-	mngr    := plugin.mngr
+	mngr := plugin.mngr
 	message := ""
 
 	// enable a plugin
@@ -99,9 +101,9 @@ func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
 }
 
 func (plugin *PluginControlPlugin) respondToListCommand(channel *twitch.Channel, args []string) {
-	plugins     := plugin.getPluginStates(channel)
+	plugins := plugin.getPluginStates(channel)
 	enabledOnly := len(args) > 0 && strings.ToLower(args[0]) == "enabled"
-	nameList    := make([]string, 0)
+	nameList := make([]string, 0)
 
 	for pluginKey, enabled := range plugins {
 		if enabledOnly {
@@ -110,9 +112,9 @@ func (plugin *PluginControlPlugin) respondToListCommand(channel *twitch.Channel,
 			}
 		} else {
 			if enabled {
-				nameList = append(nameList, pluginKey + " (enabled)")
+				nameList = append(nameList, pluginKey+" (enabled)")
 			} else {
-				nameList = append(nameList, pluginKey + " (disabled)")
+				nameList = append(nameList, pluginKey+" (disabled)")
 			}
 		}
 	}
@@ -125,9 +127,9 @@ func (plugin *PluginControlPlugin) respondToListCommand(channel *twitch.Channel,
 	}
 
 	if len(nameList) == 0 {
-		plugin.bot.Say(channel, "There are no " + prefix + " plugins.")
+		plugin.bot.Say(channel, "There are no "+prefix+" plugins.")
 	} else {
-		plugin.bot.Say(channel, prefix + " plugins are: " + strings.Join(nameList, ", "))
+		plugin.bot.Say(channel, prefix+" plugins are: "+strings.Join(nameList, ", "))
 	}
 }
 

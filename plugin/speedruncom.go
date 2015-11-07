@@ -11,8 +11,8 @@ import "time"
 import "github.com/sgt-kabukiman/kabukibot/bot"
 
 type srCategoryMap map[string]string
-type srGameMap     map[string]srCategoryMap
-type srSeriesMap   map[string]srGameMap
+type srGameMap map[string]srCategoryMap
+type srSeriesMap map[string]srGameMap
 
 type srConfig struct {
 	Interval int
@@ -26,7 +26,7 @@ type srRecord struct {
 	Player  string
 }
 
-type srGameLeaderboard   map[string]srRecord
+type srGameLeaderboard map[string]srRecord
 type srSeriesLeaderboard map[string]srGameLeaderboard
 
 type SpeedrunComPlugin struct {
@@ -42,11 +42,11 @@ func NewSpeedrunComPlugin() *SpeedrunComPlugin {
 }
 
 func (self *SpeedrunComPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot      = bot
-	self.log      = bot.Logger()
-	self.dict     = bot.Dictionary()
-	self.interval = 15*time.Minute
-	self.mapping  = make(srSeriesMap)
+	self.bot = bot
+	self.log = bot.Logger()
+	self.dict = bot.Dictionary()
+	self.interval = 15 * time.Minute
+	self.mapping = make(srSeriesMap)
 
 	data, exists := bot.Configuration().Plugins["speedruncom"]
 
@@ -54,7 +54,7 @@ func (self *SpeedrunComPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 		// very lazy hack because i could not figure out how to nicely type assert
 		// the existing structure (which seems to be an endless map[string]interface{}
 		// monster) to the srConfig struct
-		config     := srConfig{}
+		config := srConfig{}
 		encoded, _ := json.Marshal(data)
 
 		if json.Unmarshal(encoded, &config) != nil {
@@ -62,7 +62,7 @@ func (self *SpeedrunComPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 		}
 
 		self.interval = time.Duration(config.Interval) * time.Minute
-		self.mapping  = config.Mapping
+		self.mapping = config.Mapping
 	}
 
 	go self.updaterRoutine()
@@ -145,7 +145,7 @@ func (self *SpeedrunComPlugin) updateDictionary(key string, game string, categor
 		category = "any%"
 	}
 
-	game  = strings.Replace(game, "Grand Theft Auto", "GTA", -1)
+	game = strings.Replace(game, "Grand Theft Auto", "GTA", -1)
 	text := fmt.Sprintf("WR for %s %s is %s", game, category, bot.SecondsToRunTime(float32(runtime)))
 
 	if runtimeIGT > 0 {

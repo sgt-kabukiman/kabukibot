@@ -9,7 +9,7 @@ type StringTemplater interface {
 	Render(string) string
 }
 
-type stringRenderer    func(string) string
+type stringRenderer func(string) string
 type stringRendererMap map[string]stringRenderer
 
 type stringTemplater struct {
@@ -26,13 +26,16 @@ func NewStringTemplater() StringTemplater {
 			return dateString
 		}
 
-		now      := time.Now()
+		now := time.Now()
 		duration := int(now.Sub(t).Hours() / 24)
 
 		switch duration {
-			case 0:  return "today"
-			case 1:  return "yesterday"
-			case -1: return "tomorrow"
+		case 0:
+			return "today"
+		case 1:
+			return "yesterday"
+		case -1:
+			return "tomorrow"
 		}
 
 		if duration > 0 {

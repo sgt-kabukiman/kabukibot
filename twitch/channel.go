@@ -45,9 +45,9 @@ func (c *Channel) ClearState() {
 
 func (s *ChannelState) Clear() {
 	s.Subscriber = false
-	s.Turbo      = false
-	s.Staff      = false
-	s.Admin      = false
+	s.Turbo = false
+	s.Staff = false
+	s.Admin = false
 
 	if len(s.EmoteSet) > 0 {
 		s.EmoteSet = make([]int, 0)
@@ -85,7 +85,7 @@ func (c *Channel) RemoveModerator(user string) bool {
 	pos := c.findModerator(user)
 
 	if pos != -1 {
-		c.mods = append(c.mods[:pos], c.mods[(pos + 1):]...)
+		c.mods = append(c.mods[:pos], c.mods[(pos+1):]...)
 		return true
 	}
 

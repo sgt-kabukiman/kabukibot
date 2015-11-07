@@ -21,8 +21,8 @@ func (self *SubHypePlugin) Key() string {
 }
 
 func (self *SubHypePlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot    = bot
-	self.dict   = bot.Dictionary()
+	self.bot = bot
+	self.dict = bot.Dictionary()
 	self.prefix = bot.Configuration().CommandPrefix
 }
 
@@ -34,7 +34,9 @@ func (self *SubHypePlugin) Load(c *twitch.Channel, bot *bot.Kabukibot, d bot.Dis
 }
 
 func (self *SubHypePlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() { return }
+	if cmd.Processed() {
+		return
+	}
 
 	if cmd.Command() != "submsg" {
 		return
@@ -49,7 +51,7 @@ func (self *SubHypePlugin) onCommand(cmd bot.Command) {
 	args := cmd.Args()
 
 	if len(args) == 0 {
-		self.bot.Respond(cmd, "you forgot to add a message: `!submsg PogChamp, {user} just became awesome!`. {user} will be replaced with the user who subscribed. To disable notifications, just disable the plugin: `!" + self.prefix + "disable subhype`.")
+		self.bot.Respond(cmd, "you forgot to add a message: `!submsg PogChamp, {user} just became awesome!`. {user} will be replaced with the user who subscribed. To disable notifications, just disable the plugin: `!"+self.prefix+"disable subhype`.")
 	}
 
 	msg := strings.Join(args, " ")
@@ -65,7 +67,7 @@ func (self *SubHypePlugin) onTwitchMessage(msg twitch.TwitchMessage) {
 		return
 	}
 
-	cname   := msg.Channel().Name
+	cname := msg.Channel().Name
 	message := self.dict.Get("subhype_" + cname + "_message")
 
 	if len(message) == 0 {

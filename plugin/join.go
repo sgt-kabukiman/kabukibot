@@ -15,25 +15,30 @@ func NewJoinPlugin() *JoinPlugin {
 }
 
 func (self *JoinPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot    = bot
-	self.mngr   = bot.ChannelManager()
+	self.bot = bot
+	self.mngr = bot.ChannelManager()
 	self.prefix = bot.Configuration().CommandPrefix
 
 	d.OnCommand(self.onCommand, nil)
 }
 
 func (self *JoinPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() { return }
+	if cmd.Processed() {
+		return
+	}
 
 	switch cmd.Command() {
-		case self.prefix + "join":  self.handleJoin(cmd)
-		case self.prefix + "part":  fallthrough
-		case self.prefix + "leave": self.handlePart(cmd)
+	case self.prefix + "join":
+		self.handleJoin(cmd)
+	case self.prefix + "part":
+		fallthrough
+	case self.prefix + "leave":
+		self.handlePart(cmd)
 	}
 }
 
 func (self *JoinPlugin) handleJoin(cmd bot.Command) {
-	args   := cmd.Args()
+	args := cmd.Args()
 	sentOn := cmd.Channel().Name
 	sender := cmd.User().Name
 
@@ -56,15 +61,15 @@ func (self *JoinPlugin) handleJoin(cmd bot.Command) {
 
 		if !self.mngr.Joined(target) {
 			self.bot.Join(twitch.NewChannel(target))
-			self.bot.Respond(cmd, "I've joined " + targetName + ".")
+			self.bot.Respond(cmd, "I've joined "+targetName+".")
 		} else {
-			self.bot.Respond(cmd, "I am already in " + targetName + ".")
+			self.bot.Respond(cmd, "I am already in "+targetName+".")
 		}
 	}
 }
 
 func (self *JoinPlugin) handlePart(cmd bot.Command) {
-	args   := cmd.Args()
+	args := cmd.Args()
 	sentOn := cmd.Channel().Name
 	sender := cmd.User().Name
 
@@ -91,10 +96,10 @@ func (self *JoinPlugin) handlePart(cmd bot.Command) {
 		}
 
 		if !self.mngr.Joined(target) {
-			self.bot.Respond(cmd, "I am not in " + targetName + ".")
+			self.bot.Respond(cmd, "I am not in "+targetName+".")
 		} else {
 			self.bot.Part(twitch.NewChannel(target))
-			self.bot.Respond(cmd, "Leaving " + targetName + " now. So long and thanks for all the FrankerZ")
+			self.bot.Respond(cmd, "Leaving "+targetName+" now. So long and thanks for all the FrankerZ")
 		}
 	}
 }

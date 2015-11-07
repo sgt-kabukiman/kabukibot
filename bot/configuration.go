@@ -1,8 +1,8 @@
 package bot
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 )
 
@@ -13,14 +13,14 @@ type Configuration struct {
 		Username string
 		Password string
 	}
-	Database      struct {
+	Database struct {
 		DSN string
 	}
-	IRC           struct {
+	IRC struct {
 		Host string
 		Port int
 	}
-	Plugins       map[string]interface{}
+	Plugins map[string]interface{}
 }
 
 func LoadConfiguration() (*Configuration, error) {

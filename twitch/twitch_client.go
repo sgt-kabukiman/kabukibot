@@ -1,20 +1,21 @@
 package twitch
 
 import (
-	"time"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
+
 	irc "github.com/fluffle/goirc/client"
 )
 
 type TwitchClient struct {
-	conn         *irc.Conn
-	queue        SendQueue
-	dispatcher   Dispatcher
-	channels     map[string]*Channel
-	me           string
-	ReadySignal  chan bool
-	QuitSignal   chan bool
+	conn        *irc.Conn
+	queue       SendQueue
+	dispatcher  Dispatcher
+	channels    map[string]*Channel
+	me          string
+	ReadySignal chan bool
+	QuitSignal  chan bool
 }
 
 func NewTwitchClient(conn *irc.Conn, d Dispatcher, delay time.Duration) *TwitchClient {
@@ -34,13 +35,13 @@ func NewTwitchClient(conn *irc.Conn, d Dispatcher, delay time.Duration) *TwitchC
 }
 
 func (client *TwitchClient) setupInternalHandlers() {
-	client.conn.HandleFunc(irc.REGISTER,     client.onConnect)
+	client.conn.HandleFunc(irc.REGISTER, client.onConnect)
 	client.conn.HandleFunc(irc.DISCONNECTED, client.onDisconnect)
-	client.conn.HandleFunc(irc.PRIVMSG,      client.onLine)
-	client.conn.HandleFunc(irc.ACTION,       client.onLine)
-	client.conn.HandleFunc(irc.MODE,         client.onMode)
-	client.conn.HandleFunc(irc.JOIN,         client.onJoin)
-	client.conn.HandleFunc(irc.PART,         client.onPart)
+	client.conn.HandleFunc(irc.PRIVMSG, client.onLine)
+	client.conn.HandleFunc(irc.ACTION, client.onLine)
+	client.conn.HandleFunc(irc.MODE, client.onMode)
+	client.conn.HandleFunc(irc.JOIN, client.onJoin)
+	client.conn.HandleFunc(irc.PART, client.onPart)
 }
 
 func (client *TwitchClient) Channel(name string) (c *Channel, ok bool) {
@@ -78,7 +79,7 @@ func (client *TwitchClient) Join(channel *Channel) {
 func (client *TwitchClient) Part(channel *Channel) {
 	_, ok := client.Channel(channel.Name)
 	if ok {
-		client.queue.Push(func () {
+		client.queue.Push(func() {
 			client.conn.Part(channel.IrcName())
 			delete(client.channels, channel.Name)
 		})
@@ -157,7 +158,7 @@ func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
 	// internal Twitch stuff, both state information (subscriber, turbo, emoteset, ...)
 	// as well as one-time things like timeouts
 	if line.Nick == "jtv" {
-		parts   := strings.SplitN(baseMsg.text, " ", 3)
+		parts := strings.SplitN(baseMsg.text, " ", 3)
 		command := strings.ToLower(parts[0])
 
 		msg := &twitchMessage{
@@ -221,10 +222,10 @@ func updateChannelState(msg *twitchMessage) {
 		list := args[1]
 
 		// trim "[" and "]"
-		list = list[1:len(list)-1]
+		list = list[1 : len(list)-1]
 
 		codes := strings.Split(list, ",")
-		ids   := make([]int, 0)
+		ids := make([]int, 0)
 
 		for idx, code := range codes {
 			converted, err := strconv.Atoi(code)
@@ -238,17 +239,17 @@ func updateChannelState(msg *twitchMessage) {
 }
 
 func updateUserState(msg *message) {
-	user  := msg.User()
-	cn    := msg.Channel()
+	user := msg.User()
+	cn := msg.Channel()
 	state := &cn.State
 
 	user.IsBroadcaster = user.Name == cn.Name
-	user.IsModerator   = cn.IsModerator(user.Name)
-	user.IsSubscriber  = state.Subscriber
-	user.IsTurbo       = state.Turbo
+	user.IsModerator = cn.IsModerator(user.Name)
+	user.IsSubscriber = state.Subscriber
+	user.IsTurbo = state.Turbo
 	user.IsTwitchAdmin = state.Admin
 	user.IsTwitchStaff = state.Staff
-	user.EmoteSet      = state.EmoteSet
+	user.EmoteSet = state.EmoteSet
 
 	state.Clear()
 }

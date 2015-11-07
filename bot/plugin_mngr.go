@@ -4,10 +4,10 @@ import "log"
 import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 type pluginList []Plugin
-type pluginMap  map[string]ChannelPlugin
+type pluginMap map[string]ChannelPlugin
 
 type channelPluginList []ChannelPlugin
-type channelPluginMap  map[string]channelPluginList
+type channelPluginMap map[string]channelPluginList
 
 type PluginManager struct {
 	db         *DatabaseStruct
@@ -39,7 +39,7 @@ func (self *PluginManager) PluginMap() *pluginMap {
 
 func (self *PluginManager) PluginKeys() []string {
 	list := make([]string, len(self.pluginMap))
-	idx  := 0
+	idx := 0
 
 	for key, _ := range self.pluginMap {
 		list[idx] = key
@@ -64,7 +64,7 @@ func (self *PluginManager) LoadedPlugins(channel *twitch.Channel) channelPluginL
 }
 
 func (self *PluginManager) LoadedPluginKeys(channel *twitch.Channel) []string {
-	list   := self.LoadedPlugins(channel)
+	list := self.LoadedPlugins(channel)
 	result := make([]string, len(list))
 
 	for idx, plugin := range list {
@@ -212,7 +212,7 @@ func (self *PluginManager) unloadPlugin(channel *twitch.Channel, key string) {
 
 	// is this plugin loaded in this channel?
 	loadedKeys := self.LoadedPluginKeys(channel)
-	idx        := -1
+	idx := -1
 
 	for i, ikey := range loadedKeys {
 		if ikey == key {

@@ -20,11 +20,11 @@ func NewSysInfoPlugin() *SysInfoPlugin {
 }
 
 func (self *SysInfoPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot      = bot
-	self.chans    = bot.ChannelManager()
-	self.plugins  = bot.PluginManager()
-	self.prefix   = bot.Configuration().CommandPrefix
-	self.startup  = time.Now()
+	self.bot = bot
+	self.chans = bot.ChannelManager()
+	self.plugins = bot.PluginManager()
+	self.prefix = bot.Configuration().CommandPrefix
+	self.startup = time.Now()
 	self.messages = 0
 
 	d.OnCommand(self.onCommand, nil)
@@ -48,10 +48,10 @@ func (self *SysInfoPlugin) onCommand(cmd bot.Command) {
 	}
 
 	command := cmd.Command()
-	prefix  := self.prefix
+	prefix := self.prefix
 
 	if command == prefix+"uptime" {
-		self.bot.RespondToAll(cmd, "I have been running for " + self.getUptime() + ".")
+		self.bot.RespondToAll(cmd, "I have been running for "+self.getUptime()+".")
 		return
 	}
 
@@ -61,7 +61,7 @@ func (self *SysInfoPlugin) onCommand(cmd bot.Command) {
 
 		infoString := fmt.Sprintf(
 			"System Info: %s uptime, %d channels, %d messages processed, %.2f MiB res. size",
-			self.getUptime(), len(*self.bot.Channels()), self.messages, float64(mem.Sys) / (1024*1024),
+			self.getUptime(), len(*self.bot.Channels()), self.messages, float64(mem.Sys)/(1024*1024),
 		)
 
 		self.bot.RespondToAll(cmd, infoString)

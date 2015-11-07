@@ -23,7 +23,7 @@ func (q *messageQueue) push(item QueueItem) {
 
 func (q *messageQueue) pop() QueueItem {
 	head := (*q)[0]
-	*q    = (*q)[1:]
+	*q = (*q)[1:]
 
 	return head
 }
@@ -33,17 +33,17 @@ func (q *messageQueue) len() int {
 }
 
 type sendQueue struct {
-	queue  messageQueue
-	delay  time.Duration
+	queue messageQueue
+	delay time.Duration
 }
 
 func (s *sendQueue) Push(item QueueItem) {
 	s.queue.push(item)
 }
 
-func (s* sendQueue) Worker() {
+func (s *sendQueue) Worker() {
 	for {
-		if (s.queue.len() > 0) {
+		if s.queue.len() > 0 {
 			s.queue.pop()()
 		}
 

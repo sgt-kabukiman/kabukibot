@@ -12,18 +12,20 @@ func NewPingPlugin() *PingPlugin {
 }
 
 func (plugin *PingPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot    = bot
+	plugin.bot = bot
 	plugin.prefix = bot.Configuration().CommandPrefix
 
 	d.OnCommand(plugin.onCommand, nil)
 }
 
 func (plugin *PingPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() { return }
+	if cmd.Processed() {
+		return
+	}
 
 	command := cmd.Command()
 
-	if command == plugin.prefix + "ping" && plugin.bot.IsOperator(cmd.User().Name) {
+	if command == plugin.prefix+"ping" && plugin.bot.IsOperator(cmd.User().Name) {
 		plugin.bot.Respond(cmd, "Pong!")
 	}
 }

@@ -16,8 +16,8 @@ func NewACLPlugin() *ACLPlugin {
 }
 
 func (plugin *ACLPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot    = bot
-	plugin.acl    = bot.ACL()
+	plugin.bot = bot
+	plugin.acl = bot.ACL()
 	plugin.prefix = bot.Configuration().CommandPrefix
 
 	d.OnCommand(plugin.onCommand, nil)
@@ -26,7 +26,9 @@ func (plugin *ACLPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
 func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() { return }
+	if cmd.Processed() {
+		return
+	}
 
 	c := cmd.Command()
 	p := plugin.prefix
@@ -52,7 +54,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 		if len(permissions) == 0 {
 			plugin.bot.Say(channel, "There are no permissions available to be configured.")
 		} else {
-			plugin.bot.Say(channel, "available permissions are: " + strings.Join(permissions, ", "))
+			plugin.bot.Say(channel, "available permissions are: "+strings.Join(permissions, ", "))
 		}
 
 		return
@@ -66,7 +68,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 	}
 
 	// check the permission
-	permission  := strings.ToLower(permRegex.ReplaceAllString(args[0], ""))
+	permission := strings.ToLower(permRegex.ReplaceAllString(args[0], ""))
 	permissions := plugin.getPermissions(channel)
 
 	if len(permission) == 0 {
@@ -84,7 +86,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 	}
 
 	if !found {
-		plugin.bot.Say(channel, "invalid permission (" + permission + ") given.")
+		plugin.bot.Say(channel, "invalid permission ("+permission+") given.")
 		return
 	}
 
@@ -95,9 +97,9 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 		users := acl.AllowedUsers(channel.Name, permission)
 
 		if len(permissions) == 0 {
-			plugin.bot.Say(channel, "\"" + permission + "\" is granted to nobody at the moment, only you can use it.")
+			plugin.bot.Say(channel, "\""+permission+"\" is granted to nobody at the moment, only you can use it.")
 		} else {
-			plugin.bot.Say(channel, "\"" + permission + "\" is granted to " + strings.Join(*users, ", "))
+			plugin.bot.Say(channel, "\""+permission+"\" is granted to "+strings.Join(*users, ", "))
 		}
 
 		return
@@ -105,7 +107,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 
 	// no user ident(s) given
 	if len(args) == 1 {
-		plugin.bot.Say(channel, "no groups/usernames given. Group names are " + strings.Join(bot.ACLGroups(), ", ") + ".")
+		plugin.bot.Say(channel, "no groups/usernames given. Group names are "+strings.Join(bot.ACLGroups(), ", ")+".")
 		return
 	}
 
@@ -113,7 +115,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 }
 
 var userIdentRegex = regexp.MustCompile(`[^a-zA-Z0-9_$,]`)
-var userNameRegex  = regexp.MustCompile(`[^a-z0-9_]`)
+var userNameRegex = regexp.MustCompile(`[^a-z0-9_]`)
 
 func (plugin *ACLPlugin) handleAllowDeny(command string, permission string, args []string, cmd bot.Command, silent bool) {
 	// normalize the arguments into a single array of (possibly bogus) idents
@@ -127,9 +129,9 @@ func (plugin *ACLPlugin) handleAllowDeny(command string, permission string, args
 		return
 	}
 
-	isAllow   := command == plugin.prefix+"allow"
+	isAllow := command == plugin.prefix+"allow"
 	processed := make([]string, 0)
-	chanName  := cmd.Channel().Name
+	chanName := cmd.Channel().Name
 
 	for i, ident := range args {
 		if plugin.acl.IsUsername(ident) {
@@ -137,7 +139,7 @@ func (plugin *ACLPlugin) handleAllowDeny(command string, permission string, args
 
 			// if we removed bogus characters, discard the user ident to not accidentally grant or revoke permissions
 			if ident != args[i] {
-				continue;
+				continue
 			}
 		}
 
@@ -159,15 +161,15 @@ func (plugin *ACLPlugin) handleAllowDeny(command string, permission string, args
 	if len(processed) == 0 {
 		plugin.bot.Say(cmd.Channel(), "no changes needed.")
 	} else if isAllow {
-		plugin.bot.Say(cmd.Channel(), "granted permission for " + permission + " to " + strings.Join(processed, ", ") + ".")
+		plugin.bot.Say(cmd.Channel(), "granted permission for "+permission+" to "+strings.Join(processed, ", ")+".")
 	} else {
-		plugin.bot.Say(cmd.Channel(), "revoked permission for " + permission + " from " + strings.Join(processed, ", ") + ".")
+		plugin.bot.Say(cmd.Channel(), "revoked permission for "+permission+" from "+strings.Join(processed, ", ")+".")
 	}
 }
 
 func (plugin *ACLPlugin) getPermissions(channel *twitch.Channel) []string {
 	plugins := plugin.bot.PluginManager().LoadedPlugins(channel)
-	result  := make([]string, 0)
+	result := make([]string, 0)
 
 	for _, plugin := range plugins {
 		for _, perm := range plugin.Permissions() {

@@ -11,7 +11,7 @@ func NewDatabase() *DatabaseStruct {
 	return &DatabaseStruct{}
 }
 
-func (self *DatabaseStruct) Connect(dsn string) (error) {
+func (self *DatabaseStruct) Connect(dsn string) error {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return err
