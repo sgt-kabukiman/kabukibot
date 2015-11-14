@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
