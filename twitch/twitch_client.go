@@ -5,10 +5,15 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sorcix/irc"
 )
+
+// buffer at most this many messages before dropping messages
+// (this applies to OUTGOING messages)
+const queueSize = 50
 
 // a message on the queue, this is not what the outside world sees
 type queueItem struct {
@@ -50,7 +55,10 @@ type TwitchClient struct {
 	incoming chan Message
 
 	// list of ougtoing messages (sent by us)
-	outgoing chan queueItem
+	outgoing   chan queueItem
+	queueLen   int
+	queueSize  int
+	queueMutex sync.Mutex
 }
 
 func NewTwitchClient(server string, username string, password string, delay time.Duration) *TwitchClient {
@@ -69,7 +77,10 @@ func NewTwitchClient(server string, username string, password string, delay time
 		stoppedReceiving: make(chan struct{}),
 		stoppedSending:   make(chan struct{}),
 		incoming:         make(chan Message, 50),
-		outgoing:         make(chan queueItem, 50),
+		outgoing:         make(chan queueItem, queueSize+10), // make a bit room so we never block, even when reaching queueSize
+		queueSize:        queueSize,
+		queueLen:         0,
+		queueMutex:       sync.Mutex{},
 	}
 
 	// setup vital message listeners
@@ -143,13 +154,19 @@ func (client *TwitchClient) Disconnect() error {
 
 func (client *TwitchClient) Send(msg irc.Message) <-chan bool {
 	signal := make(chan bool, 1)
-	outgoing := queueItem{msg, signal}
 
-	// if queue is not full, then
-	client.outgoing <- outgoing
-	// else
-	// 	signal <- false // means "not sent"
-	// 	close(signal)
+	client.queueMutex.Lock()
+
+	// silenty drop the message so our queue doesn't grow infinitely
+	if client.queueLen >= client.queueSize {
+		signal <- false
+		close(signal)
+	} else {
+		client.outgoing <- queueItem{msg, signal}
+		client.queueLen++
+	}
+
+	client.queueMutex.Unlock()
 
 	return signal
 }
@@ -164,6 +181,10 @@ func (client *TwitchClient) sender() {
 			// signal to the one who sent the message that it was in fact sent
 			msg.signal <- true
 			close(msg.signal)
+
+			client.queueMutex.Lock()
+			client.queueLen--
+			client.queueMutex.Unlock()
 
 		case <-client.stopSending:
 			break
