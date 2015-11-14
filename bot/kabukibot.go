@@ -43,7 +43,6 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.channelMutex = sync.Mutex{}
 	bot.logger = logger
 	bot.twitch = twitch
-	// bot.chanMngr = NewChannelManager(db)
 	// bot.pluginMngr = NewPluginManager(&bot, dispatcher, db)
 	// bot.dictionary = NewDictionary(db, logger)
 	bot.database = nil
@@ -123,10 +122,6 @@ func (bot *Kabukibot) Logger() Logger {
 
 // func (bot *Kabukibot) PluginManager() *PluginManager {
 // 	return bot.pluginMngr
-// }
-
-// func (bot *Kabukibot) ChannelManager() *ChannelManager {
-// 	return bot.chanMngr
 // }
 
 // func (bot *Kabukibot) EmoteManager() EmoteManager {
