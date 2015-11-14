@@ -45,6 +45,10 @@ func (self *channelWorker) Shutdown() <-chan struct{} {
 }
 
 func (self *channelWorker) Work() {
+	// remember, defers are executed in reverse order
+	defer close(self.inputChannel)
+	defer close(self.alive)
+
 	// endless worker loop
 	for {
 		select {
@@ -53,8 +57,10 @@ func (self *channelWorker) Work() {
 			_, okay := newMsg.(twitch.PartMessage)
 			if okay {
 				fmt.Printf("[%s] IS LEAVING THE BUILDING!\n", self.channel)
-				break
+				return
 			}
+
+			// hand the message to all plugins
 
 			fmt.Printf("[%s] %+v\n", self.channel, newMsg)
 
@@ -73,7 +79,4 @@ func (self *channelWorker) Work() {
 			break // out of the endless loop
 		}
 	}
-
-	close(self.alive)
-	close(self.inputChannel)
 }
