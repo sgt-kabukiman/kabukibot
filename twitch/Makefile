@@ -6,4 +6,4 @@ build: fix
 fix: *.go
 	goimports -l -w .
 	gofmt -l -w .
-	go generate
+	# go generate

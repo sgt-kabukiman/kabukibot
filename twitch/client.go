@@ -17,7 +17,7 @@ const queueSize = 50
 
 // a message on the queue, this is not what the outside world sees
 type queueItem struct {
-	message irc.Message
+	message OutgoingMessage
 	signal  chan bool
 }
 
@@ -52,7 +52,7 @@ type TwitchClient struct {
 	stoppedReceiving chan struct{}
 
 	// on this channel incoming messages from the network are sent
-	incoming chan Message
+	incoming chan IncomingMessage
 
 	// list of ougtoing messages (sent by us)
 	outgoing   chan queueItem
@@ -76,7 +76,7 @@ func NewTwitchClient(server string, username string, password string, delay time
 		stopSending:      make(chan struct{}),
 		stoppedReceiving: make(chan struct{}),
 		stoppedSending:   make(chan struct{}),
-		incoming:         make(chan Message, 50),
+		incoming:         make(chan IncomingMessage, 50),
 		outgoing:         make(chan queueItem, queueSize+10), // make a bit room so we never block, even when reaching queueSize
 		queueSize:        queueSize,
 		queueLen:         0,
@@ -97,7 +97,7 @@ func (client *TwitchClient) Alive() <-chan struct{} {
 	return client.alive
 }
 
-func (client *TwitchClient) Incoming() <-chan Message {
+func (client *TwitchClient) Incoming() <-chan IncomingMessage {
 	return client.incoming
 }
 
@@ -118,20 +118,20 @@ func (client *TwitchClient) Connect() error {
 	go client.receiver()
 
 	// send login info before anything else
-	client.Send(irc.Message{
+	client.Send(RawMessage{irc.Message{
 		Command: irc.PASS,
 		Params:  []string{client.password},
-	})
+	}})
 
-	client.Send(irc.Message{
+	client.Send(RawMessage{irc.Message{
 		Command: irc.NICK,
 		Params:  []string{client.username},
-	})
+	}})
 
-	client.Send(irc.Message{
+	client.Send(RawMessage{irc.Message{
 		Command: irc.USER,
 		Params:  []string{"kabukibot", "8", "*", client.username},
-	})
+	}})
 
 	return nil
 }
@@ -152,7 +152,7 @@ func (client *TwitchClient) Disconnect() error {
 	return client.conn.Close()
 }
 
-func (client *TwitchClient) Send(msg irc.Message) <-chan bool {
+func (client *TwitchClient) Send(msg OutgoingMessage) <-chan bool {
 	signal := make(chan bool, 1)
 
 	client.queueMutex.Lock()
@@ -175,8 +175,9 @@ func (client *TwitchClient) sender() {
 	for {
 		select {
 		case msg := <-client.outgoing:
-			fmt.Println("< " + msg.message.String())
-			client.writer.Encode(&msg.message)
+			ircMsg := msg.message.IrcMessage()
+			fmt.Println("< " + ircMsg.String())
+			client.writer.Encode(ircMsg)
 
 			// signal to the one who sent the message that it was in fact sent
 			msg.signal <- true
@@ -227,7 +228,8 @@ func (client *TwitchClient) receiver() {
 	for {
 		select {
 		case rawLine := <-buffer:
-			fmt.Println("> " + strings.TrimSpace(rawLine))
+			// fmt.Println("> " + strings.TrimSpace(rawLine))
+
 			// if the message begins with a '@', we have some tags (IRCv3). The default
 			// IRC decoder will not have properly detected it and mangled its output.
 			// We fix that by manually splitting the tags from the rest of the message
@@ -244,10 +246,14 @@ func (client *TwitchClient) receiver() {
 				msg = irc.ParseMessage(rawLine)
 			}
 
-			// hand it over to the message handler
+			// hand it over to the message handler;
+			// this could be done in goroutines by simply doing "go handler(...)",
+			// but then we could interpret messages out-of-order. There are enough
+			// buffers and goroutines already, so forking here is not really
+			// needed anyway.
 			handler, ok := client.handlers[msg.Command]
 			if ok {
-				go handler(msg, tags)
+				handler(msg, tags)
 			}
 
 		case <-client.stopReceiving:

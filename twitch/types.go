@@ -10,15 +10,50 @@ import (
 	"github.com/sorcix/irc"
 )
 
-type Message interface {
+type IncomingMessage interface {
+	ChannelName() string
+}
+
+type OutgoingMessage interface {
+	IrcMessage() *irc.Message
+}
+
+type RawMessage struct {
+	Message irc.Message
+}
+
+func (self RawMessage) IrcMessage() *irc.Message {
+	return &self.Message
 }
 
 type JoinMessage struct {
 	Channel string
 }
 
+func (self JoinMessage) ChannelName() string {
+	return self.Channel
+}
+
+func (self JoinMessage) IrcMessage() *irc.Message {
+	return &irc.Message{
+		Command: irc.JOIN,
+		Params:  []string{self.Channel},
+	}
+}
+
 type PartMessage struct {
 	Channel string
+}
+
+func (self PartMessage) ChannelName() string {
+	return self.Channel
+}
+
+func (self PartMessage) IrcMessage() *irc.Message {
+	return &irc.Message{
+		Command: irc.PART,
+		Params:  []string{self.Channel},
+	}
 }
 
 type RoomStateMessage struct {
@@ -29,6 +64,10 @@ type RoomStateMessage struct {
 	SubsOnly FlagState
 }
 
+func (self RoomStateMessage) ChannelName() string {
+	return self.Channel
+}
+
 type TextMessage struct {
 	Channel string
 	User    User
@@ -36,9 +75,46 @@ type TextMessage struct {
 	Action  string
 }
 
+func (self TextMessage) ChannelName() string {
+	return self.Channel
+}
+
+func (self TextMessage) IrcMessage() *irc.Message {
+	return &irc.Message{
+		Command:  irc.PRIVMSG,
+		Params:   []string{self.Channel},
+		Trailing: self.Text,
+	}
+}
+
 type ClearChatMessage struct {
-	Channel string
-	User    string
+	Channel  string
+	User     string
+	Duration int // TODO: use time.Duration
+}
+
+func (self ClearChatMessage) ChannelName() string {
+	return self.Channel
+}
+
+func (self ClearChatMessage) IrcMessage() *irc.Message {
+	text := ""
+
+	if self.User == "" {
+		text = ".clearchat"
+	} else {
+		text = ".timeout " + self.User
+
+		if self.Duration > 0 {
+			text += " " + strconv.Itoa(self.Duration)
+		}
+	}
+
+	return &irc.Message{
+		Command:  irc.PRIVMSG,
+		Params:   []string{self.Channel},
+		Trailing: text,
+	}
 }
 
 type SubscriberNotificationMessage struct {
@@ -46,6 +122,10 @@ type SubscriberNotificationMessage struct {
 	User    string
 	Months  int
 	Text    string
+}
+
+func (self SubscriberNotificationMessage) ChannelName() string {
+	return self.Channel
 }
 
 var justSubscribed = regexp.MustCompile(`^([a-zA-Z0-9_]+) just subscribed!$`)
@@ -75,6 +155,30 @@ func parseSubNotification(msg *irc.Message) SubscriberNotificationMessage {
 	}
 
 	return out
+}
+
+type pongMessage struct {
+	Params   []string
+	Trailing string
+}
+
+func (self pongMessage) IrcMessage() *irc.Message {
+	return &irc.Message{
+		Command:  irc.PONG,
+		Params:   self.Params,
+		Trailing: self.Trailing,
+	}
+}
+
+type capReqMessage struct {
+	Capability string
+}
+
+func (self capReqMessage) IrcMessage() *irc.Message {
+	return &irc.Message{
+		Command: irc.CAP,
+		Params:  []string{irc.CAP_REQ, ":twitch.tv/" + self.Capability},
+	}
 }
 
 type EmoticonMarker struct {

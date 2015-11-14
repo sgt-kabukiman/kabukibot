@@ -1,57 +1,55 @@
 package bot
 
-import "github.com/sgt-kabukiman/kabukibot/twitch"
+// type Command interface {
+// 	twitch.Message
 
-type Command interface {
-	twitch.Message
+// 	Command() string
+// 	Args() []string
+// }
 
-	Command() string
-	Args() []string
-}
+// type CommandHandlerFunc func(Command)
 
-type CommandHandlerFunc func(Command)
+// type command struct {
+// 	twitch.Message
 
-type command struct {
-	twitch.Message
+// 	cmd  string
+// 	args []string
+// }
 
-	cmd  string
-	args []string
-}
+// func (cmd *command) Command() string { return cmd.cmd }
+// func (cmd *command) Args() []string  { return cmd.args }
 
-func (cmd *command) Command() string { return cmd.cmd }
-func (cmd *command) Args() []string  { return cmd.args }
+// type Response interface {
+// 	ResponseTo() twitch.Message
+// 	Channel() *twitch.Channel
+// 	Text() string
+// }
 
-type Response interface {
-	ResponseTo() twitch.Message
-	Channel() *twitch.Channel
-	Text() string
-}
+// type ResponseHandlerFunc func(Response)
 
-type ResponseHandlerFunc func(Response)
+// type response struct {
+// 	to      twitch.Message
+// 	channel *twitch.Channel
+// 	text    string
+// }
 
-type response struct {
-	to      twitch.Message
-	channel *twitch.Channel
-	text    string
-}
+// func (r *response) ResponseTo() twitch.Message { return r.to }
+// func (r *response) Channel() *twitch.Channel   { return r.channel }
+// func (r *response) Text() string               { return r.text }
 
-func (r *response) ResponseTo() twitch.Message { return r.to }
-func (r *response) Channel() *twitch.Channel   { return r.channel }
-func (r *response) Text() string               { return r.text }
+// type Plugin interface {
+// 	Setup(*Kabukibot, Dispatcher)
+// }
 
-type Plugin interface {
-	Setup(*Kabukibot, Dispatcher)
-}
+// type GlobalPlugin interface {
+// 	Plugin
+// }
 
-type GlobalPlugin interface {
-	Plugin
-}
+// type ChannelPlugin interface {
+// 	Plugin
 
-type ChannelPlugin interface {
-	Plugin
-
-	Key() string
-	Permissions() []string
-	Load(*twitch.Channel, *Kabukibot, Dispatcher)
-	Unload(*twitch.Channel, *Kabukibot, Dispatcher)
-}
+// 	Key() string
+// 	Permissions() []string
+// 	Load(*twitch.Channel, *Kabukibot, Dispatcher)
+// 	Unload(*twitch.Channel, *Kabukibot, Dispatcher)
+// }

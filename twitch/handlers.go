@@ -3,6 +3,7 @@ package twitch
 import (
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/sorcix/irc"
 )
@@ -30,10 +31,7 @@ func (client *TwitchClient) onWelcome(msg *irc.Message, tags irc.Tags) {
 	caps := []string{"membership", "commands", "tags"}
 
 	for _, capability := range caps {
-		sent = client.Send(irc.Message{
-			Command: irc.CAP,
-			Params:  []string{irc.CAP_REQ, ":twitch.tv/" + capability},
-		})
+		sent = client.Send(capReqMessage{capability})
 	}
 
 	// wait for the message being sent
@@ -48,19 +46,21 @@ func (client *TwitchClient) onWelcome(msg *irc.Message, tags irc.Tags) {
 }
 
 func (client *TwitchClient) onPing(msg *irc.Message, tags irc.Tags) {
-	client.Send(irc.Message{
-		Command:  irc.PONG,
-		Params:   msg.Params,
-		Trailing: msg.Trailing,
-	})
+	client.Send(pongMessage{msg.Params, msg.Trailing})
 }
 
 func (client *TwitchClient) onJoin(msg *irc.Message, tags irc.Tags) {
-	// client.incoming <- JoinMessage{msg.Params[0]}
+	// only care about when WE joined something
+	if msg.Prefix != nil && msg.Prefix.User == client.username {
+		client.incoming <- JoinMessage{msg.Params[0]}
+	}
 }
 
 func (client *TwitchClient) onPart(msg *irc.Message, tags irc.Tags) {
-	// client.incoming <- PartMessage{msg.Params[0]}
+	// only care about when WE parted something
+	if msg.Prefix != nil && msg.Prefix.User == client.username {
+		client.incoming <- PartMessage{msg.Params[0]}
+	}
 }
 
 func (client *TwitchClient) onRoomState(msg *irc.Message, tags irc.Tags) {
@@ -79,7 +79,7 @@ func (client *TwitchClient) onRoomState(msg *irc.Message, tags irc.Tags) {
 	flag, _ = tags["r9k"]
 	message.R9K = parseFlagState(flag)
 
-	// client.incoming <- message
+	client.incoming <- message
 }
 
 func (client *TwitchClient) onPrivmsg(msg *irc.Message, tags irc.Tags) {
@@ -137,31 +137,31 @@ func (client *TwitchClient) onPrivmsg(msg *irc.Message, tags irc.Tags) {
 	}
 
 	// handle IRC ACTION commands
-	// text := msg.Trailing
-	// action := ""
+	text := msg.Trailing
+	action := ""
 
-	// if strings.HasPrefix(text, "\x01") {
-	// 	text = strings.Trim(text, "\x01")
+	if strings.HasPrefix(text, "\x01") {
+		text = strings.Trim(text, "\x01")
 
-	// 	if strings.HasPrefix(text, "ACTION ") {
-	// 		action = "/me"
-	// 		text = strings.TrimPrefix(text, "ACTION ")
-	// 	}
-	// }
+		if strings.HasPrefix(text, "ACTION ") {
+			action = "/me"
+			text = strings.TrimPrefix(text, "ACTION ")
+		}
+	}
 
-	// message := TextMessage{
-	// 	Channel: msg.Params[0],
-	// 	User:    user,
-	// 	Text:    text,
-	// 	Action:  action,
-	// }
+	message := TextMessage{
+		Channel: msg.Params[0],
+		User:    user,
+		Text:    text,
+		Action:  action,
+	}
 
-	// client.incoming <- message
+	client.incoming <- message
 }
 
 func (client *TwitchClient) onClearChat(msg *irc.Message, tags irc.Tags) {
-	// client.incoming <- ClearChatMessage{
-	// 	Channel: msg.Params[0],
-	// 	User:    msg.Trailing,
-	// }
+	client.incoming <- ClearChatMessage{
+		Channel: msg.Params[0],
+		User:    msg.Trailing,
+	}
 }
