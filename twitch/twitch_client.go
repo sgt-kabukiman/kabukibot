@@ -226,7 +226,7 @@ func (client *TwitchClient) receiver() {
 			// hand it over to the message handler
 			handler, ok := client.handlers[msg.Command]
 			if ok {
-				handler(msg, tags)
+				go handler(msg, tags)
 			}
 
 		case <-client.stopReceiving:
