@@ -1,255 +1,238 @@
 package twitch
 
 import (
-	"strconv"
+	"bufio"
+	"fmt"
+	"net"
 	"strings"
 	"time"
 
-	irc "github.com/fluffle/goirc/client"
+	"github.com/sorcix/irc"
 )
 
+// a message on the queue, this is not what the outside world sees
+type queueItem struct {
+	message irc.Message
+	signal  chan bool
+}
+
 type TwitchClient struct {
-	conn        *irc.Conn
-	queue       SendQueue
-	dispatcher  Dispatcher
-	channels    map[string]*Channel
-	me          string
-	ReadySignal chan bool
-	QuitSignal  chan bool
+	server   string
+	username string
+	password string
+
+	// connection handling
+	conn   net.Conn
+	reader *bufio.Reader
+	writer *irc.Encoder
+
+	// handlers for incoming messages
+	handlers map[string]HandlerFunc
+
+	// time between two regular messages are sent
+	delay time.Duration
+
+	// this signal is sent when the client has sent the CAP REQ commands
+	ready chan struct{}
+
+	// this signal is sent when we disconnected
+	alive chan struct{}
+
+	// these are fired when .Disconnect() is called
+	stopSending   chan struct{}
+	stopReceiving chan struct{}
+
+	// this is fired when .sender() / .receiver() stop
+	stoppedSending   chan struct{}
+	stoppedReceiving chan struct{}
+
+	// on this channel incoming messages from the network are sent
+	incoming chan Message
+
+	// list of ougtoing messages (sent by us)
+	outgoing chan queueItem
 }
 
-func NewTwitchClient(conn *irc.Conn, d Dispatcher, delay time.Duration) *TwitchClient {
-	client := TwitchClient{
-		conn,
-		NewSendQueue(delay),
-		d,
-		make(map[string]*Channel),
-		conn.Me().Nick,
-		make(chan bool, 1),
-		make(chan bool, 1),
+func NewTwitchClient(server string, username string, password string, delay time.Duration) *TwitchClient {
+	client := &TwitchClient{
+		server:           server,
+		username:         username,
+		password:         password,
+		delay:            delay,
+		conn:             nil,
+		reader:           nil,
+		writer:           nil,
+		ready:            make(chan struct{}),
+		alive:            make(chan struct{}),
+		stopReceiving:    make(chan struct{}),
+		stopSending:      make(chan struct{}),
+		stoppedReceiving: make(chan struct{}),
+		stoppedSending:   make(chan struct{}),
+		incoming:         make(chan Message, 50),
+		outgoing:         make(chan queueItem, 50),
 	}
 
-	client.setupInternalHandlers()
+	// setup vital message listeners
+	client.setupHandlers()
 
-	return &client
+	return client
 }
 
-func (client *TwitchClient) setupInternalHandlers() {
-	client.conn.HandleFunc(irc.REGISTER, client.onConnect)
-	client.conn.HandleFunc(irc.DISCONNECTED, client.onDisconnect)
-	client.conn.HandleFunc(irc.PRIVMSG, client.onLine)
-	client.conn.HandleFunc(irc.ACTION, client.onLine)
-	client.conn.HandleFunc(irc.MODE, client.onMode)
-	client.conn.HandleFunc(irc.JOIN, client.onJoin)
-	client.conn.HandleFunc(irc.PART, client.onPart)
+func (client *TwitchClient) Ready() <-chan struct{} {
+	return client.ready
 }
 
-func (client *TwitchClient) Channel(name string) (c *Channel, ok bool) {
-	c, ok = client.channels[strings.TrimLeft(name, "#")]
-	return
+func (client *TwitchClient) Alive() <-chan struct{} {
+	return client.alive
 }
 
-func (client *TwitchClient) Channels() *map[string]*Channel {
-	return &client.channels
+func (client *TwitchClient) Incoming() <-chan Message {
+	return client.incoming
 }
 
-func (client *TwitchClient) Connect() (chan bool, error) {
-	// start working on our outgoing queue
-	go client.queue.Worker()
-
-	err := client.conn.Connect()
+func (client *TwitchClient) Connect() error {
+	conn, err := net.Dial("tcp", client.server)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return client.QuitSignal, nil
-}
+	client.conn = conn
+	client.reader = bufio.NewReader(conn) // we manually read to properly handle tags
+	client.writer = irc.NewEncoder(conn)
 
-func (client *TwitchClient) Join(channel *Channel) {
-	_, ok := client.Channel(channel.Name)
-	if !ok {
-		client.channels[channel.Name] = channel
+	// start working on the queue
+	go client.sender()
 
-		client.queue.Push(func() {
-			client.conn.Join(channel.IrcName())
-		})
-	}
-}
+	// start receiving
+	go client.receiver()
 
-func (client *TwitchClient) Part(channel *Channel) {
-	_, ok := client.Channel(channel.Name)
-	if ok {
-		client.queue.Push(func() {
-			client.conn.Part(channel.IrcName())
-			delete(client.channels, channel.Name)
-		})
-	}
-}
-
-func (client *TwitchClient) Privmsg(target string, text string) {
-	client.queue.Push(func() {
-		client.conn.Privmsg(target, text)
+	// send login info before anything else
+	client.Send(irc.Message{
+		Command: irc.PASS,
+		Params:  []string{client.password},
 	})
+
+	client.Send(irc.Message{
+		Command: irc.NICK,
+		Params:  []string{client.username},
+	})
+
+	client.Send(irc.Message{
+		Command: irc.USER,
+		Params:  []string{"kabukibot", "8", "*", client.username},
+	})
+
+	return nil
 }
 
-func (client *TwitchClient) onConnect(conn *irc.Conn, line *irc.Line) {
-	conn.Raw("TWITCHCLIENT 3")
-	client.ReadySignal <- true
+func (client *TwitchClient) Disconnect() error {
+	// stop the sender/receiver and wait for them to stop (maybe it will drain the
+	// outgoing queue, maybe it won't, but let's give it time)
+	close(client.stopReceiving)
+	<-client.stoppedReceiving
+
+	close(client.stopSending)
+	<-client.stoppedSending
+
+	// for all intents and purposes, we are not alive anymore
+	close(client.alive)
+
+	// close the IRC connection
+	return client.conn.Close()
 }
 
-func (client *TwitchClient) onDisconnect(conn *irc.Conn, line *irc.Line) {
-	client.QuitSignal <- true
+func (client *TwitchClient) Send(msg irc.Message) <-chan bool {
+	signal := make(chan bool, 1)
+	outgoing := queueItem{msg, signal}
+
+	// if queue is not full, then
+	client.outgoing <- outgoing
+	// else
+	// 	signal <- false // means "not sent"
+	// 	close(signal)
+
+	return signal
 }
 
-func (client *TwitchClient) onJoin(conn *irc.Conn, line *irc.Line) {
-	// only react to when *we* join a channel
-	if line.Nick != client.me {
-		return
-	}
+func (client *TwitchClient) sender() {
+	for {
+		select {
+		case msg := <-client.outgoing:
+			fmt.Println("< " + msg.message.String())
+			client.writer.Encode(&msg.message)
 
-	channel, ok := client.Channel(line.Target())
-	if ok {
-		println("Joined " + channel.IrcName())
-		client.dispatcher.HandleJoin(channel)
-	}
-}
+			// signal to the one who sent the message that it was in fact sent
+			msg.signal <- true
+			close(msg.signal)
 
-func (client *TwitchClient) onPart(conn *irc.Conn, line *irc.Line) {
-	// only react to when *we* part a channel
-	if line.Nick != client.me {
-		return
-	}
-
-	channel, ok := client.Channel(line.Target())
-	if ok {
-		client.dispatcher.HandlePart(channel)
-	}
-}
-
-func (client *TwitchClient) onMode(conn *irc.Conn, line *irc.Line) {
-	channel, ok := client.Channel(line.Target())
-	if !ok {
-		return
-	}
-
-	mode, username := line.Args[1], line.Args[2]
-
-	if mode == "+o" {
-		channel.AddModerator(username)
-	} else if mode == "-o" {
-		channel.RemoveModerator(username)
-	}
-}
-
-func (client *TwitchClient) onLine(conn *irc.Conn, line *irc.Line) {
-	channel, ok := client.Channel(line.Target())
-	if !ok {
-		return
-	}
-
-	baseMsg := message{
-		channel:   channel,
-		user:      NewUser(line.Nick, channel),
-		text:      line.Text(),
-		time:      line.Time,
-		processed: false,
-	}
-
-	// internal Twitch stuff, both state information (subscriber, turbo, emoteset, ...)
-	// as well as one-time things like timeouts
-	if line.Nick == "jtv" {
-		parts := strings.SplitN(baseMsg.text, " ", 3)
-		command := strings.ToLower(parts[0])
-
-		msg := &twitchMessage{
-			baseMsg,
-			command,
-			parts[1:],
+		case <-client.stopSending:
+			break
 		}
-
-		// handle the internal user state
-		updateChannelState(msg)
-
-		// now the world may know about this message
-		client.dispatcher.HandleTwitchMessage(msg)
-
-		return
 	}
 
-	// subscriber notifications
-	if line.Nick == "twitchnotify" {
-		client.dispatcher.HandleTwitchMessage(&twitchMessage{
-			baseMsg,
-			"SUBSCRIBER",
-			make([]string, 0),
-		})
-
-		return
-	}
-
-	// handle someone typing "/me likes this"
-	if line.Cmd == "ACTION" {
-		baseMsg.text = "/me " + baseMsg.text
-	}
-
-	// pull the state we collected since the last text message and apply it to this user
-	updateUserState(&baseMsg)
-
-	// now tell the world what we got
-	client.dispatcher.HandleTextMessage(&baseMsg)
+	close(client.stoppedSending)
 }
 
-func updateChannelState(msg *twitchMessage) {
-	cn := msg.Channel()
+func (client *TwitchClient) receiver() {
+	reading := make(chan struct{})
 
-	switch msg.Command() {
-	case "specialuser":
-		args := msg.Args()
+	// a buffer between the raw irc input from the net and the goroutine channels
+	buffer := make(chan string, 10)
 
-		switch args[1] {
-		case "subscriber":
-			cn.State.Subscriber = true
-		case "turbo":
-			cn.State.Turbo = true
-		case "staff":
-			cn.State.Staff = true
-		case "admin":
-			cn.State.Admin = true
-		}
+	// fork a reader loop, which could block and needs special handling as it's not a channel
+	// (but it will pump its messages into a channel)
+	go func() {
+		for {
+			select {
+			case <-client.stopReceiving:
+				break
 
-	case "emoteset":
-		args := msg.Args()
-		list := args[1]
+			default:
+				// set a 5min timeout
+				client.conn.SetDeadline(time.Now().Add(300 * time.Second))
 
-		// trim "[" and "]"
-		list = list[1 : len(list)-1]
+				line, err := client.reader.ReadString('\n')
+				if err != nil {
+					break
+				}
 
-		codes := strings.Split(list, ",")
-		ids := make([]int, 0)
-
-		for idx, code := range codes {
-			converted, err := strconv.Atoi(code)
-			if err == nil && converted > 0 {
-				ids[idx] = converted
+				buffer <- line
 			}
 		}
 
-		cn.State.EmoteSet = ids
+		close(reading)
+	}()
+
+	for {
+		select {
+		case rawLine := <-buffer:
+			fmt.Println("> " + strings.TrimSpace(rawLine))
+			// if the message begins with a '@', we have some tags (IRCv3). The default
+			// IRC decoder will not have properly detected it and mangled its output.
+			// We fix that by manually splitting the tags from the rest of the message
+			// and parse each part individually.
+			tags := make(irc.Tags)
+			msg := &irc.Message{}
+
+			if strings.HasPrefix(rawLine, "@") {
+				parts := strings.SplitN(rawLine, " ", 2)
+
+				tags = irc.ParseTags(strings.TrimPrefix(parts[0], "@"))
+				msg = irc.ParseMessage(parts[1])
+			} else {
+				msg = irc.ParseMessage(rawLine)
+			}
+
+			// hand it over to the message handler
+			handler, ok := client.handlers[msg.Command]
+			if ok {
+				handler(msg, tags)
+			}
+
+		case <-client.stopReceiving:
+			break
+		}
 	}
-}
 
-func updateUserState(msg *message) {
-	user := msg.User()
-	cn := msg.Channel()
-	state := &cn.State
-
-	user.IsBroadcaster = user.Name == cn.Name
-	user.IsModerator = cn.IsModerator(user.Name)
-	user.IsSubscriber = state.Subscriber
-	user.IsTurbo = state.Turbo
-	user.IsTwitchAdmin = state.Admin
-	user.IsTwitchStaff = state.Staff
-	user.EmoteSet = state.EmoteSet
-
-	state.Clear()
+	close(client.stoppedReceiving)
 }
