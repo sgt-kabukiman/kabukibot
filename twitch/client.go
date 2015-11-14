@@ -187,12 +187,14 @@ func (client *TwitchClient) sender() {
 			client.queueLen--
 			client.queueMutex.Unlock()
 
+			// wait a bit
+			<-time.After(client.delay)
+
 		case <-client.stopSending:
-			break
+			close(client.stoppedSending)
+			return
 		}
 	}
-
-	close(client.stoppedSending)
 }
 
 func (client *TwitchClient) receiver() {
@@ -204,10 +206,12 @@ func (client *TwitchClient) receiver() {
 	// fork a reader loop, which could block and needs special handling as it's not a channel
 	// (but it will pump its messages into a channel)
 	go func() {
+		defer close(reading)
+
 		for {
 			select {
 			case <-client.stopReceiving:
-				break
+				return
 
 			default:
 				// set a 5min timeout
@@ -215,20 +219,20 @@ func (client *TwitchClient) receiver() {
 
 				line, err := client.reader.ReadString('\n')
 				if err != nil {
-					break
+					return
 				}
 
 				buffer <- line
 			}
 		}
-
-		close(reading)
 	}()
+
+	defer close(client.stoppedReceiving)
 
 	for {
 		select {
 		case rawLine := <-buffer:
-			// fmt.Println("> " + strings.TrimSpace(rawLine))
+			fmt.Println("> " + strings.TrimSpace(rawLine))
 
 			// if the message begins with a '@', we have some tags (IRCv3). The default
 			// IRC decoder will not have properly detected it and mangled its output.
@@ -257,9 +261,7 @@ func (client *TwitchClient) receiver() {
 			}
 
 		case <-client.stopReceiving:
-			break
+			return
 		}
 	}
-
-	close(client.stoppedReceiving)
 }

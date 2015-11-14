@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
@@ -13,13 +14,11 @@ type Kabukibot struct {
 	twitch       *twitch.TwitchClient
 	workers      map[string]*channelWorker
 	channelMutex sync.Mutex
-	// dispatcher    Dispatcher
-	logger Logger
-	// acl           *ACL
+	logger       Logger
 	// chanMngr      *ChannelManager
 	// pluginMngr    *PluginManager
 	// dictionary    *Dictionary
-	database      *DatabaseStruct
+	database      *sqlx.DB
 	configuration *Configuration
 	alive         chan struct{}
 }
@@ -35,37 +34,30 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// create logger
 	logger := NewLogger(LOG_LEVEL_DEBUG)
 
-	// hello database
-	db := NewDatabase()
-
 	// create the bot
 	bot := Kabukibot{}
 	bot.configuration = config
 	bot.workers = make(map[string]*channelWorker)
 	bot.channelMutex = sync.Mutex{}
-	// bot.dispatcher = dispatcher
 	bot.logger = logger
 	bot.twitch = twitch
-	// bot.acl = NewACL(&bot, logger, db)
 	// bot.chanMngr = NewChannelManager(db)
 	// bot.pluginMngr = NewPluginManager(&bot, dispatcher, db)
 	// bot.dictionary = NewDictionary(db, logger)
-	bot.database = db
+	bot.database = nil
 	bot.alive = make(chan struct{})
-
-	// dispatcher.OnJoin(bot.onJoin, nil)
-	// dispatcher.OnPart(bot.onPart, nil)
-	// dispatcher.OnTextMessage(bot.detectCommand, nil)
 
 	return &bot, nil
 }
 
 func (bot *Kabukibot) Connect() error {
 	// connect to database
-	err := bot.database.Connect(bot.configuration.Database.DSN)
+	db, err := sqlx.Connect("mysql", bot.configuration.Database.DSN)
 	if err != nil {
 		return err
 	}
+
+	bot.database = db
 
 	// load dictionary elements
 	// bot.logger.Debug("Loading dictionary...")
@@ -92,6 +84,8 @@ func (bot *Kabukibot) Connect() error {
 }
 
 func (bot *Kabukibot) Work() {
+	go bot.joinInitialChannels()
+
 	for msg := range bot.twitch.Incoming() {
 		// find the appropriate worker
 		channel := msg.ChannelName()
@@ -117,21 +111,13 @@ func (bot *Kabukibot) Configuration() *Configuration {
 	return bot.configuration
 }
 
-func (bot *Kabukibot) Database() *DatabaseStruct {
+func (bot *Kabukibot) Database() *sqlx.DB {
 	return bot.database
 }
 
 func (bot *Kabukibot) Logger() Logger {
 	return bot.logger
 }
-
-// func (bot *Kabukibot) Dispatcher() Dispatcher {
-// 	return bot.dispatcher
-// }
-
-// func (bot *Kabukibot) ACL() *ACL {
-// 	return bot.acl
-// }
 
 // func (bot *Kabukibot) PluginManager() *PluginManager {
 // 	return bot.pluginMngr
@@ -177,11 +163,14 @@ func (bot *Kabukibot) Join(channel string) <-chan bool {
 	}
 
 	// prepare the channelWorker
-	worker := newChannelWorker(channel)
+	worker := newChannelWorker(channel, bot)
 
 	// remember worker
 	bot.workers[channel] = worker
 	bot.channelMutex.Unlock()
+
+	// remember that we joined
+	bot.Database().Exec("INSERT INTO channel (name) VALUES (?)", channel)
 
 	// go have fun
 	go worker.Work()
@@ -201,10 +190,20 @@ func (bot *Kabukibot) Join(channel string) <-chan bool {
 }
 
 func (bot *Kabukibot) Part(channel string) <-chan bool {
+	bot.Database().Exec("DELETE FROM channel WHERE name = ?", channel)
+
 	// send off the request to leave the channel, but wait for its confirmation
 	// to shutdown our worker; this signal therefore does not represent the
 	// moment when we left, but only the moment the PART message was sent.
 	return bot.twitch.Send(twitch.PartMessage{channel})
+}
+
+func (bot *Kabukibot) Joined(channel string) bool {
+	bot.channelMutex.Lock()
+	_, joined := bot.workers[channel]
+	bot.channelMutex.Unlock()
+
+	return joined
 }
 
 // func (bot *Kabukibot) Respond(msg twitch.Message, text string) {
@@ -237,24 +236,23 @@ func (bot *Kabukibot) IsOperator(username string) bool {
 	return bot.OpUsername() == username
 }
 
-// func (bot *Kabukibot) onPart(channel *twitch.Channel) {
-// 	bot.pluginMngr.teardownChannel(channel)
-// 	bot.chanMngr.removeChannel(channel)
-// 	bot.acl.unloadChannelData(channel.Name)
-// }
+type initialChannel struct {
+	Name string `db:"name"`
+}
 
 func (bot *Kabukibot) joinInitialChannels() {
-	// mngr := bot.chanMngr
+	// join the bot's channel
+	bot.Join("#" + bot.BotUsername())
 
-	// // load all previously joined channels
-	// mngr.loadChannels()
+	// find previously joined channels
+	list := make([]initialChannel, 0)
+	db := bot.Database()
 
-	// // this only needs to be done in an empty database: join ourselves later
-	// mngr.addChannel(twitch.NewChannel(bot.configuration.Account.Username))
+	db.Select(&list, "SELECT name FROM channel ORDER BY name")
 
-	// for _, channel := range *mngr.Channels() {
-	// 	bot.Join(channel)
-	// }
+	for _, channel := range list {
+		bot.Join(channel.Name)
+	}
 }
 
 // var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)

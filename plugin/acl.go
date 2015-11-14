@@ -99,7 +99,7 @@ func (plugin *ACLPlugin) onCommand(cmd bot.Command) {
 		if len(permissions) == 0 {
 			plugin.bot.Say(channel, "\""+permission+"\" is granted to nobody at the moment, only you can use it.")
 		} else {
-			plugin.bot.Say(channel, "\""+permission+"\" is granted to "+strings.Join(*users, ", "))
+			plugin.bot.Say(channel, "\""+permission+"\" is granted to "+strings.Join(users, ", "))
 		}
 
 		return

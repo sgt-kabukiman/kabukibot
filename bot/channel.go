@@ -12,15 +12,21 @@ type channelWorker struct {
 	leaveSignal    chan struct{}               // to be sent (= closed) when we LEAVE the channel on purpose
 	shutdownSignal chan struct{}               // to be sent when we just shutdown the bot
 	alive          chan struct{}               // is sent by the worker when the goroutine is ending
+	log            Logger
+	acl            *ACL
+	workers        []pluginWorkerStruct
 }
 
-func newChannelWorker(channel string) *channelWorker {
+func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
 	return &channelWorker{
 		channel:        channel,
 		inputChannel:   make(chan twitch.IncomingMessage, 10),
 		leaveSignal:    make(chan struct{}),
 		shutdownSignal: make(chan struct{}),
 		alive:          make(chan struct{}),
+		log:            bot.Logger(),
+		acl:            NewACL(channel, bot.OpUsername(), bot.Logger(), bot.Database()),
+		workers:        make([]pluginWorkerStruct, 0),
 	}
 }
 
@@ -49,6 +55,11 @@ func (self *channelWorker) Work() {
 	defer close(self.inputChannel)
 	defer close(self.alive)
 
+	// initialize ACL
+	self.acl.loadData()
+
+	// initialize plugin workers
+
 	// endless worker loop
 	for {
 		select {
@@ -60,23 +71,52 @@ func (self *channelWorker) Work() {
 				return
 			}
 
-			// hand the message to all plugins
+			// determine the plugins to hand this message to
+			for _, worker := range self.workers {
+				if !worker.Enabled {
+					continue
+				}
 
-			fmt.Printf("[%s] %+v\n", self.channel, newMsg)
+				switch msg := newMsg.(type) {
+				case twitch.TextMessage:
+					asserted, okay := worker.Worker.(textMessageWorker)
+					if okay {
+						asserted.HandleTextMessage(&msg)
+					}
+
+				case twitch.RoomStateMessage:
+					asserted, okay := worker.Worker.(roomStateMessageWorker)
+					if okay {
+						asserted.HandleRoomStateMessage(&msg)
+					}
+
+				case twitch.ClearChatMessage:
+					asserted, okay := worker.Worker.(clearChatMessageWorker)
+					if okay {
+						asserted.HandleClearChatMessage(&msg)
+					}
+
+				case twitch.SubscriberNotificationMessage:
+					asserted, okay := worker.Worker.(subNotificationMessageWorker)
+					if okay {
+						asserted.HandleSubscriberNotificationMessage(&msg)
+					}
+				}
+			}
 
 		case <-self.leaveSignal:
 			// for worker in workers {
 			// 	worker.leave()
 			// }
 
-			break // out of the endless loop
+			return
 
 		case <-self.shutdownSignal:
 			// for worker in workers {
 			// 	worker.shutdown()
 			// }
 
-			break // out of the endless loop
+			return
 		}
 	}
 }

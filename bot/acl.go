@@ -1,8 +1,12 @@
 package bot
 
-import "log"
+import (
+	"log"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/sgt-kabukiman/kabukibot/twitch"
+)
 import "strings"
-import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 const (
 	ACL_ALL           = "$all"
@@ -15,37 +19,31 @@ const (
 
 type usernameList []string
 type permissionMap map[string]usernameList
-type channelPermMap map[string]permissionMap
 
 type ACL struct {
-	bot         *Kabukibot
+	channel     string
+	operator    string
+	broadcaster string
 	log         Logger
-	db          *DatabaseStruct
-	permissions channelPermMap
+	db          *sqlx.DB
+	permissions permissionMap
 }
 
-func NewACL(bot *Kabukibot, log Logger, db *DatabaseStruct) *ACL {
-	return &ACL{bot, log, db, make(channelPermMap)}
+func NewACL(channel string, operator string, log Logger, db *sqlx.DB) *ACL {
+	return &ACL{channel, operator, strings.TrimPrefix(operator, "#"), log, db, make(permissionMap)}
 }
 
 func ACLGroups() []string {
 	return []string{ACL_ALL, ACL_MODERATORS, ACL_SUBSCRIBERS, ACL_TURBO_USERS, ACL_TWITCH_STAFF, ACL_TWITCH_ADMINS}
 }
 
-func (self *ACL) AllowedUsers(channel string, permission string) *usernameList {
-	permMap, ok := self.permissions[channel]
+func (self *ACL) AllowedUsers(permission string) usernameList {
+	userList, ok := self.permissions[permission]
 	if !ok {
-		empty := make(usernameList, 0)
-		return &empty
+		userList = make(usernameList, 0)
 	}
 
-	userList, ok := permMap[permission]
-	if !ok {
-		empty := make(usernameList, 0)
-		return &empty
-	}
-
-	return &userList
+	return userList
 }
 
 func (self *ACL) IsUsername(name string) bool {
@@ -60,33 +58,33 @@ func (self *ACL) IsUsername(name string) bool {
 	return true
 }
 
-func (self *ACL) IsAllowed(user *twitch.User, permission string) bool {
+func (self *ACL) IsAllowed(user twitch.User, permission string) bool {
 	// the bot operator and channel owner are always allowed to use the available commands
-	if user.IsBroadcaster || self.bot.IsOperator(user.Name) {
+	if user.Name == self.operator || user.Name == self.broadcaster {
 		return true
 	}
 
-	allowed := self.AllowedUsers(user.Channel.Name, permission)
-	if len(*allowed) == 0 {
+	allowed := self.AllowedUsers(permission)
+	if len(allowed) == 0 {
 		return false
 	}
 
-	for _, ident := range *allowed {
+	for _, ident := range allowed {
 		allowed := false
 
 		switch ident {
 		case ACL_ALL:
 			allowed = true
 		case ACL_MODERATORS:
-			allowed = user.IsModerator
+			allowed = (user.Type == twitch.Moderator) || (user.Type == twitch.GlobalModerator)
 		case ACL_SUBSCRIBERS:
-			allowed = user.IsSubscriber
+			allowed = user.Subscriber
 		case ACL_TURBO_USERS:
-			allowed = user.IsTurbo
+			allowed = user.Turbo
 		case ACL_TWITCH_STAFF:
-			allowed = user.IsTwitchStaff
+			allowed = user.Type == twitch.TwitchStaff
 		case ACL_TWITCH_ADMINS:
-			allowed = user.IsTwitchAdmin
+			allowed = user.Type == twitch.TwitchAdmin
 		default:
 			allowed = user.Name == ident
 		}
@@ -99,27 +97,22 @@ func (self *ACL) IsAllowed(user *twitch.User, permission string) bool {
 	return false
 }
 
-func (self *ACL) Allow(channel string, userIdent string, permission string) bool {
+func (self *ACL) Allow(userIdent string, permission string) bool {
 	// allowing something for the owner is pointless
-	if channel == userIdent {
+	if self.broadcaster == userIdent {
 		return false
 	}
 
-	// create skeleton structure for channel and permissions
-	_, ok := self.permissions[channel]
+	// create skeleton structure for permissions
+	_, ok := self.permissions[permission]
 	if !ok {
-		self.permissions[channel] = make(permissionMap, 0)
-	}
-
-	_, ok = self.permissions[channel][permission]
-	if !ok {
-		self.permissions[channel][permission] = make(usernameList, 0)
+		self.permissions[permission] = make(usernameList, 0)
 	}
 
 	// check if the permission is already set
 	exists := false
 
-	for _, ident := range self.permissions[channel][permission] {
+	for _, ident := range self.permissions[permission] {
 		if ident == userIdent {
 			exists = true
 			break
@@ -130,25 +123,20 @@ func (self *ACL) Allow(channel string, userIdent string, permission string) bool
 		return false
 	}
 
-	self.permissions[channel][permission] = append(self.permissions[channel][permission], userIdent)
+	self.permissions[permission] = append(self.permissions[permission], userIdent)
 
-	_, err := self.db.Exec("INSERT INTO acl (channel, permission, user_ident) VALUES (?,?,?)", channel, permission, userIdent)
+	_, err := self.db.Exec("INSERT INTO acl (channel, permission, user_ident) VALUES (?,?,?)", self.channel, permission, userIdent)
 	if err != nil {
 		log.Fatal("Could not add ACL entry to the database: " + err.Error())
 	}
 
-	self.log.Debug("Allowed %s for %s in #%s.", permission, userIdent, channel)
+	self.log.Debug("Allowed %s for %s in %s.", permission, userIdent, self.channel)
 
 	return true
 }
 
-func (self *ACL) Deny(channel string, userIdent string, permission string) bool {
-	permMap, ok := self.permissions[channel]
-	if !ok {
-		return false
-	}
-
-	userList, ok := permMap[permission]
+func (self *ACL) Deny(userIdent string, permission string) bool {
+	userList, ok := self.permissions[permission]
 	if !ok {
 		return false
 	}
@@ -168,60 +156,44 @@ func (self *ACL) Deny(channel string, userIdent string, permission string) bool 
 
 	// remove element or kill list alltogether if this was the last user
 	if len(userList) > 1 {
-		self.permissions[channel][permission] = append(userList[:idx], userList[(idx+1):]...)
+		self.permissions[permission] = append(userList[:idx], userList[(idx+1):]...)
 	} else {
-		delete(self.permissions[channel], permission)
-
-		// kill the entire channel if it's empty now
-		if len(self.permissions[channel]) == 0 {
-			delete(self.permissions, channel)
-		}
+		delete(self.permissions, permission)
 	}
 
-	_, err := self.db.Exec("DELETE FROM acl WHERE channel = ? AND permission = ? AND user_ident = ?", channel, permission, userIdent)
+	_, err := self.db.Exec("DELETE FROM acl WHERE channel = ? AND permission = ? AND user_ident = ?", self.channel, permission, userIdent)
 	if err != nil {
 		log.Fatal("Could not delete ACL entry from the database: " + err.Error())
 	}
 
-	self.log.Debug("Denied %s for %s in #%s.", permission, userIdent, channel)
+	self.log.Debug("Denied %s for %s in %s.", permission, userIdent, self.channel)
 
 	return true
 }
 
-func (self *ACL) DeletePermission(channel string, permission string) {
-	permMap, ok := self.permissions[channel]
+func (self *ACL) DeletePermission(permission string) {
+	_, ok := self.permissions[permission]
 	if !ok {
 		return
 	}
 
-	_, ok = permMap[permission]
-	if !ok {
-		return
-	}
+	delete(self.permissions, permission)
 
-	delete(self.permissions[channel], permission)
-
-	// kill the entire channel if it's empty now
-	if len(self.permissions[channel]) == 0 {
-		delete(self.permissions, channel)
-	}
-
-	_, err := self.db.Exec("DELETE FROM acl WHERE channel = ? AND permission = ?", channel, permission)
+	_, err := self.db.Exec("DELETE FROM acl WHERE channel = ? AND permission = ?", self.channel, permission)
 	if err != nil {
 		log.Fatal("Could not delete ACL entries from the database: " + err.Error())
 	}
 
-	self.log.Debug("Removed all %s permissions for #%s.", permission, channel)
+	self.log.Debug("Removed all %s permissions for %s.", permission, self.channel)
 }
 
-func (self *ACL) loadChannelData(channel string) {
-	rows, err := self.db.Query("SELECT permission, user_ident FROM acl WHERE channel = ?", channel)
+func (self *ACL) loadData() {
+	rows, err := self.db.Query("SELECT permission, user_ident FROM acl WHERE channel = ? ORDER BY permission", self.channel)
 	if err != nil {
 		self.log.Fatal("Could not query ACL data: %s", err.Error())
 	}
 	defer rows.Close()
 
-	newPermMap := make(permissionMap)
 	lastPerm := ""
 	rowCount := 0
 
@@ -236,7 +208,7 @@ func (self *ACL) loadChannelData(channel string) {
 
 		if permission != lastPerm {
 			if lastPerm != "" {
-				newPermMap[lastPerm] = newUserList
+				self.permissions[lastPerm] = newUserList
 			}
 
 			newUserList = make(usernameList, 0)
@@ -252,18 +224,8 @@ func (self *ACL) loadChannelData(channel string) {
 	}
 
 	if lastPerm != "" {
-		newPermMap[lastPerm] = newUserList
+		self.permissions[lastPerm] = newUserList
 	}
 
-	self.permissions[channel] = newPermMap
-
-	self.log.Debug("Loaded %d ACL entries for #%s.", rowCount, channel)
-}
-
-func (self *ACL) unloadChannelData(channel string) {
-	_, ok := self.permissions[channel]
-	if ok {
-		delete(self.permissions, channel)
-		self.log.Debug("Unloaded ACL data for #%s.", channel)
-	}
+	self.log.Debug("Loaded %d ACL entries for %s.", rowCount, self.channel)
 }
