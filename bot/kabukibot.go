@@ -14,14 +14,12 @@ import (
 )
 
 type Kabukibot struct {
-	twitch       *twitch.TwitchClient
-	workers      map[string]*channelWorker
-	channelMutex sync.Mutex
-	plugins      []Plugin
-	logger       Logger
-	// chanMngr      *ChannelManager
-	// pluginMngr    *PluginManager
-	// dictionary    *Dictionary
+	twitch        *twitch.TwitchClient
+	workers       map[string]*channelWorker
+	channelMutex  sync.Mutex
+	plugins       []Plugin
+	logger        Logger
+	dictionary    *Dictionary
 	database      *sqlx.DB
 	configuration *Configuration
 	alive         chan struct{}
@@ -31,9 +29,6 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	// setup our TwitchClient
 	server := net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
 	twitch := twitch.NewTwitchClient(server, config.Account.Username, config.Account.Password, 2*time.Second)
-
-	// we need our own dispatcher to handle custom events
-	// dispatcher := NewDispatcher()
 
 	// create logger
 	logger := NewLogger(LOG_LEVEL_DEBUG)
@@ -45,9 +40,6 @@ func NewKabukibot(config *Configuration) (*Kabukibot, error) {
 	bot.channelMutex = sync.Mutex{}
 	bot.logger = logger
 	bot.twitch = twitch
-	// bot.pluginMngr = NewPluginManager(&bot, dispatcher, db)
-	// bot.dictionary = NewDictionary(db, logger)
-	bot.database = nil
 	bot.alive = make(chan struct{})
 
 	return &bot, nil
@@ -63,12 +55,14 @@ func (bot *Kabukibot) Connect() error {
 	bot.database = db
 
 	// load dictionary elements
-	// bot.logger.Debug("Loading dictionary...")
-	// bot.dictionary.load()
+	bot.logger.Debug("Loading dictionary...")
+	bot.dictionary = NewDictionary(db, bot.logger)
+	bot.dictionary.load()
 
-	// // setup plugins
-	// bot.logger.Debug("Setting up plugins...")
-	// bot.pluginMngr.setup()
+	// setup plugins
+	for _, plugin := range bot.plugins {
+		plugin.Setup(bot)
+	}
 
 	// connect to Twitch
 	client := bot.twitch
@@ -133,9 +127,9 @@ func (bot *Kabukibot) Logger() Logger {
 // 	return bot.emoteMngr
 // }
 
-// func (bot *Kabukibot) Dictionary() *Dictionary {
-// 	return bot.dictionary
-// }
+func (bot *Kabukibot) Dictionary() *Dictionary {
+	return bot.dictionary
+}
 
 func (bot *Kabukibot) Channels() []string {
 	bot.channelMutex.Lock()
@@ -151,13 +145,7 @@ func (bot *Kabukibot) Channels() []string {
 	return result
 }
 
-// func (bot *Kabukibot) Channel(name string) (c *twitch.Channel, ok bool) {
-// 	return bot.chanMngr.Channel(name)
-// }
-
 func (bot *Kabukibot) AddPlugin(plugin Plugin) {
-	plugin.Setup(bot)
-
 	bot.plugins = append(bot.plugins, plugin)
 }
 
