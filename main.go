@@ -33,7 +33,7 @@ func main() {
 	// kabukibot.AddPlugin(plugin.NewACLPlugin())
 	// kabukibot.AddPlugin(plugin.NewPluginControlPlugin())
 	// kabukibot.AddPlugin(plugin.NewSpeedrunComPlugin())
-	// kabukibot.AddPlugin(plugin.NewEchoPlugin())
+	kabukibot.AddPlugin(plugin.NewEchoPlugin())
 	// kabukibot.AddPlugin(plugin.NewSysInfoPlugin())
 	// kabukibot.AddPlugin(plugin.NewDictionaryControlPlugin())
 	// kabukibot.AddPlugin(plugin.NewBanhammerBotPlugin())

@@ -87,7 +87,7 @@ func (self *channelWorker) Work() {
 				}
 
 				switch msg := newMsg.(type) {
-				case twitch.TextMessage:
+				case TextMessage:
 					asserted, okay := worker.Worker.(textMessageWorker)
 					if okay {
 						asserted.HandleTextMessage(&msg, self.sender)

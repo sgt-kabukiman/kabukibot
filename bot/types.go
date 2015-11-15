@@ -1,5 +1,59 @@
 package bot
 
+import (
+	"regexp"
+	"strings"
+
+	"github.com/sgt-kabukiman/kabukibot/twitch"
+)
+
+type TextMessage struct {
+	twitch.TextMessage
+
+	prefix string
+}
+
+func (self *TextMessage) IsCommand(cmd string) bool {
+	return strings.HasPrefix(self.Text, "!"+cmd)
+}
+
+func (self *TextMessage) IsGlobalCommand(cmd string) bool {
+	return self.IsCommand(self.prefix + cmd)
+}
+
+func (self *TextMessage) IsFrom(user string) bool {
+	return strings.ToLower(self.User.Name) == strings.ToLower(user)
+}
+
+var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)
+var argSplitter = regexp.MustCompile(`\s+`)
+
+func (self *TextMessage) Command() string {
+	match := commandRegex.FindStringSubmatch(self.Text)
+	if len(match) == 0 {
+		return ""
+	}
+
+	return strings.ToLower(match[1])
+}
+
+func (self *TextMessage) Arguments() []string {
+	args := make([]string, 0)
+
+	match := commandRegex.FindStringSubmatch(self.Text)
+	if len(match) == 0 {
+		return args
+	}
+
+	argString := strings.TrimSpace(match[2])
+
+	if len(argString) > 0 {
+		args = argSplitter.Split(argString, -1)
+	}
+
+	return args
+}
+
 // type Command interface {
 // 	twitch.Message
 

@@ -1,32 +1,35 @@
 package plugin
 
-import "strings"
-import "github.com/sgt-kabukiman/kabukibot/bot"
+import (
+	"strings"
+
+	"github.com/sgt-kabukiman/kabukibot/bot"
+)
 
 type EchoPlugin struct {
-	bot    *bot.Kabukibot
-	prefix string
+	operator string
 }
 
 func NewEchoPlugin() *EchoPlugin {
 	return &EchoPlugin{}
 }
 
-func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot = bot
-	plugin.prefix = bot.Configuration().CommandPrefix
-
-	d.OnCommand(plugin.onCommand, nil)
+func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot) {
+	plugin.operator = bot.Configuration().Operator
 }
 
-func (plugin *EchoPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() {
-		return
-	}
+func (plugin *EchoPlugin) CreateWorker(channel string) bot.PluginWorker {
+	return plugin
+}
 
-	command := cmd.Command()
+func (self *EchoPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if msg.IsFrom(self.operator) && (msg.IsGlobalCommand("echo") || msg.IsGlobalCommand("say")) {
+		response := strings.Join(msg.Arguments(), " ")
 
-	if (command == plugin.prefix+"say" || command == plugin.prefix+"echo") && plugin.bot.IsOperator(cmd.User().Name) {
-		plugin.bot.Say(cmd.Channel(), strings.Join(cmd.Args(), " "))
+		if len(response) == 0 {
+			response = "err... echo?"
+		}
+
+		sender.SendText(response)
 	}
 }

@@ -33,7 +33,7 @@ type pluginWorkerStruct struct {
 // these are just used to detect message types that a plugin worker wants to handle
 
 type textMessageWorker interface {
-	HandleTextMessage(*twitch.TextMessage, Sender)
+	HandleTextMessage(*TextMessage, Sender)
 }
 
 type roomStateMessageWorker interface {

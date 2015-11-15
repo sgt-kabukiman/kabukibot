@@ -88,6 +88,8 @@ func (bot *Kabukibot) Connect() error {
 func (bot *Kabukibot) Work() {
 	go bot.joinInitialChannels()
 
+	prefix := bot.configuration.CommandPrefix
+
 	for msg := range bot.twitch.Incoming() {
 		// find the appropriate worker
 		channel := msg.ChannelName()
@@ -97,7 +99,12 @@ func (bot *Kabukibot) Work() {
 		bot.channelMutex.Unlock()
 
 		if exists {
-			worker.Input() <- msg
+			asserted, okay := msg.(twitch.TextMessage)
+			if okay {
+				worker.Input() <- TextMessage{asserted, prefix}
+			} else {
+				worker.Input() <- msg
+			}
 		}
 	}
 
@@ -254,24 +261,3 @@ func (bot *Kabukibot) joinInitialChannels() {
 		bot.Join(channel.Name)
 	}
 }
-
-// var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)
-// var argSplitter = regexp.MustCompile(`\s+`)
-
-// func (bot *Kabukibot) detectCommand(msg twitch.TextMessage) {
-// 	match := commandRegex.FindStringSubmatch(msg.Text())
-// 	if len(match) == 0 {
-// 		return
-// 	}
-
-// 	cmd := strings.ToLower(match[1])
-// 	argString := strings.TrimSpace(match[2])
-// 	args := make([]string, 0)
-
-// 	if len(argString) > 0 {
-// 		args = argSplitter.Split(argString, -1)
-// 	}
-
-// 	c := command{msg, cmd, args}
-// 	bot.dispatcher.HandleCommand(&c)
-// }
