@@ -30,6 +30,14 @@ func (self *EchoPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 
+func (self *EchoPlugin) Part() {
+	// nothing to do for us
+}
+
+func (self *EchoPlugin) Shutdown() {
+	// nothing to do for us
+}
+
 func (self *EchoPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsFrom(self.operator) && (msg.IsGlobalCommand("echo") || msg.IsGlobalCommand("say")) {
 		response := strings.Join(msg.Arguments(), " ")

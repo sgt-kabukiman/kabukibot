@@ -51,6 +51,14 @@ type pluginControlWorker struct {
 	plugins  []bot.Plugin
 }
 
+func (self *pluginControlWorker) Part() {
+	// nothing to do for us
+}
+
+func (self *pluginControlWorker) Shutdown() {
+	// nothing to do for us
+}
+
 func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	// skip unwanted commands
 	if !msg.IsGlobalCommand("enable") && !msg.IsGlobalCommand("disable") && !msg.IsGlobalCommand("plugins") {

@@ -1,8 +1,6 @@
 package bot
 
 import (
-	"fmt"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
@@ -160,7 +158,7 @@ func (self *channelWorker) Work() {
 			// we just left the channel
 			_, okay := newMsg.(twitch.PartMessage)
 			if okay {
-				fmt.Printf("[%s] IS LEAVING THE BUILDING!\n", self.channel)
+				self.partWorkers()
 				return
 			}
 
@@ -198,19 +196,25 @@ func (self *channelWorker) Work() {
 			}
 
 		case <-self.leaveSignal:
-			// for worker in workers {
-			// 	worker.leave()
-			// }
-
+			self.partWorkers()
 			return
 
 		case <-self.shutdownSignal:
-			// for worker in workers {
-			// 	worker.shutdown()
-			// }
-
+			self.shutdownWorkers()
 			return
 		}
+	}
+}
+
+func (self *channelWorker) partWorkers() {
+	for _, worker := range self.workers {
+		worker.Worker.Part()
+	}
+}
+
+func (self *channelWorker) shutdownWorkers() {
+	for _, worker := range self.workers {
+		worker.Worker.Shutdown()
 	}
 }
 

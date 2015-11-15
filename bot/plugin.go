@@ -23,8 +23,8 @@ type Plugin interface {
 // }
 
 type PluginWorker interface {
-	// Part()
-	// Shutdown()
+	Part()
+	Shutdown()
 }
 
 type pluginWorkerStruct struct {

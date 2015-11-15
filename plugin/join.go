@@ -36,6 +36,14 @@ func (self *JoinPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 
+func (self *JoinPlugin) Part() {
+	// nothing to do for us
+}
+
+func (self *JoinPlugin) Shutdown() {
+	// nothing to do for us
+}
+
 func (self *JoinPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsGlobalCommand("join") {
 		self.handleJoin(msg, sender)

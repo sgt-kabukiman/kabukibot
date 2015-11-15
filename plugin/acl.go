@@ -43,6 +43,14 @@ type aclPluginWorker struct {
 	channel  bot.Channel
 }
 
+func (self *aclPluginWorker) Part() {
+	// nothing to do for us
+}
+
+func (self *aclPluginWorker) Shutdown() {
+	// nothing to do for us
+}
+
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
 func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
