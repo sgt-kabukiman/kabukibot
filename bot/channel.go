@@ -6,6 +6,14 @@ import (
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
+// this is what's visible to plugins
+type Channel interface {
+	Name() string
+	Alive() <-chan struct{}
+	Plugins() []Plugin
+	ACL() *ACL
+}
+
 type channelWorker struct {
 	channel        string
 	inputChannel   chan twitch.IncomingMessage // should be buffered to sth. like 100msg
@@ -21,14 +29,7 @@ type channelWorker struct {
 func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
 	workers := make([]pluginWorkerStruct, 0)
 
-	for _, plugin := range bot.Plugins() {
-		workers = append(workers, pluginWorkerStruct{
-			Worker:  plugin.CreateWorker(channel),
-			Enabled: true,
-		})
-	}
-
-	return &channelWorker{
+	cw := &channelWorker{
 		channel:        channel,
 		inputChannel:   make(chan twitch.IncomingMessage, 10),
 		leaveSignal:    make(chan struct{}),
@@ -36,9 +37,41 @@ func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
 		alive:          make(chan struct{}),
 		log:            bot.Logger(),
 		acl:            NewACL(channel, bot.OpUsername(), bot.Logger(), bot.Database()),
-		workers:        workers,
+		workers:        nil,
 		sender:         newSenderStruct(bot.twitch, channel),
 	}
+
+	for _, plugin := range bot.Plugins() {
+		workers = append(workers, pluginWorkerStruct{
+			Plugin:  plugin,
+			Worker:  plugin.CreateWorker(cw),
+			Enabled: true,
+		})
+	}
+
+	cw.workers = workers
+
+	return cw
+}
+
+func (self *channelWorker) Name() string {
+	return self.channel
+}
+
+func (self *channelWorker) Plugins() []Plugin {
+	result := make([]Plugin, 0)
+
+	for _, worker := range self.workers {
+		if worker.Enabled {
+			result = append(result, worker.Plugin)
+		}
+	}
+
+	return result
+}
+
+func (self *channelWorker) ACL() *ACL {
+	return self.acl
 }
 
 func (self *channelWorker) Input() chan<- twitch.IncomingMessage {

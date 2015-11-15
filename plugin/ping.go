@@ -10,11 +10,19 @@ func NewPingPlugin() *PingPlugin {
 	return &PingPlugin{}
 }
 
+func (self *PingPlugin) Name() string {
+	return ""
+}
+
+func (self *PingPlugin) Permissions() []string {
+	return []string{}
+}
+
 func (self *PingPlugin) Setup(bot *bot.Kabukibot) {
 	self.operator = bot.OpUsername()
 }
 
-func (self *PingPlugin) CreateWorker(channel string) bot.PluginWorker {
+func (self *PingPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 

@@ -14,11 +14,19 @@ func NewEchoPlugin() *EchoPlugin {
 	return &EchoPlugin{}
 }
 
+func (self *EchoPlugin) Name() string {
+	return ""
+}
+
+func (self *EchoPlugin) Permissions() []string {
+	return []string{}
+}
+
 func (self *EchoPlugin) Setup(bot *bot.Kabukibot) {
 	self.operator = bot.Configuration().Operator
 }
 
-func (self *EchoPlugin) CreateWorker(channel string) bot.PluginWorker {
+func (self *EchoPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 

@@ -18,13 +18,21 @@ func NewJoinPlugin() *JoinPlugin {
 	return &JoinPlugin{}
 }
 
+func (self *JoinPlugin) Name() string {
+	return ""
+}
+
+func (self *JoinPlugin) Permissions() []string {
+	return []string{}
+}
+
 func (self *JoinPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
 	self.operator = bot.OpUsername()
 	self.home = "#" + strings.ToLower(bot.BotUsername())
 }
 
-func (self *JoinPlugin) CreateWorker(channel string) bot.PluginWorker {
+func (self *JoinPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 

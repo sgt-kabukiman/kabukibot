@@ -3,8 +3,10 @@ package bot
 import "github.com/sgt-kabukiman/kabukibot/twitch"
 
 type Plugin interface {
+	Name() string
 	Setup(*Kabukibot)
-	CreateWorker(string) PluginWorker
+	CreateWorker(Channel) PluginWorker
+	Permissions() []string
 }
 
 // type GlobalPlugin interface {
@@ -26,6 +28,7 @@ type PluginWorker interface {
 }
 
 type pluginWorkerStruct struct {
+	Plugin  Plugin
 	Worker  PluginWorker
 	Enabled bool
 }

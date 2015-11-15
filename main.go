@@ -30,7 +30,7 @@ func main() {
 	// kabukibot.AddPlugin(plugin.NewConsoleOutputPlugin())
 	kabukibot.AddPlugin(plugin.NewPingPlugin())
 	kabukibot.AddPlugin(plugin.NewJoinPlugin())
-	// kabukibot.AddPlugin(plugin.NewACLPlugin())
+	kabukibot.AddPlugin(plugin.NewACLPlugin())
 	// kabukibot.AddPlugin(plugin.NewPluginControlPlugin())
 	// kabukibot.AddPlugin(plugin.NewSpeedrunComPlugin())
 	kabukibot.AddPlugin(plugin.NewEchoPlugin())
