@@ -25,6 +25,10 @@ func (self *TextMessage) IsFrom(user string) bool {
 	return strings.ToLower(self.User.Name) == strings.ToLower(user)
 }
 
+func (self *TextMessage) IsFromBroadcaster() bool {
+	return self.IsFrom(strings.TrimPrefix(self.Channel, "#"))
+}
+
 var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)
 var argSplitter = regexp.MustCompile(`\s+`)
 

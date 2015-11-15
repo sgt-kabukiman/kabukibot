@@ -3,6 +3,7 @@ package bot
 import (
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -155,6 +156,8 @@ func (bot *Kabukibot) Plugins() []Plugin {
 }
 
 func (bot *Kabukibot) Join(channel string) <-chan bool {
+	channel = strings.ToLower(channel)
+
 	bot.channelMutex.Lock()
 
 	// check if we already are in the channel. if not, then ..
@@ -197,6 +200,17 @@ func (bot *Kabukibot) Join(channel string) <-chan bool {
 }
 
 func (bot *Kabukibot) Part(channel string) <-chan bool {
+	channel = strings.ToLower(channel)
+
+	// never leave our home channel
+	if channel == "#"+strings.ToLower(bot.BotUsername()) {
+		dummy := make(chan bool, 1)
+		dummy <- false
+		close(dummy)
+
+		return dummy
+	}
+
 	bot.Database().Exec("DELETE FROM channel WHERE name = ?", channel)
 
 	// send off the request to leave the channel, but wait for its confirmation

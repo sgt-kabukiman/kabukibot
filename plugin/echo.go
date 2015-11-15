@@ -14,12 +14,12 @@ func NewEchoPlugin() *EchoPlugin {
 	return &EchoPlugin{}
 }
 
-func (plugin *EchoPlugin) Setup(bot *bot.Kabukibot) {
-	plugin.operator = bot.Configuration().Operator
+func (self *EchoPlugin) Setup(bot *bot.Kabukibot) {
+	self.operator = bot.Configuration().Operator
 }
 
-func (plugin *EchoPlugin) CreateWorker(channel string) bot.PluginWorker {
-	return plugin
+func (self *EchoPlugin) CreateWorker(channel string) bot.PluginWorker {
+	return self
 }
 
 func (self *EchoPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
