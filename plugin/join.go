@@ -81,7 +81,7 @@ func (self *JoinPlugin) handleJoin(msg *bot.TextMessage, sender bot.Sender) {
 			result := <-sent
 
 			if result {
-				sender.SendText("Joined " + toJoin + ".")
+				sender.Respond("I joined " + toJoin + ".")
 			}
 		}()
 	}
@@ -109,9 +109,9 @@ func (self *JoinPlugin) handlePart(msg *bot.TextMessage, sender bot.Sender) {
 	toLeave = "#" + strings.TrimPrefix(strings.ToLower(toLeave), "#")
 
 	if toLeave == self.home {
-		sender.SendText("Not leaving my home, sweet home...")
+		sender.Respond("I am not leaving my home, sweet home...")
 	} else if len(toLeave) > 1 {
-		sender.SendText("Trying to leave " + toLeave + "...")
+		sender.Respond("I am trying to leave " + toLeave + "...")
 		self.bot.Part(toLeave)
 	}
 }

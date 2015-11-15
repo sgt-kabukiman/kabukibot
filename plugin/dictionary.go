@@ -66,7 +66,7 @@ func (self *DictionaryPlugin) handleSet(msg *bot.TextMessage, sender bot.Sender)
 	args := msg.Arguments()
 
 	if len(args) < 2 {
-		sender.SendText("no text given.")
+		sender.Respond("you have not given any text.")
 		return
 	}
 
@@ -77,9 +77,9 @@ func (self *DictionaryPlugin) handleSet(msg *bot.TextMessage, sender bot.Sender)
 	self.dict.Set(key, value)
 
 	if exists {
-		sender.SendText("replaced '" + key + "' with '" + value + "'.")
+		sender.Respond("replaced '" + key + "' with '" + value + "'.")
 	} else {
-		sender.SendText("added '" + key + "' with '" + value + "'.")
+		sender.Respond("added '" + key + "' with '" + value + "'.")
 	}
 }
 
@@ -87,16 +87,16 @@ func (self *DictionaryPlugin) handleGet(msg *bot.TextMessage, sender bot.Sender)
 	args := msg.Arguments()
 
 	if len(args) < 1 {
-		sender.SendText("no key given.")
+		sender.Respond("you have not given a key.")
 		return
 	}
 
 	key := strings.ToLower(args[0])
 
 	if self.dict.Has(key) {
-		sender.SendText(key + " = " + self.dict.Get(key))
+		sender.Respond(key + " = " + self.dict.Get(key))
 	} else {
-		sender.SendText("unknown key '" + key + "' given.")
+		sender.Respond("the key '" + key + "' does not exist.")
 	}
 }
 
@@ -105,5 +105,5 @@ func (self *DictionaryPlugin) handleKeys(msg *bot.TextMessage, sender bot.Sender
 
 	sort.Strings(keys)
 
-	sender.SendText("keys are: " + strings.Join(keys, ", "))
+	sender.Respond("keys are: " + strings.Join(keys, ", "))
 }

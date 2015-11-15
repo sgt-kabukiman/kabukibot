@@ -69,7 +69,7 @@ func (self *sysInfoWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Se
 
 	if msg.IsFromOperator() {
 		if msg.IsGlobalCommand("uptime") {
-			sender.SendText("I have been running for " + self.uptime() + ".")
+			sender.Respond("I have been running for " + self.uptime() + ".")
 			return
 		}
 
@@ -82,7 +82,7 @@ func (self *sysInfoWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Se
 				self.uptime(), len(self.plugin.bot.Channels()), humanize.FormatInteger("#,###.", self.plugin.messages), humanize.IBytes(mem.Sys),
 			)
 
-			sender.SendText(infoString)
+			sender.Respond(infoString)
 		}
 	}
 }

@@ -84,7 +84,7 @@ func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender 
 
 	// everything from now on requires at last a plugin key as the first parameter
 	if len(args) == 0 {
-		sender.SendText("no plugin name given. See !" + self.prefix + "plugins for a list of available plugins.")
+		sender.Respond("no plugin name given. See !" + self.prefix + "plugins for a list of available plugins.")
 		return
 	}
 
@@ -101,7 +101,7 @@ func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender 
 	}
 
 	if !found {
-		sender.SendText("invalid plugin \"" + pluginKey + "\" given.")
+		sender.Respond("invalid plugin \"" + pluginKey + "\" given.")
 		return
 	}
 
@@ -122,7 +122,7 @@ func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender 
 		}
 	}
 
-	sender.SendText(message)
+	sender.Respond(message)
 }
 
 func (self *pluginControlWorker) respondToListCommand(args []string, sender bot.Sender) {
@@ -152,9 +152,9 @@ func (self *pluginControlWorker) respondToListCommand(args []string, sender bot.
 	}
 
 	if len(nameList) == 0 {
-		sender.SendText("There are no " + prefix + " plugins.")
+		sender.Respond("there are no " + prefix + " plugins.")
 	} else {
-		sender.SendText(prefix + " plugins are: " + strings.Join(nameList, ", "))
+		sender.Respond(prefix + " plugins are: " + strings.Join(nameList, ", "))
 	}
 }
 

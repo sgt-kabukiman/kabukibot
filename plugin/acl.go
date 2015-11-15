@@ -73,9 +73,9 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 		permissions := self.permissions()
 
 		if len(permissions) == 0 {
-			sender.SendText("There are no permissions available to be configured.")
+			sender.Respond("there are no permissions available to be configured.")
 		} else {
-			sender.SendText("available permissions are: " + strings.Join(permissions, ", "))
+			sender.Respond("available permissions are: " + strings.Join(permissions, ", "))
 		}
 
 		return
@@ -84,7 +84,7 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 	// everything from now on requires at last a permission as the first parameter
 	args := msg.Arguments()
 	if len(args) == 0 {
-		sender.SendText("no permission name given.")
+		sender.Respond("no permission name given.")
 		return
 	}
 
@@ -93,7 +93,7 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 	permissions := self.permissions()
 
 	if len(permission) == 0 {
-		sender.SendText("invalid permission given.")
+		sender.Respond("invalid (no) permission given.")
 		return
 	}
 
@@ -107,7 +107,7 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 	}
 
 	if !found {
-		sender.SendText("invalid permission (" + permission + ") given.")
+		sender.Respond("invalid permission (" + permission + ") given.")
 		return
 	}
 
@@ -118,9 +118,9 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 		users := acl.AllowedUsers(permission)
 
 		if len(permissions) == 0 {
-			sender.SendText("\"" + permission + "\" is granted to nobody at the moment, only you can use it.")
+			sender.Respond("\"" + permission + "\" is granted to nobody at the moment, only you can use it.")
 		} else {
-			sender.SendText("\"" + permission + "\" is granted to " + strings.Join(users, ", "))
+			sender.Respond("\"" + permission + "\" is granted to " + strings.Join(users, ", "))
 		}
 
 		return
@@ -128,7 +128,7 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 
 	// no user ident(s) given
 	if len(args) == 1 {
-		sender.SendText("no groups/usernames given. Group names are " + strings.Join(bot.ACLGroups(), ", ") + ".")
+		sender.Respond("no groups/usernames given. Group names are " + strings.Join(bot.ACLGroups(), ", ") + ".")
 		return
 	}
 
@@ -143,7 +143,7 @@ func (self *aclPluginWorker) handleAllowDeny(allow bool, permission string, args
 	args = strings.Split(strings.ToLower(userIdentRegex.ReplaceAllString(strings.Join(args, ","), "")), ",")
 
 	if len(args) == 0 {
-		sender.SendText("invalid groups/usernames. Use a comma separated list if you give multiple.")
+		sender.Respond("invalid groups/usernames. Use a comma separated list if you give multiple.")
 		return
 	}
 
@@ -172,11 +172,11 @@ func (self *aclPluginWorker) handleAllowDeny(allow bool, permission string, args
 	}
 
 	if len(processed) == 0 {
-		sender.SendText("no changes needed.")
+		sender.Respond("no changes needed.")
 	} else if allow {
-		sender.SendText("granted permission for " + permission + " to " + strings.Join(processed, ", ") + ".")
+		sender.Respond("granted permission for " + permission + " to " + strings.Join(processed, ", ") + ".")
 	} else {
-		sender.SendText("revoked permission for " + permission + " from " + strings.Join(processed, ", ") + ".")
+		sender.Respond("revoked permission for " + permission + " from " + strings.Join(processed, ", ") + ".")
 	}
 }
 

@@ -25,7 +25,7 @@ type channelWorker struct {
 	log            Logger
 	acl            *ACL
 	workers        []pluginWorkerStruct
-	sender         Sender
+	sender         *channelSender
 }
 
 type pluginRow struct {
@@ -45,7 +45,7 @@ func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
 		log:            bot.Logger(),
 		acl:            NewACL(channel, bot.OpUsername(), bot.Logger(), bot.Database()),
 		workers:        nil,
-		sender:         newSenderStruct(bot.twitch, channel),
+		sender:         newChannelSender(bot.twitch, channel),
 	}
 
 	// find out what plugins have been enabled for the channel
@@ -181,7 +181,7 @@ func (self *channelWorker) Work() {
 				case TextMessage:
 					asserted, okay := worker.Worker.(textMessageWorker)
 					if okay {
-						asserted.HandleTextMessage(&msg, self.sender)
+						asserted.HandleTextMessage(&msg, self.sender.newResponder(&msg))
 					}
 
 				case twitch.RoomStateMessage:
