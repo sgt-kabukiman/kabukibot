@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 	// add plugins
 	// kabukibot.AddPlugin(plugin.NewBlacklistPlugin()) // load this as early as possible, because users will only be blacklisted for all following plugins
 	// kabukibot.AddPlugin(plugin.NewConsoleOutputPlugin())
-	// kabukibot.AddPlugin(plugin.NewPingPlugin())
+	kabukibot.AddPlugin(plugin.NewPingPlugin())
 	// kabukibot.AddPlugin(plugin.NewJoinPlugin())
 	// kabukibot.AddPlugin(plugin.NewACLPlugin())
 	// kabukibot.AddPlugin(plugin.NewPluginControlPlugin())

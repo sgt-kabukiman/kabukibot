@@ -16,6 +16,7 @@ type Kabukibot struct {
 	twitch       *twitch.TwitchClient
 	workers      map[string]*channelWorker
 	channelMutex sync.Mutex
+	plugins      []Plugin
 	logger       Logger
 	// chanMngr      *ChannelManager
 	// pluginMngr    *PluginManager
@@ -120,10 +121,6 @@ func (bot *Kabukibot) Logger() Logger {
 	return bot.logger
 }
 
-// func (bot *Kabukibot) PluginManager() *PluginManager {
-// 	return bot.pluginMngr
-// }
-
 // func (bot *Kabukibot) EmoteManager() EmoteManager {
 // 	return bot.emoteMngr
 // }
@@ -140,9 +137,15 @@ func (bot *Kabukibot) Logger() Logger {
 // 	return bot.chanMngr.Channel(name)
 // }
 
-// func (bot *Kabukibot) AddPlugin(plugin Plugin) {
-// 	bot.pluginMngr.registerPlugin(plugin)
-// }
+func (bot *Kabukibot) AddPlugin(plugin Plugin) {
+	plugin.Setup(bot)
+
+	bot.plugins = append(bot.plugins, plugin)
+}
+
+func (bot *Kabukibot) Plugins() []Plugin {
+	return bot.plugins
+}
 
 func (bot *Kabukibot) Join(channel string) <-chan bool {
 	bot.channelMutex.Lock()

@@ -1,31 +1,32 @@
 package plugin
 
-import "github.com/sgt-kabukiman/kabukibot/bot"
+import (
+	"strings"
+
+	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/twitch"
+)
 
 type PingPlugin struct {
-	bot    *bot.Kabukibot
-	prefix string
+	operator string
+	prefix   string
 }
 
 func NewPingPlugin() *PingPlugin {
 	return &PingPlugin{}
 }
 
-func (plugin *PingPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot = bot
+func (plugin *PingPlugin) Setup(bot *bot.Kabukibot) {
+	plugin.operator = bot.Configuration().Operator
 	plugin.prefix = bot.Configuration().CommandPrefix
-
-	d.OnCommand(plugin.onCommand, nil)
 }
 
-func (plugin *PingPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() {
-		return
-	}
+func (plugin *PingPlugin) CreateWorker(channel string) bot.PluginWorker {
+	return plugin
+}
 
-	command := cmd.Command()
-
-	if command == plugin.prefix+"ping" && plugin.bot.IsOperator(cmd.User().Name) {
-		plugin.bot.Respond(cmd, "Pong!")
+func (self *PingPlugin) HandleTextMessage(msg *twitch.TextMessage, sender bot.Sender) {
+	if strings.ToLower(msg.User.Name) == self.operator && strings.HasPrefix(msg.Text, "!"+self.prefix+"ping") {
+		sender.SendText("Pong!")
 	}
 }

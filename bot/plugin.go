@@ -2,9 +2,27 @@ package bot
 
 import "github.com/sgt-kabukiman/kabukibot/twitch"
 
+type Plugin interface {
+	Setup(*Kabukibot)
+	CreateWorker(string) PluginWorker
+}
+
+// type GlobalPlugin interface {
+// 	Plugin
+// }
+
+// type ChannelPlugin interface {
+// 	Plugin
+
+// 	Key() string
+// 	Permissions() []string
+// 	Load(*twitch.Channel, *Kabukibot, Dispatcher)
+// 	Unload(*twitch.Channel, *Kabukibot, Dispatcher)
+// }
+
 type PluginWorker interface {
-	Part()
-	Shutdown()
+	// Part()
+	// Shutdown()
 }
 
 type pluginWorkerStruct struct {
@@ -15,17 +33,17 @@ type pluginWorkerStruct struct {
 // these are just used to detect message types that a plugin worker wants to handle
 
 type textMessageWorker interface {
-	HandleTextMessage(msg *twitch.TextMessage)
+	HandleTextMessage(*twitch.TextMessage, Sender)
 }
 
 type roomStateMessageWorker interface {
-	HandleRoomStateMessage(msg *twitch.RoomStateMessage)
+	HandleRoomStateMessage(*twitch.RoomStateMessage, Sender)
 }
 
 type clearChatMessageWorker interface {
-	HandleClearChatMessage(msg *twitch.ClearChatMessage)
+	HandleClearChatMessage(*twitch.ClearChatMessage, Sender)
 }
 
 type subNotificationMessageWorker interface {
-	HandleSubscriberNotificationMessage(msg *twitch.SubscriberNotificationMessage)
+	HandleSubscriberNotificationMessage(*twitch.SubscriberNotificationMessage, Sender)
 }

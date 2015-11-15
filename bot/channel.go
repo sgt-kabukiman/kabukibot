@@ -15,9 +15,19 @@ type channelWorker struct {
 	log            Logger
 	acl            *ACL
 	workers        []pluginWorkerStruct
+	sender         Sender
 }
 
 func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
+	workers := make([]pluginWorkerStruct, 0)
+
+	for _, plugin := range bot.Plugins() {
+		workers = append(workers, pluginWorkerStruct{
+			Worker:  plugin.CreateWorker(channel),
+			Enabled: true,
+		})
+	}
+
 	return &channelWorker{
 		channel:        channel,
 		inputChannel:   make(chan twitch.IncomingMessage, 10),
@@ -26,7 +36,8 @@ func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
 		alive:          make(chan struct{}),
 		log:            bot.Logger(),
 		acl:            NewACL(channel, bot.OpUsername(), bot.Logger(), bot.Database()),
-		workers:        make([]pluginWorkerStruct, 0),
+		workers:        workers,
+		sender:         newSenderStruct(bot.twitch, channel),
 	}
 }
 
@@ -58,8 +69,6 @@ func (self *channelWorker) Work() {
 	// initialize ACL
 	self.acl.loadData()
 
-	// initialize plugin workers
-
 	// endless worker loop
 	for {
 		select {
@@ -81,25 +90,25 @@ func (self *channelWorker) Work() {
 				case twitch.TextMessage:
 					asserted, okay := worker.Worker.(textMessageWorker)
 					if okay {
-						asserted.HandleTextMessage(&msg)
+						asserted.HandleTextMessage(&msg, self.sender)
 					}
 
 				case twitch.RoomStateMessage:
 					asserted, okay := worker.Worker.(roomStateMessageWorker)
 					if okay {
-						asserted.HandleRoomStateMessage(&msg)
+						asserted.HandleRoomStateMessage(&msg, self.sender)
 					}
 
 				case twitch.ClearChatMessage:
 					asserted, okay := worker.Worker.(clearChatMessageWorker)
 					if okay {
-						asserted.HandleClearChatMessage(&msg)
+						asserted.HandleClearChatMessage(&msg, self.sender)
 					}
 
 				case twitch.SubscriberNotificationMessage:
 					asserted, okay := worker.Worker.(subNotificationMessageWorker)
 					if okay {
-						asserted.HandleSubscriberNotificationMessage(&msg)
+						asserted.HandleSubscriberNotificationMessage(&msg, self.sender)
 					}
 				}
 			}
