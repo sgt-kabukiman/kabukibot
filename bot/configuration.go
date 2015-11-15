@@ -42,3 +42,21 @@ func LoadConfiguration() (*Configuration, error) {
 
 	return &config, nil
 }
+
+func (self *Configuration) PluginConfig(plugin string, dest interface{}) error {
+	data, exists := self.Plugins[plugin]
+
+	if exists {
+		// very lazy hack because i could not figure out how to nicely type assert
+		// the existing structure (which seems to be an endless map[string]interface{}
+		// monster) to the concrete dest struct
+		encoded, _ := json.Marshal(data)
+
+		err := json.Unmarshal(encoded, dest)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
