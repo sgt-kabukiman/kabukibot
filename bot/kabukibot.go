@@ -84,6 +84,7 @@ func (bot *Kabukibot) Work() {
 	go bot.joinInitialChannels()
 
 	prefix := bot.configuration.CommandPrefix
+	operator := bot.OpUsername()
 
 	for msg := range bot.twitch.Incoming() {
 		// find the appropriate worker
@@ -96,7 +97,7 @@ func (bot *Kabukibot) Work() {
 		if exists {
 			asserted, okay := msg.(twitch.TextMessage)
 			if okay {
-				worker.Input() <- TextMessage{asserted, prefix}
+				worker.Input() <- TextMessage{asserted, prefix, operator}
 			} else {
 				worker.Input() <- msg
 			}

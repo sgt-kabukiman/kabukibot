@@ -20,8 +20,7 @@ type logConfig struct {
 }
 
 type LogPlugin struct {
-	config   logConfig
-	operator string
+	config logConfig
 }
 
 func NewLogPlugin() *LogPlugin {
@@ -38,7 +37,6 @@ func (self *LogPlugin) Permissions() []string {
 
 func (self *LogPlugin) Setup(bot *bot.Kabukibot) {
 	self.config = logConfig{}
-	self.operator = bot.OpUsername()
 
 	err := bot.Configuration().PluginConfig(self.Name(), &self.config)
 	if err != nil {
@@ -50,14 +48,12 @@ func (self *LogPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return &logWorker{
 		directory: self.config.Directory,
 		channel:   channel.Name(),
-		operator:  self.operator,
 	}
 }
 
 type logWorker struct {
 	directory string
 	channel   string
-	operator  string
 	file      *os.File
 }
 
@@ -138,7 +134,7 @@ func (self *logWorker) userPrefix(msg *bot.TextMessage) string {
 		prefix += "!!"
 	}
 
-	if msg.IsFrom(self.operator) {
+	if msg.IsFromOperator() {
 		prefix += "$"
 	}
 

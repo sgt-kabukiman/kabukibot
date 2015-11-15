@@ -7,7 +7,6 @@ import (
 )
 
 type EchoPlugin struct {
-	operator string
 }
 
 func NewEchoPlugin() *EchoPlugin {
@@ -23,7 +22,6 @@ func (self *EchoPlugin) Permissions() []string {
 }
 
 func (self *EchoPlugin) Setup(bot *bot.Kabukibot) {
-	self.operator = bot.Configuration().Operator
 }
 
 func (self *EchoPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
@@ -47,7 +45,7 @@ func (self *EchoPlugin) Shutdown() {
 }
 
 func (self *EchoPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
-	if msg.IsFrom(self.operator) && (msg.IsGlobalCommand("echo") || msg.IsGlobalCommand("say")) {
+	if msg.IsFromOperator() && (msg.IsGlobalCommand("echo") || msg.IsGlobalCommand("say")) {
 		response := strings.Join(msg.Arguments(), " ")
 
 		if len(response) == 0 {

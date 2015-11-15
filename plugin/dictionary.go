@@ -8,8 +8,7 @@ import (
 )
 
 type DictionaryPlugin struct {
-	dict     *bot.Dictionary
-	operator string
+	dict *bot.Dictionary
 }
 
 func NewDictionaryPlugin() *DictionaryPlugin {
@@ -26,7 +25,6 @@ func (self *DictionaryPlugin) Permissions() []string {
 
 func (self *DictionaryPlugin) Setup(bot *bot.Kabukibot) {
 	self.dict = bot.Dictionary()
-	self.operator = bot.OpUsername()
 }
 
 func (self *DictionaryPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
@@ -51,7 +49,7 @@ func (self *DictionaryPlugin) Shutdown() {
 
 func (self *DictionaryPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	// op-only
-	if !msg.IsFrom(self.operator) {
+	if !msg.IsFromOperator() {
 		return
 	}
 

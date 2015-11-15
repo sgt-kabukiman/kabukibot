@@ -10,7 +10,8 @@ import (
 type TextMessage struct {
 	twitch.TextMessage
 
-	prefix string
+	prefix   string
+	operator string
 }
 
 func (self *TextMessage) IsCommand(cmd string) bool {
@@ -27,6 +28,14 @@ func (self *TextMessage) IsFrom(user string) bool {
 
 func (self *TextMessage) IsFromBroadcaster() bool {
 	return self.IsFrom(strings.TrimPrefix(self.Channel, "#"))
+}
+
+func (self *TextMessage) IsFromOperator() bool {
+	return self.IsFrom(self.operator)
+}
+
+func (self *TextMessage) IsFromBot() bool {
+	return self.User.Myself
 }
 
 var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)

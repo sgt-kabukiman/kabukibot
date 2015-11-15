@@ -190,6 +190,7 @@ type EmoticonMarkers map[int][]EmoticonMarker
 
 type User struct {
 	Name       string
+	Myself     bool
 	Subscriber bool
 	Turbo      bool
 	ID         int

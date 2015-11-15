@@ -8,8 +8,7 @@ import (
 )
 
 type ACLPlugin struct {
-	bot      *bot.Kabukibot
-	operator string
+	bot *bot.Kabukibot
 }
 
 func NewACLPlugin() *ACLPlugin {
@@ -26,21 +25,18 @@ func (self *ACLPlugin) Permissions() []string {
 
 func (self *ACLPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
-	self.operator = bot.OpUsername()
 }
 
 func (self *ACLPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return &aclPluginWorker{
-		bot:      self.bot,
-		operator: self.operator,
-		channel:  channel,
+		bot:     self.bot,
+		channel: channel,
 	}
 }
 
 type aclPluginWorker struct {
-	bot      *bot.Kabukibot
-	operator string
-	channel  bot.Channel
+	bot     *bot.Kabukibot
+	channel bot.Channel
 }
 
 func (self *aclPluginWorker) Enable() {
@@ -68,7 +64,7 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 	}
 
 	// our commands are all priv-only
-	if !msg.IsFromBroadcaster() && !msg.IsFrom(self.operator) {
+	if !msg.IsFromBroadcaster() && !msg.IsFromOperator() {
 		return
 	}
 

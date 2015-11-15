@@ -18,7 +18,6 @@ type SysInfoPlugin struct {
 	bot      *bot.Kabukibot
 	startup  time.Time
 	messages int
-	operator string
 	mutex    sync.Mutex
 }
 
@@ -38,7 +37,6 @@ func (self *SysInfoPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
 	self.startup = time.Now()
 	self.mutex = sync.Mutex{}
-	self.operator = bot.OpUsername()
 	self.messages = 0
 }
 
@@ -69,7 +67,7 @@ func (self *sysInfoWorker) Shutdown() {
 func (self *sysInfoWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	self.countMessage()
 
-	if msg.IsFrom(self.plugin.operator) {
+	if msg.IsFromOperator() {
 		if msg.IsGlobalCommand("uptime") {
 			sender.SendText("I have been running for " + self.uptime() + ".")
 			return

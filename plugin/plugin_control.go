@@ -8,10 +8,9 @@ import (
 )
 
 type PluginControlPlugin struct {
-	bot      *bot.Kabukibot
-	operator string
-	prefix   string
-	plugins  []bot.Plugin
+	bot     *bot.Kabukibot
+	prefix  string
+	plugins []bot.Plugin
 }
 
 func NewPluginControlPlugin() *PluginControlPlugin {
@@ -28,27 +27,24 @@ func (self *PluginControlPlugin) Permissions() []string {
 
 func (self *PluginControlPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
-	self.operator = bot.OpUsername()
 	self.prefix = bot.Configuration().CommandPrefix
 	self.plugins = bot.Plugins()
 }
 
 func (self *PluginControlPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return &pluginControlWorker{
-		bot:      self.bot,
-		operator: self.operator,
-		prefix:   self.prefix,
-		channel:  channel,
-		plugins:  self.plugins,
+		bot:     self.bot,
+		prefix:  self.prefix,
+		channel: channel,
+		plugins: self.plugins,
 	}
 }
 
 type pluginControlWorker struct {
-	bot      *bot.Kabukibot
-	operator string
-	prefix   string
-	channel  bot.Channel
-	plugins  []bot.Plugin
+	bot     *bot.Kabukibot
+	prefix  string
+	channel bot.Channel
+	plugins []bot.Plugin
 }
 
 func (self *pluginControlWorker) Enable() {
@@ -74,7 +70,7 @@ func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender 
 	}
 
 	// our commands are all priv-only
-	if !msg.IsFromBroadcaster() && !msg.IsFrom(self.operator) {
+	if !msg.IsFromBroadcaster() && !msg.IsFromOperator() {
 		return
 	}
 

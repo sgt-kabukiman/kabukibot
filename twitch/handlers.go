@@ -96,7 +96,11 @@ func (client *TwitchClient) onPrivmsg(msg *irc.Message, tags irc.Tags) {
 	}
 
 	// parse user information from tags
-	user := User{Name: nickname, Type: Plebs}
+	user := User{
+		Name:   nickname,
+		Type:   Plebs,
+		Myself: strings.ToLower(nickname) == strings.ToLower(client.username),
+	}
 
 	displayName, okay := tags["display-name"]
 	if okay && len(displayName) > 0 {

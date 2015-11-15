@@ -8,10 +8,9 @@ import (
 )
 
 type JoinPlugin struct {
-	bot      *bot.Kabukibot
-	prefix   string
-	operator string
-	home     string
+	bot    *bot.Kabukibot
+	prefix string
+	home   string
 }
 
 func NewJoinPlugin() *JoinPlugin {
@@ -28,7 +27,6 @@ func (self *JoinPlugin) Permissions() []string {
 
 func (self *JoinPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
-	self.operator = bot.OpUsername()
 	self.home = "#" + strings.ToLower(bot.BotUsername())
 }
 
@@ -69,7 +67,7 @@ func (self *JoinPlugin) handleJoin(msg *bot.TextMessage, sender bot.Sender) {
 	if len(args) == 0 && sentOn == self.home {
 		// anyone#bot: !join
 		toJoin = user
-	} else if len(args) > 0 && msg.IsFrom(self.operator) && isChannel(args[0]) {
+	} else if len(args) > 0 && msg.IsFromOperator() && isChannel(args[0]) {
 		// op#anywhere: !join #channel
 		toJoin = args[0]
 	}
@@ -99,11 +97,11 @@ func (self *JoinPlugin) handlePart(msg *bot.TextMessage, sender bot.Sender) {
 		if sentOn == self.home {
 			// (anyone)#bot: !part
 			toLeave = user
-		} else if msg.IsFrom(self.operator) || msg.IsFromBroadcaster() {
+		} else if msg.IsFromOperator() || msg.IsFromBroadcaster() {
 			// [op|owner]#(anywhere): !part
 			toLeave = sentOn
 		}
-	} else if isChannel(args[0]) && msg.IsFrom(self.operator) {
+	} else if isChannel(args[0]) && msg.IsFromOperator() {
 		// op#(anywhere): !part #something
 		toLeave = args[0]
 	}
