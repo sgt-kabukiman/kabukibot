@@ -1,19 +1,29 @@
 package bot
 
+import (
+	"sync"
+
+	"github.com/jmoiron/sqlx"
+)
+
 type dict map[string]string
 
 // The Dictionary is a glorified string/string map that's kept in sync with a database table.
 type Dictionary struct {
-	db   *DatabaseStruct
-	log  Logger
-	data dict
+	db    *sqlx.DB
+	log   Logger
+	data  dict
+	mutex sync.RWMutex
 }
 
-func NewDictionary(db *DatabaseStruct, log Logger) *Dictionary {
-	return &Dictionary{db, log, make(dict)}
+func NewDictionary(db *sqlx.DB, log Logger) *Dictionary {
+	return &Dictionary{db, log, make(dict), sync.RWMutex{}}
 }
 
 func (self *Dictionary) Keys() []string {
+	self.mutex.RLock()
+	defer self.mutex.RUnlock()
+
 	list := make([]string, len(self.data))
 	idx := 0
 
@@ -25,7 +35,10 @@ func (self *Dictionary) Keys() []string {
 	return list
 }
 
-func (self *Dictionary) Add(key string, value string) *Dictionary {
+func (self *Dictionary) Add(key string, value string) {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+
 	_, exists := self.data[key]
 	if !exists {
 		self.data[key] = value
@@ -37,14 +50,16 @@ func (self *Dictionary) Add(key string, value string) *Dictionary {
 
 		self.log.Debug("Added dictionary entry '%s' as '%s'.", key, value)
 	}
-
-	return self
 }
 
-func (self *Dictionary) Set(key string, value string) *Dictionary {
+func (self *Dictionary) Set(key string, value string) {
+	self.mutex.Lock()
+
 	_, exists := self.data[key]
 	if !exists {
-		return self.Add(key, value)
+		self.mutex.Unlock()
+		self.Add(key, value)
+		return
 	}
 
 	_, err := self.db.Exec("UPDATE dictionary SET value = ? WHERE keyname = ?", value, key)
@@ -53,11 +68,13 @@ func (self *Dictionary) Set(key string, value string) *Dictionary {
 	}
 
 	self.log.Debug("Updated dictionary entry '%s' with '%s'.", key, value)
-
-	return self
+	self.mutex.Unlock()
 }
 
 func (self *Dictionary) Get(key string) string {
+	self.mutex.RLock()
+	defer self.mutex.RUnlock()
+
 	value, exists := self.data[key]
 	if exists {
 		return value
@@ -67,6 +84,9 @@ func (self *Dictionary) Get(key string) string {
 }
 
 func (self *Dictionary) Has(key string) bool {
+	self.mutex.RLock()
+	defer self.mutex.RUnlock()
+
 	_, exists := self.data[key]
 	return exists
 }
@@ -87,28 +107,21 @@ func (self *Dictionary) Delete(key string) *Dictionary {
 	return self
 }
 
+type dictRow struct {
+	Keyname string
+	Value   string
+}
+
 func (self *Dictionary) load() {
-	rows, err := self.db.Query("SELECT * FROM dictionary")
-	if err != nil {
-		self.log.Fatal("Could not query the dictionary: " + err.Error())
-	}
-	defer rows.Close()
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
 
-	rowCount := 0
+	list := make([]dictRow, 0)
+	self.db.Select(&list, "SELECT * FROM dictionary ORDER BY keyname")
 
-	for rows.Next() {
-		var key, value string
-		if err := rows.Scan(&key, &value); err != nil {
-			self.log.Fatal("%s", err.Error())
-		}
-
-		self.data[key] = value
-		rowCount = rowCount + 1
+	for _, item := range list {
+		self.data[item.Keyname] = item.Value
 	}
 
-	if err := rows.Err(); err != nil {
-		self.log.Fatal("%s", err.Error())
-	}
-
-	self.log.Debug("Loaded %d dictionary entries.", rowCount)
+	self.log.Debug("Loaded %d dictionary entries.", len(list))
 }
