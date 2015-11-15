@@ -124,10 +124,6 @@ func (bot *Kabukibot) Logger() Logger {
 	return bot.logger
 }
 
-// func (bot *Kabukibot) EmoteManager() EmoteManager {
-// 	return bot.emoteMngr
-// }
-
 func (bot *Kabukibot) Dictionary() *Dictionary {
 	return bot.dictionary
 }
