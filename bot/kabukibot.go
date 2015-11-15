@@ -137,9 +137,19 @@ func (bot *Kabukibot) Logger() Logger {
 // 	return bot.dictionary
 // }
 
-// func (bot *Kabukibot) Channels() *channelMap {
-// 	return bot.chanMngr.Channels()
-// }
+func (bot *Kabukibot) Channels() []string {
+	bot.channelMutex.Lock()
+
+	result := make([]string, 0)
+
+	for cn, _ := range bot.workers {
+		result = append(result, cn)
+	}
+
+	bot.channelMutex.Unlock()
+
+	return result
+}
 
 // func (bot *Kabukibot) Channel(name string) (c *twitch.Channel, ok bool) {
 // 	return bot.chanMngr.Channel(name)
@@ -226,20 +236,6 @@ func (bot *Kabukibot) Joined(channel string) bool {
 
 	return joined
 }
-
-// func (bot *Kabukibot) Respond(msg twitch.Message, text string) {
-// 	msg.SetProcessed(true)
-// 	bot.twitch.Privmsg(msg.Channel().IrcName(), text)
-// }
-
-// func (bot *Kabukibot) RespondToAll(msg twitch.Message, text string) {
-// 	msg.SetProcessed(true)
-// 	bot.twitch.Privmsg(msg.Channel().IrcName(), text)
-// }
-
-// func (bot *Kabukibot) Say(channel *twitch.Channel, text string) {
-// 	bot.twitch.Privmsg(channel.IrcName(), text)
-// }
 
 func (bot *Kabukibot) BotUsername() string {
 	return bot.configuration.Account.Username
