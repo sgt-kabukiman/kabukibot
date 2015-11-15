@@ -99,7 +99,7 @@ func (client *TwitchClient) onPrivmsg(msg *irc.Message, tags irc.Tags) {
 	user := User{Name: nickname, Type: Plebs}
 
 	displayName, okay := tags["display-name"]
-	if okay {
+	if okay && len(displayName) > 0 {
 		user.Name = displayName
 	}
 
