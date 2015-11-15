@@ -1,70 +1,84 @@
 package plugin
 
-import "strings"
-import "sort"
-import "github.com/sgt-kabukiman/kabukibot/bot"
-import "github.com/sgt-kabukiman/kabukibot/twitch"
+import (
+	"sort"
+	"strings"
 
-type channelPluginStateMap map[string]bool
+	"github.com/sgt-kabukiman/kabukibot/bot"
+)
 
 type PluginControlPlugin struct {
-	bot    *bot.Kabukibot
-	mngr   *bot.PluginManager
-	acl    *bot.ACL
-	prefix string
+	bot      *bot.Kabukibot
+	operator string
+	prefix   string
+	plugins  []bot.Plugin
 }
 
 func NewPluginControlPlugin() *PluginControlPlugin {
 	return &PluginControlPlugin{}
 }
 
-func (plugin *PluginControlPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	plugin.bot = bot
-	plugin.mngr = bot.PluginManager()
-	plugin.acl = bot.ACL()
-	plugin.prefix = bot.Configuration().CommandPrefix
-
-	d.OnCommand(plugin.onCommand, nil)
+func (self *PluginControlPlugin) Name() string {
+	return ""
 }
 
-func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() {
-		return
+func (self *PluginControlPlugin) Permissions() []string {
+	return []string{}
+}
+
+func (self *PluginControlPlugin) Setup(bot *bot.Kabukibot) {
+	self.bot = bot
+	self.operator = bot.OpUsername()
+	self.prefix = bot.Configuration().CommandPrefix
+	self.plugins = bot.Plugins()
+}
+
+func (self *PluginControlPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
+	return &pluginControlWorker{
+		bot:      self.bot,
+		operator: self.operator,
+		prefix:   self.prefix,
+		channel:  channel,
+		plugins:  self.plugins,
 	}
+}
 
-	c := cmd.Command()
-	p := plugin.prefix
+type pluginControlWorker struct {
+	bot      *bot.Kabukibot
+	operator string
+	prefix   string
+	channel  bot.Channel
+	plugins  []bot.Plugin
+}
 
+func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	// skip unwanted commands
-	if c != p+"enable" && c != p+"disable" && c != p+"plugins" {
+	if !msg.IsGlobalCommand("enable") && !msg.IsGlobalCommand("disable") && !msg.IsGlobalCommand("plugins") {
 		return
 	}
 
-	// our commands are all priv only
-	user := cmd.User()
-
-	if !user.IsBroadcaster && !plugin.bot.IsOperator(user.Name) {
+	// our commands are all priv-only
+	if !msg.IsFromBroadcaster() && !msg.IsFrom(self.operator) {
 		return
 	}
 
-	channel := cmd.Channel()
-	args := cmd.Args()
+	args := msg.Arguments()
 
 	// send the list of available permissions
-	if c == p+"plugins" {
-		plugin.respondToListCommand(channel, args)
+	if msg.IsGlobalCommand("plugins") {
+		self.respondToListCommand(args, sender)
 		return
 	}
 
 	// everything from now on requires at last a plugin key as the first parameter
 	if len(args) == 0 {
-		plugin.bot.Say(channel, "no plugin name given. See !"+p+"plugins for a list of available plugins.")
+		sender.SendText("no plugin name given. See !" + self.prefix + "plugins for a list of available plugins.")
 		return
 	}
 
 	// check the plugin
 	pluginKey := strings.ToLower(args[0])
-	allKeys := plugin.getPluginKeys()
+	allKeys := self.pluginKeys()
 	found := false
 
 	for _, key := range allKeys {
@@ -75,33 +89,32 @@ func (plugin *PluginControlPlugin) onCommand(cmd bot.Command) {
 	}
 
 	if !found {
-		plugin.bot.Say(channel, "invalid plugin ("+pluginKey+") given.")
+		sender.SendText("invalid plugin \"" + pluginKey + "\" given.")
 		return
 	}
 
-	mngr := plugin.mngr
 	message := ""
 
 	// enable a plugin
-	if c == p+"enable" {
-		if mngr.AddPluginToChannel(channel, pluginKey) {
+	if msg.IsGlobalCommand("enable") {
+		if self.channel.EnablePlugin(pluginKey) {
 			message = "the plugin " + pluginKey + " has been enabled."
 		} else {
 			message = "the plugin " + pluginKey + " is already enabled in this channel."
 		}
 	} else { // disable a plugin
-		if mngr.RemovePluginFromChannel(channel, pluginKey) {
+		if self.channel.DisablePlugin(pluginKey) {
 			message = "the plugin " + pluginKey + " has been disabled."
 		} else {
 			message = "the plugin " + pluginKey + " is not enabled in this channel."
 		}
 	}
 
-	plugin.bot.Say(channel, message)
+	sender.SendText(message)
 }
 
-func (plugin *PluginControlPlugin) respondToListCommand(channel *twitch.Channel, args []string) {
-	plugins := plugin.getPluginStates(channel)
+func (self *pluginControlWorker) respondToListCommand(args []string, sender bot.Sender) {
+	plugins := self.pluginStates()
 	enabledOnly := len(args) > 0 && strings.ToLower(args[0]) == "enabled"
 	nameList := make([]string, 0)
 
@@ -127,25 +140,39 @@ func (plugin *PluginControlPlugin) respondToListCommand(channel *twitch.Channel,
 	}
 
 	if len(nameList) == 0 {
-		plugin.bot.Say(channel, "There are no "+prefix+" plugins.")
+		sender.SendText("There are no " + prefix + " plugins.")
 	} else {
-		plugin.bot.Say(channel, prefix+" plugins are: "+strings.Join(nameList, ", "))
+		sender.SendText(prefix + " plugins are: " + strings.Join(nameList, ", "))
 	}
 }
 
-func (plugin *PluginControlPlugin) getPluginKeys() []string {
-	keys := plugin.mngr.PluginKeys()
+func (self *pluginControlWorker) pluginKeys() []string {
+	keys := make([]string, 0)
+
+	for _, plugin := range self.plugins {
+		if len(plugin.Name()) > 0 {
+			keys = append(keys, plugin.Name())
+		}
+	}
 
 	sort.Strings(keys)
 
 	return keys
 }
 
-func (plugin *PluginControlPlugin) getPluginStates(channel *twitch.Channel) channelPluginStateMap {
-	result := make(channelPluginStateMap)
+func (self *pluginControlWorker) pluginStates() map[string]bool {
+	result := make(map[string]bool)
 
-	for _, key := range plugin.getPluginKeys() {
-		result[key] = plugin.mngr.IsLoaded(channel, key)
+	for _, plugin := range self.plugins {
+		if len(plugin.Name()) > 0 {
+			result[plugin.Name()] = false
+		}
+	}
+
+	for _, plugin := range self.channel.Plugins() {
+		if len(plugin.Name()) > 0 {
+			result[plugin.Name()] = true
+		}
 	}
 
 	return result

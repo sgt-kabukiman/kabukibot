@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
@@ -12,6 +13,8 @@ type Channel interface {
 	Alive() <-chan struct{}
 	Plugins() []Plugin
 	ACL() *ACL
+	EnablePlugin(string) bool
+	DisablePlugin(string) bool
 }
 
 type channelWorker struct {
@@ -20,10 +23,15 @@ type channelWorker struct {
 	leaveSignal    chan struct{}               // to be sent (= closed) when we LEAVE the channel on purpose
 	shutdownSignal chan struct{}               // to be sent when we just shutdown the bot
 	alive          chan struct{}               // is sent by the worker when the goroutine is ending
+	database       *sqlx.DB
 	log            Logger
 	acl            *ACL
 	workers        []pluginWorkerStruct
 	sender         Sender
+}
+
+type pluginRow struct {
+	Plugin string `db:"plugin"`
 }
 
 func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
@@ -35,17 +43,32 @@ func newChannelWorker(channel string, bot *Kabukibot) *channelWorker {
 		leaveSignal:    make(chan struct{}),
 		shutdownSignal: make(chan struct{}),
 		alive:          make(chan struct{}),
+		database:       bot.Database(),
 		log:            bot.Logger(),
 		acl:            NewACL(channel, bot.OpUsername(), bot.Logger(), bot.Database()),
 		workers:        nil,
 		sender:         newSenderStruct(bot.twitch, channel),
 	}
 
+	// find out what plugins have been enabled for the channel
+	list := make([]pluginRow, 0)
+	bot.Database().Select(&list, "SELECT plugin FROM plugin WHERE channel = ?", channel)
+
 	for _, plugin := range bot.Plugins() {
+		name := plugin.Name()
+		enabled := (name == "")
+
+		for _, l := range list {
+			if l.Plugin == name {
+				enabled = true
+				break
+			}
+		}
+
 		workers = append(workers, pluginWorkerStruct{
 			Plugin:  plugin,
 			Worker:  plugin.CreateWorker(cw),
-			Enabled: true,
+			Enabled: enabled,
 		})
 	}
 
@@ -72,6 +95,34 @@ func (self *channelWorker) Plugins() []Plugin {
 
 func (self *channelWorker) ACL() *ACL {
 	return self.acl
+}
+
+func (self *channelWorker) EnablePlugin(name string) bool {
+	worker := self.findWorker(name)
+
+	if worker == nil || worker.Enabled {
+		return false
+	}
+
+	worker.Enabled = true
+
+	self.database.Exec("INSERT INTO plugin (channel, plugin) VALUES (?, ?)", self.channel, name)
+
+	return true
+}
+
+func (self *channelWorker) DisablePlugin(name string) bool {
+	worker := self.findWorker(name)
+
+	if worker == nil || !worker.Enabled {
+		return false
+	}
+
+	worker.Enabled = false
+
+	self.database.Exec("DELETE FROM plugin WHERE channel = ? AND plugin = ?", self.channel, name)
+
+	return true
 }
 
 func (self *channelWorker) Input() chan<- twitch.IncomingMessage {
@@ -161,4 +212,14 @@ func (self *channelWorker) Work() {
 			return
 		}
 	}
+}
+
+func (self *channelWorker) findWorker(pluginName string) *pluginWorkerStruct {
+	for idx, ws := range self.workers {
+		if ws.Plugin.Name() == pluginName {
+			return &self.workers[idx]
+		}
+	}
+
+	return nil
 }
