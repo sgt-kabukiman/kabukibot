@@ -23,6 +23,8 @@ type Plugin interface {
 // }
 
 type PluginWorker interface {
+	Enable()
+	Disable()
 	Part()
 	Shutdown()
 }

@@ -51,6 +51,14 @@ type pluginControlWorker struct {
 	plugins  []bot.Plugin
 }
 
+func (self *pluginControlWorker) Enable() {
+	// nothing to do for us
+}
+
+func (self *pluginControlWorker) Disable() {
+	// nothing to do for us
+}
+
 func (self *pluginControlWorker) Part() {
 	// nothing to do for us
 }

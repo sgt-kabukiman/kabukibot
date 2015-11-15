@@ -30,6 +30,14 @@ func (self *EchoPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 
+func (self *EchoPlugin) Enable() {
+	// nothing to do for us
+}
+
+func (self *EchoPlugin) Disable() {
+	// nothing to do for us
+}
+
 func (self *EchoPlugin) Part() {
 	// nothing to do for us
 }

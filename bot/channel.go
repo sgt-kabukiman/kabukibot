@@ -103,6 +103,7 @@ func (self *channelWorker) EnablePlugin(name string) bool {
 	}
 
 	worker.Enabled = true
+	worker.Worker.Enable()
 
 	self.database.Exec("INSERT INTO plugin (channel, plugin) VALUES (?, ?)", self.channel, name)
 
@@ -117,6 +118,7 @@ func (self *channelWorker) DisablePlugin(name string) bool {
 	}
 
 	worker.Enabled = false
+	worker.Worker.Disable()
 
 	self.database.Exec("DELETE FROM plugin WHERE channel = ? AND plugin = ?", self.channel, name)
 
@@ -150,6 +152,13 @@ func (self *channelWorker) Work() {
 
 	// initialize ACL
 	self.acl.loadData()
+
+	// enable workers
+	for _, worker := range self.workers {
+		if worker.Enabled {
+			worker.Worker.Enable()
+		}
+	}
 
 	// endless worker loop
 	for {

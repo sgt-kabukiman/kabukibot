@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
@@ -16,7 +17,7 @@ import (
 type SysInfoPlugin struct {
 	bot      *bot.Kabukibot
 	startup  time.Time
-	messages uint64
+	messages int
 	operator string
 	mutex    sync.Mutex
 }
@@ -49,6 +50,14 @@ type sysInfoWorker struct {
 	plugin *SysInfoPlugin
 }
 
+func (self *sysInfoWorker) Enable() {
+	// nothing to do for us
+}
+
+func (self *sysInfoWorker) Disable() {
+	// nothing to do for us
+}
+
 func (self *sysInfoWorker) Part() {
 	// nothing to do for us
 }
@@ -71,8 +80,8 @@ func (self *sysInfoWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Se
 			runtime.ReadMemStats(&mem)
 
 			infoString := fmt.Sprintf(
-				"System Info: %s uptime, %d channels, %d messages processed, %.2f MiB res. size",
-				self.uptime(), len(self.plugin.bot.Channels()), self.plugin.messages, float64(mem.Sys)/(1024*1024),
+				"System Info: %s uptime, %d channels, %s messages processed, %s res. size",
+				self.uptime(), len(self.plugin.bot.Channels()), humanize.FormatInteger("#,###.", self.plugin.messages), humanize.IBytes(mem.Sys),
 			)
 
 			sender.SendText(infoString)

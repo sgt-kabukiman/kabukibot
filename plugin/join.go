@@ -36,6 +36,14 @@ func (self *JoinPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 
+func (self *JoinPlugin) Enable() {
+	// nothing to do for us
+}
+
+func (self *JoinPlugin) Disable() {
+	// nothing to do for us
+}
+
 func (self *JoinPlugin) Part() {
 	// nothing to do for us
 }

@@ -43,6 +43,14 @@ type aclPluginWorker struct {
 	channel  bot.Channel
 }
 
+func (self *aclPluginWorker) Enable() {
+	// nothing to do for us
+}
+
+func (self *aclPluginWorker) Disable() {
+	// nothing to do for us
+}
+
 func (self *aclPluginWorker) Part() {
 	// nothing to do for us
 }

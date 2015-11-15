@@ -26,6 +26,14 @@ func (self *PingPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 
+func (self *PingPlugin) Enable() {
+	// nothing to do for us
+}
+
+func (self *PingPlugin) Disable() {
+	// nothing to do for us
+}
+
 func (self *PingPlugin) Part() {
 	// nothing to do for us
 }
