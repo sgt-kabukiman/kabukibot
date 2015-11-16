@@ -145,6 +145,9 @@ func (client *TwitchClient) Disconnect() error {
 	close(client.stopSending)
 	<-client.stoppedSending
 
+	// close the incoming queue
+	close(client.incoming)
+
 	// for all intents and purposes, we are not alive anymore
 	close(client.alive)
 

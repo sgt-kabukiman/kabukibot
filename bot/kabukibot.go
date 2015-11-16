@@ -80,6 +80,33 @@ func (bot *Kabukibot) Connect() error {
 	return nil
 }
 
+func (bot *Kabukibot) Shutdown() {
+	// shutdown all channel workers
+	bot.channelMutex.Lock()
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(bot.workers))
+
+	for _, worker := range bot.workers {
+		signal := worker.Shutdown()
+
+		go func() {
+			<-signal
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+	bot.channelMutex.Unlock()
+
+	// disconnect from IRC;
+	// This will close the twitch client's incoming channel and hence stop .Work(),
+	// which will close self.alive eventually.
+	bot.twitch.Disconnect()
+
+	<-bot.alive
+}
+
 func (bot *Kabukibot) Work() {
 	go bot.joinInitialChannels()
 
