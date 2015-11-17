@@ -1,38 +1,52 @@
 package plugin
 
-import "github.com/sgt-kabukiman/kabukibot/bot"
-import "github.com/sgt-kabukiman/kabukibot/twitch"
+import (
+	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/twitch"
+)
 
 type BanhammerBotPlugin struct {
-	channelPlugin
-
-	bot *bot.Kabukibot
 }
 
 func NewBanhammerBotPlugin() *BanhammerBotPlugin {
-	return &BanhammerBotPlugin{newChannelPlugin(), nil}
+	return &BanhammerBotPlugin{}
 }
 
 func (self *BanhammerBotPlugin) Key() string {
 	return "banhammer_bot"
 }
 
-func (self *BanhammerBotPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot = bot
+func (self *BanhammerBotPlugin) Permissions() []string {
+	return []string{}
 }
 
-func (self *BanhammerBotPlugin) Load(c *twitch.Channel, bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.addChannelListeners(c, listenerList{d.OnTwitchMessage(self.onTwitchMessage, c)})
+func (self *BanhammerBotPlugin) Setup(bot *bot.Kabukibot) {
 }
 
-func (self *BanhammerBotPlugin) onTwitchMessage(msg twitch.TwitchMessage) {
-	if msg.Command() == "clearchat" {
-		args := msg.Args()
+func (self *BanhammerBotPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
+	return self
+}
 
-		if len(args) > 0 {
-			self.bot.Respond(msg, "Notification: "+args[0])
-		} else {
-			self.bot.Respond(msg, "Notification: chat has been cleared")
-		}
+func (self *BanhammerBotPlugin) Enable() {
+	// nothing to do for us
+}
+
+func (self *BanhammerBotPlugin) Disable() {
+	// nothing to do for us
+}
+
+func (self *BanhammerBotPlugin) Part() {
+	// nothing to do for us
+}
+
+func (self *BanhammerBotPlugin) Shutdown() {
+	// nothing to do for us
+}
+
+func (self *BanhammerBotPlugin) HandleClearChatMessage(msg *twitch.ClearChatMessage, sender bot.Sender) {
+	if msg.User != "" {
+		sender.Respond("Notification: " + msg.User)
+	} else {
+		sender.Respond("Notification: chat has been cleared")
 	}
 }
