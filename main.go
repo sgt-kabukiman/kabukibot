@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// add plugins
-	// kabukibot.AddPlugin(plugin.NewBlacklistPlugin()) // load this as early as possible, because users will only be blacklisted for all following plugins
+	kabukibot.AddPlugin(plugin.NewBlacklistPlugin()) // load this as early as possible, because users will only be blacklisted for all following plugins
 	kabukibot.AddPlugin(plugin.NewLogPlugin())
 	kabukibot.AddPlugin(plugin.NewPingPlugin())
 	kabukibot.AddPlugin(plugin.NewJoinPlugin())

@@ -56,6 +56,10 @@ func (self *subhypeWorker) Shutdown() {
 }
 
 func (self *subhypeWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if msg.IsProcessed() {
+		return
+	}
+
 	if !msg.IsCommand("submsg") {
 		return
 	}

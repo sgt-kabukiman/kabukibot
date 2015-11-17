@@ -58,6 +58,10 @@ func (self *aclPluginWorker) Shutdown() {
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
 func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if msg.IsProcessed() {
+		return
+	}
+
 	// skip unwanted commands
 	if !msg.IsGlobalCommand("allow") && !msg.IsGlobalCommand("deny") && !msg.IsGlobalCommand("permissions") && !msg.IsGlobalCommand("allowed") {
 		return

@@ -1,102 +1,119 @@
 package plugin
 
-import "strings"
-import "regexp"
-import "github.com/sgt-kabukiman/kabukibot/bot"
-import "github.com/sgt-kabukiman/kabukibot/twitch"
+import (
+	"regexp"
+	"strings"
+	"sync"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/sgt-kabukiman/kabukibot/bot"
+)
 
 type BlacklistPlugin struct {
-	bot    *bot.Kabukibot
-	db     *bot.DatabaseStruct
-	log    bot.Logger
-	users  []string
-	prefix string
+	db    *sqlx.DB
+	log   bot.Logger
+	users []string
+	bot   string
+	mutex sync.RWMutex
 }
 
 func NewBlacklistPlugin() *BlacklistPlugin {
 	return &BlacklistPlugin{}
 }
 
-func (self *BlacklistPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot = bot
+func (self *BlacklistPlugin) Name() string {
+	return ""
+}
+
+func (self *BlacklistPlugin) Permissions() []string {
+	return []string{}
+}
+
+func (self *BlacklistPlugin) Setup(bot *bot.Kabukibot) {
 	self.db = bot.Database()
 	self.log = bot.Logger()
-	self.users = make([]string, 0)
-	self.prefix = bot.Configuration().CommandPrefix
+	self.bot = strings.ToLower(bot.BotUsername())
+	self.mutex = sync.RWMutex{}
 
 	self.loadBlacklist()
-
-	d.OnCommand(self.onCommand, nil)
-	d.OnTextMessage(self.onTextMessage, nil)
-	d.OnTwitchMessage(self.onTwitchMessage, nil)
 }
 
-func (self *BlacklistPlugin) onTextMessage(msg twitch.TextMessage) {
-	if self.isBlacklisted(msg.User().Name) {
-		msg.SetProcessed(true)
-	}
+func (self *BlacklistPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
+	return self
 }
 
-func (self *BlacklistPlugin) onTwitchMessage(msg twitch.TwitchMessage) {
-	if self.isBlacklisted(msg.User().Name) {
-		msg.SetProcessed(true)
-	}
+func (self *BlacklistPlugin) Enable() {
+	// nothing to do for us
 }
 
-func (self *BlacklistPlugin) onCommand(cmd bot.Command) {
-	user := cmd.User()
+func (self *BlacklistPlugin) Disable() {
+	// nothing to do for us
+}
 
-	if !self.bot.IsOperator(user.Name) {
+func (self *BlacklistPlugin) Part() {
+	// nothing to do for us
+}
+
+func (self *BlacklistPlugin) Shutdown() {
+	// nothing to do for us
+}
+
+func (self *BlacklistPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if msg.IsProcessed() {
 		return
 	}
 
-	// check command
+	// mark messages from blacklisted users as processed
+	if self.isBlacklisted(msg.User.Name) {
+		self.log.Info("User is blacklisted.")
+		msg.SetProcessed()
+		return
+	}
 
-	c := cmd.Command()
-	p := self.prefix
+	if !msg.IsFromOperator() {
+		return
+	}
 
-	if c != p+"blacklist" && c != p+"unblacklist" {
+	if !msg.IsGlobalCommand("blacklist") && !msg.IsGlobalCommand("unblacklist") {
 		return
 	}
 
 	// checks args
 
-	args := cmd.Args()
+	args := msg.Arguments()
 
 	if len(args) == 0 {
-		self.bot.Respond(cmd, "you have to give a username.")
+		sender.Respond("you have to give a username.")
 		return
 	}
 
 	// sanitise username
 
-	username := args[0]
-	cleaner := regexp.MustCompile(`[^a-z0-9]`)
-
-	username = cleaner.ReplaceAllString(strings.ToLower(username), "")
+	cleaner := regexp.MustCompile(`[^a-z0-9_]`)
+	username := cleaner.ReplaceAllString(strings.ToLower(args[0]), "")
 
 	if len(username) == 0 {
-		self.bot.Respond(cmd, "the given username is invalid.")
+		sender.Respond("the given username is invalid.")
 		return
 	}
 
 	// perform blacklisting
 
-	if c == p+"blacklist" {
-		if username == user.Name {
-			self.bot.Respond(cmd, "you cannot blacklist yourself.")
+	if msg.IsGlobalCommand("blacklist") {
+		if username == strings.ToLower(msg.User.Name) {
+			sender.Respond("you cannot blacklist yourself.")
 			return
 		}
 
-		if username == self.bot.BotUsername() {
-			self.bot.Respond(cmd, "you cannot blacklist me.")
+		if username == self.bot {
+			sender.Respond("you cannot blacklist me.")
 			return
 		}
 
 		if self.blacklist(username) {
-			self.bot.Respond(cmd, username+" has been blacklisted.")
+			sender.Respond(username + " has been blacklisted.")
 		} else {
-			self.bot.Respond(cmd, username+" is already on the blacklist.")
+			sender.Respond(username + " is already on the blacklist.")
 		}
 
 		return
@@ -105,16 +122,23 @@ func (self *BlacklistPlugin) onCommand(cmd bot.Command) {
 	// perform unblacklisting
 
 	if self.unblacklist(username) {
-		self.bot.Respond(cmd, username+" has been un-blacklisted.")
+		sender.Respond(username + " has been un-blacklisted.")
 	} else {
-		self.bot.Respond(cmd, username+" is not blacklisted.")
+		sender.Respond(username + " is not blacklisted.")
 	}
 }
 
 func (self *BlacklistPlugin) blacklist(username string) bool {
+	// use a read-lock around the isBlacklisted check
+	self.mutex.RLock()
+
 	if self.isBlacklisted(username) {
+		self.mutex.RUnlock()
 		return false
 	}
+
+	self.mutex.RUnlock()
+	self.mutex.Lock()
 
 	_, err := self.db.Exec("INSERT INTO blacklist (username) VALUES (?)", username)
 	if err != nil {
@@ -122,11 +146,15 @@ func (self *BlacklistPlugin) blacklist(username string) bool {
 	}
 
 	self.users = append(self.users, username)
+	self.mutex.Unlock()
 
 	return true
 }
 
 func (self *BlacklistPlugin) unblacklist(username string) bool {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+
 	pos := -1
 
 	for idx, u := range self.users {
@@ -151,6 +179,9 @@ func (self *BlacklistPlugin) unblacklist(username string) bool {
 }
 
 func (self *BlacklistPlugin) isBlacklisted(username string) bool {
+	self.mutex.RLock()
+	defer self.mutex.RUnlock()
+
 	for _, u := range self.users {
 		if u == username {
 			return true
@@ -160,23 +191,20 @@ func (self *BlacklistPlugin) isBlacklisted(username string) bool {
 	return false
 }
 
+type blacklistUser struct {
+	Username string
+}
+
 func (self *BlacklistPlugin) loadBlacklist() {
-	rows, err := self.db.Query("SELECT username FROM blacklist")
-	if err != nil {
-		self.log.Fatal("Could not query blacklist: " + err.Error())
-	}
-	defer rows.Close()
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
 
-	for rows.Next() {
-		var username string
-		if err := rows.Scan(&username); err != nil {
-			self.log.Fatal(err.Error())
-		}
+	list := make([]blacklistUser, 0)
+	self.db.Select(&list, "SELECT username FROM blacklist ORDER BY username")
 
-		self.users = append(self.users, username)
-	}
+	self.users = make([]string, 0)
 
-	if err := rows.Err(); err != nil {
-		self.log.Fatal(err.Error())
+	for _, u := range list {
+		self.users = append(self.users, u.Username)
 	}
 }

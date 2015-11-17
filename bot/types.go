@@ -10,8 +10,9 @@ import (
 type TextMessage struct {
 	twitch.TextMessage
 
-	prefix   string
-	operator string
+	prefix    string
+	operator  string
+	processed bool
 }
 
 func (self *TextMessage) IsCommand(cmd string) bool {
@@ -36,6 +37,14 @@ func (self *TextMessage) IsFromOperator() bool {
 
 func (self *TextMessage) IsFromBot() bool {
 	return self.User.Myself
+}
+
+func (self *TextMessage) IsProcessed() bool {
+	return self.processed
+}
+
+func (self *TextMessage) SetProcessed() {
+	self.processed = true
 }
 
 var commandRegex = regexp.MustCompile(`^!([a-zA-Z0-9_-]+)(?:\s+(.*))?$`)

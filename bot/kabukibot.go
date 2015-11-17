@@ -124,7 +124,7 @@ func (bot *Kabukibot) Work() {
 		if exists {
 			asserted, okay := msg.(twitch.TextMessage)
 			if okay {
-				worker.Input() <- TextMessage{asserted, prefix, operator}
+				worker.Input() <- TextMessage{asserted, prefix, operator, false}
 			} else {
 				worker.Input() <- msg
 			}

@@ -64,6 +64,10 @@ func (self *pluginControlWorker) Shutdown() {
 }
 
 func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if msg.IsProcessed() {
+		return
+	}
+
 	// skip unwanted commands
 	if !msg.IsGlobalCommand("enable") && !msg.IsGlobalCommand("disable") && !msg.IsGlobalCommand("plugins") {
 		return

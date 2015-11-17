@@ -51,6 +51,10 @@ func (self *JoinPlugin) Shutdown() {
 }
 
 func (self *JoinPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if msg.IsProcessed() {
+		return
+	}
+
 	if msg.IsGlobalCommand("join") {
 		self.handleJoin(msg, sender)
 	} else if msg.IsGlobalCommand("part") || msg.IsGlobalCommand("leave") {
