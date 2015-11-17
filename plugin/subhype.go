@@ -1,84 +1,100 @@
 package plugin
 
-import "strings"
-import "github.com/sgt-kabukiman/kabukibot/bot"
-import "github.com/sgt-kabukiman/kabukibot/twitch"
+import (
+	"strings"
+
+	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/twitch"
+)
 
 type SubHypePlugin struct {
-	channelPlugin
-
-	bot    *bot.Kabukibot
-	dict   *bot.Dictionary
-	prefix string
+	dict *bot.Dictionary
 }
 
 func NewSubHypePlugin() *SubHypePlugin {
-	return &SubHypePlugin{newChannelPlugin(), nil, nil, ""}
+	return &SubHypePlugin{nil}
 }
 
-func (self *SubHypePlugin) Key() string {
+func (self *SubHypePlugin) Name() string {
 	return "subhype"
 }
 
-func (self *SubHypePlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot = bot
+func (self *SubHypePlugin) Permissions() []string {
+	return []string{}
+}
+
+func (self *SubHypePlugin) Setup(bot *bot.Kabukibot) {
 	self.dict = bot.Dictionary()
-	self.prefix = bot.Configuration().CommandPrefix
 }
 
-func (self *SubHypePlugin) Load(c *twitch.Channel, bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.addChannelListeners(c, listenerList{
-		d.OnCommand(self.onCommand, c),
-		d.OnTwitchMessage(self.onTwitchMessage, c),
-	})
+func (self *SubHypePlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
+	return &subhypeWorker{
+		self.dict,
+		self.dict.Get(subhypeKey(channel.Name())),
+	}
 }
 
-func (self *SubHypePlugin) onCommand(cmd bot.Command) {
-	if cmd.Processed() {
+type subhypeWorker struct {
+	dict    *bot.Dictionary
+	message string
+}
+
+func (self *subhypeWorker) Enable() {
+	// nothing to do for us
+}
+
+func (self *subhypeWorker) Disable() {
+	// nothing to do for us
+}
+
+func (self *subhypeWorker) Part() {
+	// nothing to do for us
+}
+
+func (self *subhypeWorker) Shutdown() {
+	// nothing to do for us
+}
+
+func (self *subhypeWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if !msg.IsCommand("submsg") {
 		return
 	}
 
-	if cmd.Command() != "submsg" {
+	if !msg.IsFromBroadcaster() && !msg.IsFromOperator() {
 		return
 	}
 
-	user := cmd.User()
-
-	if !user.IsBroadcaster && !self.bot.IsOperator(user.Name) {
-		return
-	}
-
-	args := cmd.Args()
+	args := msg.Arguments()
 
 	if len(args) == 0 {
-		self.bot.Respond(cmd, "you forgot to add a message: `!submsg PogChamp, {user} just became awesome!`. {user} will be replaced with the user who subscribed. To disable notifications, just disable the plugin: `!"+self.prefix+"disable subhype`.")
-	}
-
-	msg := strings.Join(args, " ")
-	key := "subhype_" + cmd.Channel().Name + "_message"
-
-	self.dict.Set(key, msg)
-
-	self.bot.Respond(cmd, "the subscriber notification has been updated.")
-}
-
-func (self *SubHypePlugin) onTwitchMessage(msg twitch.TwitchMessage) {
-	if msg.Command() != "subscriber" {
+		sender.Respond("you forgot to add a message: `!submsg PogChamp, {user} just became awesome!`. {user} will be replaced with the user who subscribed. To disable notifications, just disable the plugin.")
 		return
 	}
 
-	cname := msg.Channel().Name
-	message := self.dict.Get("subhype_" + cname + "_message")
+	text := strings.Join(args, " ")
+	key := "subhype_" + strings.TrimPrefix(msg.ChannelName(), "#") + "_message"
+
+	self.message = text
+	self.dict.Set(key, text)
+
+	sender.Respond("the subscriber notification has been updated.")
+}
+
+func (self *subhypeWorker) HandleSubscriberNotificationMessage(msg *twitch.SubscriberNotificationMessage, sender bot.Sender) {
+	uname := msg.User
+	message := self.message
 
 	if len(message) == 0 {
 		return
 	}
 
-	uname := msg.User().Name
-
 	message = strings.Replace(message, "{user}", uname, -1)
 	message = strings.Replace(message, "{username}", uname, -1)
 	message = strings.Replace(message, "{subscriber}", uname, -1)
 
-	self.bot.RespondToAll(msg, message)
+	sender.SendText(message)
+}
+
+func subhypeKey(channel string) string {
+	return "subhype_" + strings.TrimPrefix(channel, "#") + "_message"
 }
