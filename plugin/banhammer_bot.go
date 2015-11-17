@@ -12,7 +12,7 @@ func NewBanhammerBotPlugin() *BanhammerBotPlugin {
 	return &BanhammerBotPlugin{}
 }
 
-func (self *BanhammerBotPlugin) Key() string {
+func (self *BanhammerBotPlugin) Name() string {
 	return "banhammer_bot"
 }
 
