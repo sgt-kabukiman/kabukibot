@@ -30,7 +30,7 @@ type ACL struct {
 }
 
 func NewACL(channel string, operator string, log Logger, db *sqlx.DB) *ACL {
-	return &ACL{channel, operator, strings.TrimPrefix(operator, "#"), log, db, make(permissionMap)}
+	return &ACL{channel, strings.ToLower(operator), strings.ToLower(strings.TrimPrefix(operator, "#")), log, db, make(permissionMap)}
 }
 
 func ACLGroups() []string {
@@ -59,8 +59,10 @@ func (self *ACL) IsUsername(name string) bool {
 }
 
 func (self *ACL) IsAllowed(user twitch.User, permission string) bool {
+	name := strings.ToLower(user.Name)
+
 	// the bot operator and channel owner are always allowed to use the available commands
-	if user.Name == self.operator || user.Name == self.broadcaster {
+	if name == self.operator || name == self.broadcaster {
 		return true
 	}
 
@@ -86,7 +88,7 @@ func (self *ACL) IsAllowed(user twitch.User, permission string) bool {
 		case ACL_TWITCH_ADMINS:
 			allowed = user.Type == twitch.TwitchAdmin
 		default:
-			allowed = user.Name == ident
+			allowed = name == ident
 		}
 
 		if allowed {
@@ -98,6 +100,8 @@ func (self *ACL) IsAllowed(user twitch.User, permission string) bool {
 }
 
 func (self *ACL) Allow(userIdent string, permission string) bool {
+	userIdent = strings.ToLower(userIdent)
+
 	// allowing something for the owner is pointless
 	if self.broadcaster == userIdent {
 		return false
@@ -136,6 +140,8 @@ func (self *ACL) Allow(userIdent string, permission string) bool {
 }
 
 func (self *ACL) Deny(userIdent string, permission string) bool {
+	userIdent = strings.ToLower(userIdent)
+
 	userList, ok := self.permissions[permission]
 	if !ok {
 		return false
