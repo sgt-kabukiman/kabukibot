@@ -1,29 +1,28 @@
 package plugin
 
-import "fmt"
-import "time"
-import "github.com/sgt-kabukiman/kabukibot/bot"
-import "github.com/sgt-kabukiman/kabukibot/twitch"
+import (
+	"fmt"
+	"sort"
+	"strconv"
+	"sync"
+	"time"
+
+	"github.com/dustin/go-humanize"
+	"github.com/jmoiron/sqlx"
+	"github.com/sgt-kabukiman/kabukibot/bot"
+)
 
 type emoteCountMap map[string]int
-type emoteStatsMap map[string]*emoteCountMap
 
 type EmoteCounterPlugin struct {
-	channelPlugin
-
-	bot   *bot.Kabukibot
-	db    *bot.DatabaseStruct
-	em    bot.EmoteManager
-	log   bot.Logger
-	stats emoteStatsMap
-	foo   chan bool
+	db *sqlx.DB
 }
 
 func NewEmoteCounterPlugin() *EmoteCounterPlugin {
-	return &EmoteCounterPlugin{newChannelPlugin(), nil, nil, nil, nil, nil, nil}
+	return &EmoteCounterPlugin{}
 }
 
-func (self *EmoteCounterPlugin) Key() string {
+func (self *EmoteCounterPlugin) Name() string {
 	return "emote_counter"
 }
 
@@ -31,116 +30,254 @@ func (self *EmoteCounterPlugin) Permissions() []string {
 	return []string{"use_emote_counter"}
 }
 
-func (self *EmoteCounterPlugin) Setup(bot *bot.Kabukibot, d bot.Dispatcher) {
-	self.bot = bot
+func (self *EmoteCounterPlugin) Setup(bot *bot.Kabukibot) {
 	self.db = bot.Database()
-	self.em = bot.EmoteManager()
-	self.log = bot.Logger()
-	self.stats = make(emoteStatsMap)
-	self.foo = make(chan bool)
-
-	d.OnCommand(self.onGlobalCommand, nil)
-
-	go self.syncer()
 }
 
-func (self *EmoteCounterPlugin) Load(c *twitch.Channel, bot *bot.Kabukibot, d bot.Dispatcher) {
-	chanName := c.Name
-
-	_, exists := self.stats[chanName]
-	if exists {
-		delete(self.stats, chanName)
-	}
-
-	rows, err := self.db.Query("SELECT emote, counter FROM emote_counter WHERE channel = ?", chanName)
-	if err != nil {
-		self.log.Fatal("Could not query emote counter: %s", err.Error())
-	}
-	defer rows.Close()
-
-	newMap := make(emoteCountMap)
-	rowCount := 0
-
-	for rows.Next() {
-		var emote string
-		var counter int
-
-		if err := rows.Scan(&emote, &counter); err != nil {
-			self.log.Fatal(err.Error())
-		}
-
-		newMap[emote] = counter
-		rowCount = rowCount + 1
-	}
-
-	if err := rows.Err(); err != nil {
-		self.log.Fatal(err.Error())
-	}
-
-	self.stats[chanName] = &newMap
-
-	self.log.Debug("Loaded %d counted emotes for #%s.", rowCount, chanName)
-
-	self.addChannelListeners(c, listenerList{
-		d.OnCommand(self.onChannelCommand, c),
-		d.OnTextMessage(self.onText, c),
-	})
-}
-
-func (self *EmoteCounterPlugin) Unload(c *twitch.Channel, bot *bot.Kabukibot, d bot.Dispatcher) {
-	_, exists := self.stats[c.Name]
-	if exists {
-		delete(self.stats, c.Name)
-	}
-
-	self.removeChannelListeners(c)
-}
-
-func (self *EmoteCounterPlugin) onGlobalCommand(cmd bot.Command) {
-}
-
-func (self *EmoteCounterPlugin) onChannelCommand(cmd bot.Command) {
-}
-
-func (self *EmoteCounterPlugin) onText(msg twitch.TextMessage) {
-	before := time.Now()
-	emotes := self.em.FindEmotesInMessage(msg)
-
-	fmt.Printf("      > %s\n", time.Now().Sub(before).String())
-
-	if len(emotes) > 0 {
-		fmt.Printf("      > found emotes: %v\n", emotes, msg.User().EmoteSet)
+func (self *EmoteCounterPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
+	return &emoteCounterWorker{
+		channel:     channel.Name(),
+		acl:         channel.ACL(),
+		db:          self.db,
+		syncing:     nil,
+		stopSyncing: nil,
+		queue:       make(chan *bot.TextMessage, 50),
+		mutex:       sync.RWMutex{},
 	}
 }
 
-func (self *EmoteCounterPlugin) syncer() {
-	for {
-		<-time.After(15 * time.Minute)
-		self.syncAll()
+type emoteCounterWorker struct {
+	channel     string
+	acl         *bot.ACL
+	db          *sqlx.DB
+	stats       emoteCountMap
+	queue       chan *bot.TextMessage
+	syncing     chan struct{}
+	stopSyncing chan struct{}
+	mutex       sync.RWMutex
+}
+
+type emoteDbStruct struct {
+	Emote   string
+	Counter int
+}
+
+func (self *emoteCounterWorker) Enable() {
+	list := make([]emoteDbStruct, 0)
+	self.db.Select(&list, "SELECT emote, counter FROM emote_counter WHERE channel = ?", self.channel)
+
+	self.stats = make(emoteCountMap)
+
+	for _, item := range list {
+		self.stats[item.Emote] = item.Counter
+	}
+
+	// if we for some reason are already syncing, stop now
+	if self.syncing != nil {
+		self.Disable()
+	}
+
+	self.syncing = make(chan struct{})
+	self.stopSyncing = make(chan struct{})
+
+	go self.worker()
+}
+
+func (self *emoteCounterWorker) Disable() {
+	close(self.stopSyncing)
+	<-self.syncing
+}
+
+func (self *emoteCounterWorker) Part() {
+	self.Disable()
+}
+
+func (self *emoteCounterWorker) Shutdown() {
+	self.Disable()
+}
+
+func (self *emoteCounterWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+	if msg.IsProcessed() || msg.IsFromBot() {
+		return
+	}
+
+	if msg.IsCommand("top_emotes") {
+		self.handleTopEmotesCommand(msg, sender)
+		msg.SetProcessed()
+	} else if msg.IsCommand("emote_count") {
+		self.handleEmoteCountCommand(msg, sender)
+		msg.SetProcessed()
+	} else if msg.IsCommand("reset_emote_counter") {
+		self.handleResetCommand(msg, sender)
+		msg.SetProcessed()
+	} else {
+		self.handleRegularText(msg, sender)
 	}
 }
 
-func (self *EmoteCounterPlugin) syncAll() {
-	for channel, _ := range self.stats {
-		self.syncChannel(channel)
-	}
-}
-
-func (self *EmoteCounterPlugin) syncChannel(channel string) {
-	self.log.Debug("Syncing emote counter for #%s.", channel)
-
-	_, err := self.db.Exec("DELETE FROM emote_counter WHERE channel = ?", channel)
-	if err != nil {
-		self.log.Fatal("Could not delete emote counter data from the database: " + err.Error())
+func (self *emoteCounterWorker) handleTopEmotesCommand(msg *bot.TextMessage, sender bot.Sender) {
+	if !self.acl.IsAllowed(msg.User, "use_emote_counter") {
+		return
 	}
 
-	stats, exists := self.stats[channel]
-	if exists {
-		for emote, counter := range *stats {
-			_, err := self.db.Exec("INSERT INTO emote_counter (channel, emote, counter) VALUES (?, ?, ?)", channel, emote, counter)
-			if err != nil {
-				self.log.Fatal("Could not insert emote counter data: " + err.Error())
+	max := 5
+	args := msg.Arguments()
+
+	if len(args) > 0 {
+		value, err := strconv.Atoi(args[0])
+		if err != nil {
+			if value > 20 {
+				max = 20
+			} else if value < 1 {
+				max = 1
+			} else {
+				max = value
 			}
 		}
 	}
+
+	top := self.topEmotes(max)
+
+	if len(top) == 0 {
+		sender.Respond("no emotes have been counted yet.")
+		return
+	}
+
+	output := make([]string, 0, len(top))
+
+	for idx, emote := range top {
+		output[idx] = fmt.Sprintf("%s (%s x)", emote.emote, humanize.FormatInteger("#,###.", emote.count))
+	}
+
+	if max == 1 {
+		sender.Respond("this channel's top emote is: " + output[0])
+	} else {
+		sender.Respond(fmt.Sprintf("this channel's top %d emotes are: %s", len(output), bot.HumanJoin(output, ", ")))
+	}
+}
+
+func (self *emoteCounterWorker) handleEmoteCountCommand(msg *bot.TextMessage, sender bot.Sender) {
+	if !self.acl.IsAllowed(msg.User, "use_emote_counter") {
+		return
+	}
+
+	args := msg.Arguments()
+
+	if len(args) == 0 {
+		sender.Respond("you did not give any emote.")
+		return
+	}
+
+	emote := args[0]
+	count, _ := self.stats[emote]
+
+	if count == 0 {
+		sender.Respond(emote + " has not yet been used or does not even exist.")
+	} else if count == 1 {
+		sender.Respond(emote + " has been used once.")
+	} else {
+		sender.Respond(fmt.Sprintf("%s has been used %s times.", emote, humanize.FormatInteger("#,###.", count)))
+	}
+}
+
+func (self *emoteCounterWorker) handleResetCommand(msg *bot.TextMessage, sender bot.Sender) {
+	if !self.acl.IsAllowed(msg.User, "use_emote_counter") {
+		return
+	}
+
+	self.mutex.Lock()
+	self.stats = make(emoteCountMap)
+	self.mutex.Unlock()
+
+	self.sync()
+
+	sender.Respond("the emote counter has been reset.")
+}
+
+func (self *emoteCounterWorker) handleRegularText(msg *bot.TextMessage, sender bot.Sender) {
+	// anticipating that finding emotes will be complex when taking FFZ into account, we put
+	// this into the worker goroutine
+	self.queue <- msg
+}
+
+func (self *emoteCounterWorker) worker() {
+	defer close(self.syncing)
+
+	for {
+		select {
+		case <-time.After(10 * time.Second):
+			self.sync()
+
+		case msg := <-self.queue:
+			self.countEmotes(msg)
+
+		case <-self.stopSyncing:
+			self.sync()
+			return
+		}
+	}
+}
+
+func (self *emoteCounterWorker) sync() {
+	self.mutex.RLock()
+	defer self.mutex.RUnlock()
+
+	self.db.Exec("DELETE FROM emote_counter WHERE channel = ?", self.channel)
+
+	for emote, counter := range self.stats {
+		self.db.Exec("INSERT INTO emote_counter (channel, emote, counter) VALUES (?, ?, ?)", self.channel, emote, counter)
+	}
+}
+
+func (self *emoteCounterWorker) countEmotes(msg *bot.TextMessage) {
+	self.mutex.Lock()
+
+	for _, occurences := range msg.User.Emotes {
+		// find the first instance, so we know what emote we have to deal with
+		emote := msg.Text[occurences[0].FirstChar : occurences[0].LastChar+1]
+
+		count, _ := self.stats[emote]
+		self.stats[emote] = count + len(occurences)
+	}
+
+	self.mutex.Unlock()
+}
+
+type emoteFlat struct {
+	emote string
+	count int
+}
+
+type emoteSorter []emoteFlat
+
+func (a emoteSorter) Len() int {
+	return len(a)
+}
+
+func (a emoteSorter) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a emoteSorter) Less(i, j int) bool {
+	return a[i].count > a[j].count
+}
+
+func (self *emoteCounterWorker) topEmotes(max int) []emoteFlat {
+	self.mutex.RLock()
+
+	result := make([]emoteFlat, 0, len(self.stats))
+
+	for emote, count := range self.stats {
+		result = append(result, emoteFlat{emote, count})
+	}
+
+	self.mutex.RUnlock()
+
+	sort.Sort(sort.Reverse(emoteSorter(result)))
+
+	if len(result) > max {
+		return result[:max]
+	}
+
+	return result
 }
