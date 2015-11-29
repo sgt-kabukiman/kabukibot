@@ -39,6 +39,7 @@ func main() {
 	kabukibot.AddPlugin(plugin.NewBanhammerBotPlugin())
 	kabukibot.AddPlugin(plugin.NewEmoteCounterPlugin())
 	kabukibot.AddPlugin(plugin.NewSubHypePlugin())
+	kabukibot.AddPlugin(plugin.NewMonitorPlugin())
 
 	// here we go
 	err = kabukibot.Connect()
