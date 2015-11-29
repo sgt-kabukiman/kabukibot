@@ -8,7 +8,7 @@ import (
 )
 
 type Configuration struct {
-	CommandPrefix string
+	CommandPrefix string `yaml:"commandPrefix"`
 	Operator      string
 	Account       struct {
 		Username string
