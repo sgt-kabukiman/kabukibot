@@ -28,7 +28,7 @@ func NewLogPlugin() *LogPlugin {
 }
 
 func (self *LogPlugin) Name() string {
-	return "log"
+	return "LOG"
 }
 
 func (self *LogPlugin) Permissions() []string {

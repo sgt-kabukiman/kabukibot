@@ -94,7 +94,7 @@ func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender 
 
 	// check the plugin
 	pluginKey := strings.ToLower(args[0])
-	allKeys := self.pluginKeys()
+	allKeys := self.pluginKeys(msg.IsFromOperator())
 	found := false
 
 	for _, key := range allKeys {
@@ -162,12 +162,19 @@ func (self *pluginControlWorker) respondToListCommand(args []string, sender bot.
 	}
 }
 
-func (self *pluginControlWorker) pluginKeys() []string {
+func (self *pluginControlWorker) pluginKeys(includeOpOnly bool) []string {
 	keys := make([]string, 0)
 
 	for _, plugin := range self.plugins {
-		if len(plugin.Name()) > 0 {
-			keys = append(keys, plugin.Name())
+		name := plugin.Name()
+
+		if len(name) > 0 {
+			// plugins are op-only when their name is UPPERCASE. So to include it here,
+			// we either have to just don't care (includeOpOnly) or have a non-op plugin
+			// (= name is lowercase)
+			if includeOpOnly || strings.ToLower(name) == name {
+				keys = append(keys, name)
+			}
 		}
 	}
 
