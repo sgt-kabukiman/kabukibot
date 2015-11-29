@@ -1,7 +1,7 @@
 package bot
 
 import "fmt"
-import "math"
+
 import "strconv"
 import "strings"
 import "time"
@@ -96,38 +96,6 @@ func secondsToTime(seconds int, compact bool) string {
 	}
 
 	return HumanJoin(list, ", ")
-}
-
-func SecondsToRunTime(seconds float32) string {
-	hours := int(seconds / ONE_HOUR)
-	seconds -= float32(hours * ONE_HOUR)
-
-	minutes := int(seconds / ONE_MINUTE)
-	seconds -= float32(minutes * ONE_MINUTE)
-
-	list := make([]string, 0)
-
-	if hours > 0 {
-		list = append(list, twodigit(hours))
-	}
-	if len(list) > 0 || minutes > 0 {
-		list = append(list, twodigit(minutes))
-	}
-	if len(list) > 0 || seconds > 0 {
-		list = append(list, twodigit(int(seconds)))
-	}
-
-	runtime := strings.TrimPrefix(strings.Join(list, ":"), "0")
-
-	seconds -= float32(int(seconds) * ONE_SECOND)
-
-	if seconds > 0.0001 {
-		seconds *= 1000 // 0.12345 => 123.45
-		seconds = float32(math.Floor(float64(seconds + 0.5)))
-		runtime += fmt.Sprintf(".%d", int(seconds))
-	}
-
-	return runtime
 }
 
 func HumanJoin(list []string, glue string) string {
