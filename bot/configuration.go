@@ -1,9 +1,10 @@
 package bot
 
 import (
-	"encoding/json"
 	"errors"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Configuration struct {
@@ -14,7 +15,7 @@ type Configuration struct {
 		Password string
 	}
 	Database struct {
-		DSN string
+		DSN string `yaml:"DSN"`
 	}
 	IRC struct {
 		Host string
@@ -24,7 +25,7 @@ type Configuration struct {
 }
 
 func LoadConfiguration() (*Configuration, error) {
-	content, err := ioutil.ReadFile("config.json")
+	content, err := ioutil.ReadFile("config.yaml")
 
 	if err != nil {
 		return nil, err
@@ -32,7 +33,7 @@ func LoadConfiguration() (*Configuration, error) {
 
 	config := Configuration{}
 
-	if json.Unmarshal(content, &config) != nil {
+	if yaml.Unmarshal(content, &config) != nil {
 		return &config, errors.New("Could not load configuration.")
 	}
 
@@ -50,9 +51,9 @@ func (self *Configuration) PluginConfig(plugin string, dest interface{}) error {
 		// very lazy hack because i could not figure out how to nicely type assert
 		// the existing structure (which seems to be an endless map[string]interface{}
 		// monster) to the concrete dest struct
-		encoded, _ := json.Marshal(data)
+		encoded, _ := yaml.Marshal(data)
 
-		err := json.Unmarshal(encoded, dest)
+		err := yaml.Unmarshal(encoded, dest)
 		if err != nil {
 			return err
 		}

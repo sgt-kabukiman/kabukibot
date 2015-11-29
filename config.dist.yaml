@@ -1,0 +1,34 @@
+# the account Kabukibot should log-in as
+account:
+  username: mybotaccount
+  password: oauth:thesilentwindofdoom
+
+# Twitch username of the one user that has god-like powers over everything.
+operator: sgt_kabukiman
+
+# database configuration
+database:
+  DSN: 'username:password@/databasename'
+
+# prefix for global commands, so that they don't conflict with existing bots
+commandPrefix: myprefix_
+
+# plugin configuration
+plugins:
+  log:
+    # log directory, only used when the log plugin is enabled in a channel
+    directory: /full/path/to/where/logs/are/stored
+
+  speedruncom:
+    # interval in minutes in which the records should be updated;
+    # does not affect the on-demand !wr commands and others
+    #interval: 15
+    #mapping:
+    #  game_abbrevitation_here:
+    #    category_id: dictionary_key
+
+# there should rarely be a need to change these, mainly when using the bot on
+# dedicated event chat servers
+irc:
+  host: irc.twitch.tv
+  port: 6667
