@@ -13,6 +13,7 @@ type Channel interface {
 	ACL() *ACL
 	EnablePlugin(string) bool
 	DisablePlugin(string) bool
+	Sender() Sender
 }
 
 type channelWorker struct {
@@ -89,6 +90,10 @@ func (self *channelWorker) Plugins() []Plugin {
 	}
 
 	return result
+}
+
+func (self *channelWorker) Sender() Sender {
+	return self.sender
 }
 
 func (self *channelWorker) ACL() *ACL {
