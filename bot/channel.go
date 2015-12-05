@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"errors"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
@@ -11,6 +13,7 @@ type Channel interface {
 	Alive() <-chan struct{}
 	Plugins() []Plugin
 	Workers() []PluginWorker
+	WorkerByName(string) (PluginWorker, error)
 	ACL() *ACL
 	EnablePlugin(string) bool
 	DisablePlugin(string) bool
@@ -91,6 +94,16 @@ func (self *channelWorker) Plugins() []Plugin {
 	}
 
 	return result
+}
+
+func (self *channelWorker) WorkerByName(name string) (PluginWorker, error) {
+	for _, worker := range self.workers {
+		if worker.Enabled && worker.Plugin.Name() == name {
+			return worker.Worker, nil
+		}
+	}
+
+	return nil, errors.New("Plugin not found")
 }
 
 func (self *channelWorker) Workers() []PluginWorker {

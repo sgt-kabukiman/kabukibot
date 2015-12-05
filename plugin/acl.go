@@ -136,13 +136,14 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 		return
 	}
 
-	self.handleAllowDeny(msg.IsGlobalCommand("allow"), permission, args[1:], sender)
+	self.HandleAllowDeny(msg.IsGlobalCommand("allow"), permission, args[1:], sender, permission)
 }
 
 var userIdentRegex = regexp.MustCompile(`[^a-zA-Z0-9_$,]`)
 var userNameRegex = regexp.MustCompile(`[^a-z0-9_]`)
 
-func (self *aclPluginWorker) handleAllowDeny(allow bool, permission string, args []string, sender bot.Sender) {
+// HandleAllowDeny is exported because the custom commands plugin re-uses it. #cheating
+func (self *aclPluginWorker) HandleAllowDeny(allow bool, permission string, args []string, sender bot.Sender, permisionName string) {
 	// normalize the arguments into a single array of (possibly bogus) idents
 	args = strings.Split(strings.ToLower(userIdentRegex.ReplaceAllString(strings.Join(args, ","), "")), ",")
 
@@ -178,9 +179,9 @@ func (self *aclPluginWorker) handleAllowDeny(allow bool, permission string, args
 	if len(processed) == 0 {
 		sender.Respond("no changes needed.")
 	} else if allow {
-		sender.Respond("granted permission for " + permission + " to " + strings.Join(processed, ", ") + ".")
+		sender.Respond("granted permission for " + permisionName + " to " + strings.Join(processed, ", ") + ".")
 	} else {
-		sender.Respond("revoked permission for " + permission + " from " + strings.Join(processed, ", ") + ".")
+		sender.Respond("revoked permission for " + permisionName + " from " + strings.Join(processed, ", ") + ".")
 	}
 }
 
