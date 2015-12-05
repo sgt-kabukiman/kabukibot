@@ -205,7 +205,7 @@ func (self *emoteCounterWorker) worker() {
 
 	for {
 		select {
-		case <-time.After(10 * time.Second):
+		case <-time.After(5 * time.Minute):
 			self.sync()
 
 		case msg := <-self.queue:

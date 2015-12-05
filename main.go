@@ -36,6 +36,7 @@ func main() {
 	kabukibot.AddPlugin(plugin.NewEchoPlugin())
 	kabukibot.AddPlugin(plugin.NewSysInfoPlugin())
 	kabukibot.AddPlugin(plugin.NewDictionaryPlugin())
+	kabukibot.AddPlugin(plugin.NewDomainBanPlugin())
 	kabukibot.AddPlugin(plugin.NewBanhammerBotPlugin())
 	kabukibot.AddPlugin(plugin.NewEmoteCounterPlugin())
 	kabukibot.AddPlugin(plugin.NewSubHypePlugin())
