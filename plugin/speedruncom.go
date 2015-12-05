@@ -59,26 +59,28 @@ func (self *SpeedrunComPlugin) updater() {
 				continue
 			}
 
-			for _, leaderboard := range leaderboards.Data {
-				if len(leaderboard.Runs) == 0 {
-					continue
+			leaderboards.Walk(func(lb *srapi.Leaderboard) bool {
+				if len(lb.Runs) == 0 {
+					return true
 				}
 
-				cat, err := leaderboard.Category(srapi.NoEmbeds)
+				cat, err := lb.Category(srapi.NoEmbeds)
 				if err != nil {
-					continue
+					return true
 				}
 
 				dictKey, okay := catList[cat.ID]
 				if !okay {
-					continue
+					return true
 				}
 
-				wr := leaderboard.Runs[0]
+				wr := lb.Runs[0]
 				formatted := formatWorldRecord(&wr.Run, game, cat, nil, nil, nil)
 
 				self.dict.Set(dictKey, formatted)
-			}
+
+				return true
+			})
 		}
 
 		time.Sleep(interval)
@@ -159,7 +161,7 @@ func (self *speedruncomWorker) handleWorldRecordCommand(msg *bot.TextMessage, se
 		catNames := []string{}
 
 		if err == nil {
-			for _, cat := range categories {
+			categories.Walk(func(cat *srapi.Category) bool {
 				id := cleanerRegexp.ReplaceAllString(strings.ToLower(cat.Name), "")
 
 				if cat.Type == "per-game" {
@@ -169,7 +171,9 @@ func (self *speedruncomWorker) handleWorldRecordCommand(msg *bot.TextMessage, se
 				if id == catIdentifier {
 					category = cat
 				}
-			}
+
+				return true
+			})
 		}
 
 		if category == nil {
@@ -217,20 +221,27 @@ func (self *speedruncomWorker) handleWorldRecordCommand(msg *bot.TextMessage, se
 	sender.SendText(formatted)
 }
 
-func formatWorldRecord(run *srapi.Run, game *srapi.Game, cat *srapi.Category, players []*srapi.Player, region *srapi.Region, platform *srapi.Platform) string {
+func formatWorldRecord(run *srapi.Run, game *srapi.Game, cat *srapi.Category, players *srapi.PlayerCollection, region *srapi.Region, platform *srapi.Platform) string {
 	var err *srapi.Error
 
 	if game == nil {
 		game, err = run.Game(srapi.NoEmbeds)
 		if err != nil {
-			return "Could not fetch game."
+			return "Could not fetch game: " + err.Error()
 		}
 	}
 
 	if cat == nil {
 		cat, err = run.Category(srapi.NoEmbeds)
 		if err != nil {
-			return "Could not fetch category."
+			return "Could not fetch category: " + err.Error()
+		}
+	}
+
+	if players == nil {
+		players, err = run.Players()
+		if err != nil {
+			return "Could not fetch players: " + err.Error()
 		}
 	}
 
@@ -243,16 +254,10 @@ func formatWorldRecord(run *srapi.Run, game *srapi.Game, cat *srapi.Category, pl
 	// collect player names
 	names := []string{}
 
-	if len(players) == 0 {
-		players, err = run.Players()
-		if err != nil {
-			return "Could not fetch players: " + err.Error()
-		}
-	}
-
-	for _, player := range players {
-		names = append(names, player.Name())
-	}
+	players.Walk(func(p *srapi.Player) bool {
+		names = append(names, p.Name())
+		return true
+	})
 
 	formatted += " by " + bot.HumanJoin(names, ", ")
 
