@@ -10,6 +10,7 @@ type Channel interface {
 	Name() string
 	Alive() <-chan struct{}
 	Plugins() []Plugin
+	Workers() []PluginWorker
 	ACL() *ACL
 	EnablePlugin(string) bool
 	DisablePlugin(string) bool
@@ -86,6 +87,18 @@ func (self *channelWorker) Plugins() []Plugin {
 	for _, worker := range self.workers {
 		if worker.Enabled {
 			result = append(result, worker.Plugin)
+		}
+	}
+
+	return result
+}
+
+func (self *channelWorker) Workers() []PluginWorker {
+	result := make([]PluginWorker, 0)
+
+	for _, worker := range self.workers {
+		if worker.Enabled {
+			result = append(result, worker.Worker)
 		}
 	}
 

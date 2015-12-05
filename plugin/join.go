@@ -21,10 +21,6 @@ func (self *JoinPlugin) Name() string {
 	return ""
 }
 
-func (self *JoinPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *JoinPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
 	self.home = "#" + strings.ToLower(bot.BotUsername())
@@ -48,6 +44,10 @@ func (self *JoinPlugin) Part() {
 
 func (self *JoinPlugin) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *JoinPlugin) Permissions() []string {
+	return []string{}
 }
 
 func (self *JoinPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

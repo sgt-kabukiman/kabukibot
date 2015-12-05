@@ -29,10 +29,6 @@ func (self *SysInfoPlugin) Name() string {
 	return ""
 }
 
-func (self *SysInfoPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *SysInfoPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
 	self.startup = time.Now()
@@ -62,6 +58,10 @@ func (self *sysInfoWorker) Part() {
 
 func (self *sysInfoWorker) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *sysInfoWorker) Permissions() []string {
+	return []string{}
 }
 
 func (self *sysInfoWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

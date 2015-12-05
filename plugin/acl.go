@@ -19,10 +19,6 @@ func (self *ACLPlugin) Name() string {
 	return ""
 }
 
-func (self *ACLPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *ACLPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
 }
@@ -55,6 +51,10 @@ func (self *aclPluginWorker) Shutdown() {
 	// nothing to do for us
 }
 
+func (self *aclPluginWorker) Permissions() []string {
+	return []string{}
+}
+
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
 func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
@@ -74,7 +74,7 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 
 	// send the list of available permissions
 	if msg.IsGlobalCommand("permissions") {
-		permissions := self.permissions()
+		permissions := self.collectPermissions()
 
 		if len(permissions) == 0 {
 			sender.Respond("there are no permissions available to be configured.")
@@ -94,7 +94,7 @@ func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 
 	// check the permission
 	permission := strings.ToLower(permRegex.ReplaceAllString(args[0], ""))
-	permissions := self.permissions()
+	permissions := self.collectPermissions()
 
 	if len(permission) == 0 {
 		sender.Respond("invalid (no) permission given.")
@@ -184,11 +184,11 @@ func (self *aclPluginWorker) handleAllowDeny(allow bool, permission string, args
 	}
 }
 
-func (self *aclPluginWorker) permissions() []string {
+func (self *aclPluginWorker) collectPermissions() []string {
 	result := make([]string, 0)
 
-	for _, plugin := range self.channel.Plugins() {
-		for _, perm := range plugin.Permissions() {
+	for _, worker := range self.channel.Workers() {
+		for _, perm := range worker.Permissions() {
 			result = append(result, perm)
 		}
 	}

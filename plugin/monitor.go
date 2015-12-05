@@ -26,10 +26,6 @@ func (self *MonitorPlugin) Name() string {
 	return ""
 }
 
-func (self *MonitorPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *MonitorPlugin) Setup(bot *bot.Kabukibot) {
 	self.config = monitorConfig{}
 
@@ -81,6 +77,10 @@ func (self *monitorWorker) Part() {
 
 func (self *monitorWorker) Shutdown() {
 	self.Disable()
+}
+
+func (self *monitorWorker) Permissions() []string {
+	return []string{}
 }
 
 func (self *monitorWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

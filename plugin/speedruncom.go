@@ -28,10 +28,6 @@ func (self *SpeedrunComPlugin) Name() string {
 	return "speedruncom"
 }
 
-func (self *SpeedrunComPlugin) Permissions() []string {
-	return []string{"use_speedruncom_commands"}
-}
-
 func (self *SpeedrunComPlugin) Setup(bot *bot.Kabukibot) {
 	self.config = speedruncomConfig{}
 	self.dict = bot.Dictionary()
@@ -113,6 +109,10 @@ func (self *speedruncomWorker) Part() {
 
 func (self *speedruncomWorker) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *speedruncomWorker) Permissions() []string {
+	return []string{"use_speedruncom_commands"}
 }
 
 func (self *speedruncomWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

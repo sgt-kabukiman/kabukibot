@@ -6,7 +6,6 @@ type Plugin interface {
 	Name() string
 	Setup(*Kabukibot)
 	CreateWorker(Channel) PluginWorker
-	Permissions() []string
 }
 
 // type GlobalPlugin interface {
@@ -27,6 +26,7 @@ type PluginWorker interface {
 	Disable()
 	Part()
 	Shutdown()
+	Permissions() []string
 }
 
 type pluginWorkerStruct struct {

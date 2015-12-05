@@ -21,10 +21,6 @@ func (self *PluginControlPlugin) Name() string {
 	return ""
 }
 
-func (self *PluginControlPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *PluginControlPlugin) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
 	self.prefix = bot.Configuration().CommandPrefix
@@ -61,6 +57,10 @@ func (self *pluginControlWorker) Part() {
 
 func (self *pluginControlWorker) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *pluginControlWorker) Permissions() []string {
+	return []string{}
 }
 
 func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

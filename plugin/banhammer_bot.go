@@ -16,10 +16,6 @@ func (self *BanhammerBotPlugin) Name() string {
 	return "banhammer_bot"
 }
 
-func (self *BanhammerBotPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *BanhammerBotPlugin) Setup(bot *bot.Kabukibot) {
 }
 
@@ -41,6 +37,10 @@ func (self *BanhammerBotPlugin) Part() {
 
 func (self *BanhammerBotPlugin) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *BanhammerBotPlugin) Permissions() []string {
+	return []string{}
 }
 
 func (self *BanhammerBotPlugin) HandleClearChatMessage(msg *twitch.ClearChatMessage, sender bot.Sender) {

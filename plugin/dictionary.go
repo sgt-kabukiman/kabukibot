@@ -19,10 +19,6 @@ func (self *DictionaryPlugin) Name() string {
 	return ""
 }
 
-func (self *DictionaryPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *DictionaryPlugin) Setup(bot *bot.Kabukibot) {
 	self.dict = bot.Dictionary()
 }
@@ -45,6 +41,10 @@ func (self *DictionaryPlugin) Part() {
 
 func (self *DictionaryPlugin) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *DictionaryPlugin) Permissions() []string {
+	return []string{}
 }
 
 func (self *DictionaryPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

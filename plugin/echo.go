@@ -17,10 +17,6 @@ func (self *EchoPlugin) Name() string {
 	return ""
 }
 
-func (self *EchoPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *EchoPlugin) Setup(bot *bot.Kabukibot) {
 }
 
@@ -42,6 +38,10 @@ func (self *EchoPlugin) Part() {
 
 func (self *EchoPlugin) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *EchoPlugin) Permissions() []string {
+	return []string{}
 }
 
 func (self *EchoPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

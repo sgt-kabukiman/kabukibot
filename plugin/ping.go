@@ -13,10 +13,6 @@ func (self *PingPlugin) Name() string {
 	return ""
 }
 
-func (self *PingPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *PingPlugin) Setup(bot *bot.Kabukibot) {
 }
 
@@ -38,6 +34,10 @@ func (self *PingPlugin) Part() {
 
 func (self *PingPlugin) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *PingPlugin) Permissions() []string {
+	return []string{}
 }
 
 func (self *PingPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

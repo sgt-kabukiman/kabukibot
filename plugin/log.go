@@ -31,10 +31,6 @@ func (self *LogPlugin) Name() string {
 	return "LOG"
 }
 
-func (self *LogPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *LogPlugin) Setup(bot *bot.Kabukibot) {
 	self.config = logConfig{}
 
@@ -81,6 +77,10 @@ func (self *logWorker) Part() {
 
 func (self *logWorker) Shutdown() {
 	self.Disable()
+}
+
+func (self *logWorker) Permissions() []string {
+	return []string{}
 }
 
 func (self *logWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

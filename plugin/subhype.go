@@ -19,10 +19,6 @@ func (self *SubHypePlugin) Name() string {
 	return "subhype"
 }
 
-func (self *SubHypePlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *SubHypePlugin) Setup(bot *bot.Kabukibot) {
 	self.dict = bot.Dictionary()
 }
@@ -53,6 +49,10 @@ func (self *subhypeWorker) Part() {
 
 func (self *subhypeWorker) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *subhypeWorker) Permissions() []string {
+	return []string{}
 }
 
 func (self *subhypeWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

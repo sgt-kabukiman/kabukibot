@@ -25,10 +25,6 @@ func (self *BlacklistPlugin) Name() string {
 	return ""
 }
 
-func (self *BlacklistPlugin) Permissions() []string {
-	return []string{}
-}
-
 func (self *BlacklistPlugin) Setup(bot *bot.Kabukibot) {
 	self.db = bot.Database()
 	self.log = bot.Logger()
@@ -56,6 +52,10 @@ func (self *BlacklistPlugin) Part() {
 
 func (self *BlacklistPlugin) Shutdown() {
 	// nothing to do for us
+}
+
+func (self *BlacklistPlugin) Permissions() []string {
+	return []string{}
 }
 
 func (self *BlacklistPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

@@ -26,10 +26,6 @@ func (self *EmoteCounterPlugin) Name() string {
 	return "emote_counter"
 }
 
-func (self *EmoteCounterPlugin) Permissions() []string {
-	return []string{"use_emote_counter"}
-}
-
 func (self *EmoteCounterPlugin) Setup(bot *bot.Kabukibot) {
 	self.db = bot.Database()
 }
@@ -94,6 +90,10 @@ func (self *emoteCounterWorker) Part() {
 
 func (self *emoteCounterWorker) Shutdown() {
 	self.Disable()
+}
+
+func (self *emoteCounterWorker) Permissions() []string {
+	return []string{"use_emote_counter"}
 }
 
 func (self *emoteCounterWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
