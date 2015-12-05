@@ -40,6 +40,7 @@ func main() {
 	kabukibot.AddPlugin(plugin.NewBanhammerBotPlugin())
 	kabukibot.AddPlugin(plugin.NewEmoteCounterPlugin())
 	kabukibot.AddPlugin(plugin.NewSubHypePlugin())
+	kabukibot.AddPlugin(plugin.NewTrollPlugin())
 	kabukibot.AddPlugin(plugin.NewMonitorPlugin())
 	kabukibot.AddPlugin(plugin.NewCustomCommandsPlugin())
 
