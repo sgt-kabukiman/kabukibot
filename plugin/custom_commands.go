@@ -35,6 +35,8 @@ func (self *CustomCommandsPlugin) CreateWorker(channel bot.Channel) bot.PluginWo
 }
 
 type customCmdWorker struct {
+	nilWorker
+
 	channel   bot.Channel
 	acl       *bot.ACL
 	aclWorker *aclPluginWorker
@@ -68,18 +70,6 @@ func (self *customCmdWorker) Enable() {
 	}
 
 	self.aclWorker = asserted
-}
-
-func (self *customCmdWorker) Disable() {
-	// do nothing
-}
-
-func (self *customCmdWorker) Part() {
-	// do nothing
-}
-
-func (self *customCmdWorker) Shutdown() {
-	// do nothing
 }
 
 func (self *customCmdWorker) Permissions() []string {

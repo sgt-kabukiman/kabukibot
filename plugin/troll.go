@@ -74,27 +74,13 @@ func (self *TrollPlugin) Setup(bot *bot.Kabukibot) {
 }
 
 func (self *TrollPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &trollWorker{channel.ACL()}
+	return &trollWorker{acl: channel.ACL()}
 }
 
 type trollWorker struct {
+	nilWorker
+
 	acl *bot.ACL
-}
-
-func (self *trollWorker) Enable() {
-	// do nothing
-}
-
-func (self *trollWorker) Disable() {
-	// do nothing
-}
-
-func (self *trollWorker) Part() {
-	// do nothing
-}
-
-func (self *trollWorker) Shutdown() {
-	// do nothing
 }
 
 func (self *trollWorker) Permissions() []string {

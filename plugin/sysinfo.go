@@ -37,31 +37,13 @@ func (self *SysInfoPlugin) Setup(bot *bot.Kabukibot) {
 }
 
 func (self *SysInfoPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &sysInfoWorker{self}
+	return &sysInfoWorker{plugin: self}
 }
 
 type sysInfoWorker struct {
+	nilWorker
+
 	plugin *SysInfoPlugin
-}
-
-func (self *sysInfoWorker) Enable() {
-	// nothing to do for us
-}
-
-func (self *sysInfoWorker) Disable() {
-	// nothing to do for us
-}
-
-func (self *sysInfoWorker) Part() {
-	// nothing to do for us
-}
-
-func (self *sysInfoWorker) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *sysInfoWorker) Permissions() []string {
-	return []string{}
 }
 
 func (self *sysInfoWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

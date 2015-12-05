@@ -6,6 +6,7 @@ import (
 )
 
 type BanhammerBotPlugin struct {
+	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
 }
 
 func NewBanhammerBotPlugin() *BanhammerBotPlugin {
@@ -21,26 +22,6 @@ func (self *BanhammerBotPlugin) Setup(bot *bot.Kabukibot) {
 
 func (self *BanhammerBotPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
-}
-
-func (self *BanhammerBotPlugin) Enable() {
-	// nothing to do for us
-}
-
-func (self *BanhammerBotPlugin) Disable() {
-	// nothing to do for us
-}
-
-func (self *BanhammerBotPlugin) Part() {
-	// nothing to do for us
-}
-
-func (self *BanhammerBotPlugin) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *BanhammerBotPlugin) Permissions() []string {
-	return []string{}
 }
 
 func (self *BanhammerBotPlugin) HandleClearChatMessage(msg *twitch.ClearChatMessage, sender bot.Sender) {

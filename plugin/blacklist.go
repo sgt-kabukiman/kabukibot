@@ -10,6 +10,8 @@ import (
 )
 
 type BlacklistPlugin struct {
+	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
+
 	db    *sqlx.DB
 	log   bot.Logger
 	users []string
@@ -36,26 +38,6 @@ func (self *BlacklistPlugin) Setup(bot *bot.Kabukibot) {
 
 func (self *BlacklistPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
-}
-
-func (self *BlacklistPlugin) Enable() {
-	// nothing to do for us
-}
-
-func (self *BlacklistPlugin) Disable() {
-	// nothing to do for us
-}
-
-func (self *BlacklistPlugin) Part() {
-	// nothing to do for us
-}
-
-func (self *BlacklistPlugin) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *BlacklistPlugin) Permissions() []string {
-	return []string{}
 }
 
 func (self *BlacklistPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

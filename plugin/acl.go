@@ -31,28 +31,10 @@ func (self *ACLPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 }
 
 type aclPluginWorker struct {
+	nilWorker
+
 	bot     *bot.Kabukibot
 	channel bot.Channel
-}
-
-func (self *aclPluginWorker) Enable() {
-	// nothing to do for us
-}
-
-func (self *aclPluginWorker) Disable() {
-	// nothing to do for us
-}
-
-func (self *aclPluginWorker) Part() {
-	// nothing to do for us
-}
-
-func (self *aclPluginWorker) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *aclPluginWorker) Permissions() []string {
-	return []string{}
 }
 
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)

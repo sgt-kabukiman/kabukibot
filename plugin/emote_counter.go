@@ -43,6 +43,8 @@ func (self *EmoteCounterPlugin) CreateWorker(channel bot.Channel) bot.PluginWork
 }
 
 type emoteCounterWorker struct {
+	nilWorker
+
 	channel     string
 	acl         *bot.ACL
 	db          *sqlx.DB
@@ -82,14 +84,6 @@ func (self *emoteCounterWorker) Enable() {
 func (self *emoteCounterWorker) Disable() {
 	close(self.stopSyncing)
 	<-self.syncing
-}
-
-func (self *emoteCounterWorker) Part() {
-	self.Disable()
-}
-
-func (self *emoteCounterWorker) Shutdown() {
-	self.Disable()
 }
 
 func (self *emoteCounterWorker) Permissions() []string {

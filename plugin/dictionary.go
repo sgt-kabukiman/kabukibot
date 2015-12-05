@@ -8,6 +8,8 @@ import (
 )
 
 type DictionaryPlugin struct {
+	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
+
 	dict *bot.Dictionary
 }
 
@@ -25,26 +27,6 @@ func (self *DictionaryPlugin) Setup(bot *bot.Kabukibot) {
 
 func (self *DictionaryPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
-}
-
-func (self *DictionaryPlugin) Enable() {
-	// nothing to do for us
-}
-
-func (self *DictionaryPlugin) Disable() {
-	// nothing to do for us
-}
-
-func (self *DictionaryPlugin) Part() {
-	// nothing to do for us
-}
-
-func (self *DictionaryPlugin) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *DictionaryPlugin) Permissions() []string {
-	return []string{}
 }
 
 func (self *DictionaryPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

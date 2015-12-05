@@ -37,30 +37,12 @@ func (self *PluginControlPlugin) CreateWorker(channel bot.Channel) bot.PluginWor
 }
 
 type pluginControlWorker struct {
+	nilWorker
+
 	bot     *bot.Kabukibot
 	prefix  string
 	channel bot.Channel
 	plugins []bot.Plugin
-}
-
-func (self *pluginControlWorker) Enable() {
-	// nothing to do for us
-}
-
-func (self *pluginControlWorker) Disable() {
-	// nothing to do for us
-}
-
-func (self *pluginControlWorker) Part() {
-	// nothing to do for us
-}
-
-func (self *pluginControlWorker) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *pluginControlWorker) Permissions() []string {
-	return []string{}
 }
 
 func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

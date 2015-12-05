@@ -91,24 +91,10 @@ func (self *SpeedrunComPlugin) CreateWorker(channel bot.Channel) bot.PluginWorke
 }
 
 type speedruncomWorker struct {
+	nilWorker
+
 	channel string
 	acl     *bot.ACL
-}
-
-func (self *speedruncomWorker) Enable() {
-	// nothing to do for us
-}
-
-func (self *speedruncomWorker) Disable() {
-	// nothing to do for us
-}
-
-func (self *speedruncomWorker) Part() {
-	// nothing to do for us
-}
-
-func (self *speedruncomWorker) Shutdown() {
-	// nothing to do for us
 }
 
 func (self *speedruncomWorker) Permissions() []string {

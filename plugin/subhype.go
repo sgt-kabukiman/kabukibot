@@ -25,34 +25,16 @@ func (self *SubHypePlugin) Setup(bot *bot.Kabukibot) {
 
 func (self *SubHypePlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return &subhypeWorker{
-		self.dict,
-		self.dict.Get(subhypeKey(channel.Name())),
+		dict:    self.dict,
+		message: self.dict.Get(subhypeKey(channel.Name())),
 	}
 }
 
 type subhypeWorker struct {
+	nilWorker
+
 	dict    *bot.Dictionary
 	message string
-}
-
-func (self *subhypeWorker) Enable() {
-	// nothing to do for us
-}
-
-func (self *subhypeWorker) Disable() {
-	// nothing to do for us
-}
-
-func (self *subhypeWorker) Part() {
-	// nothing to do for us
-}
-
-func (self *subhypeWorker) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *subhypeWorker) Permissions() []string {
-	return []string{}
 }
 
 func (self *subhypeWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

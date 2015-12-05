@@ -52,6 +52,8 @@ func (self *MonitorPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 }
 
 type monitorWorker struct {
+	nilWorker
+
 	config      monitorConfig
 	channel     string
 	sender      bot.Sender
@@ -69,18 +71,6 @@ func (self *monitorWorker) Enable() {
 func (self *monitorWorker) Disable() {
 	close(self.stopPlaying)
 	<-self.playing
-}
-
-func (self *monitorWorker) Part() {
-	self.Disable()
-}
-
-func (self *monitorWorker) Shutdown() {
-	self.Disable()
-}
-
-func (self *monitorWorker) Permissions() []string {
-	return []string{}
 }
 
 func (self *monitorWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {

@@ -46,6 +46,8 @@ type ban struct {
 }
 
 type domainBanWorker struct {
+	nilWorker
+
 	channel     string
 	acl         *bot.ACL
 	db          *sqlx.DB
@@ -106,14 +108,6 @@ func (self *domainBanWorker) Enable() {
 func (self *domainBanWorker) Disable() {
 	close(self.stopSyncing)
 	<-self.syncing
-}
-
-func (self *domainBanWorker) Part() {
-	self.Disable()
-}
-
-func (self *domainBanWorker) Shutdown() {
-	self.Disable()
 }
 
 func (self *domainBanWorker) Permissions() []string {

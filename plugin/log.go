@@ -48,6 +48,8 @@ func (self *LogPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 }
 
 type logWorker struct {
+	nilWorker
+
 	directory string
 	channel   string
 	file      *os.File
@@ -69,14 +71,6 @@ func (self *logWorker) Disable() {
 		_ = self.file.Close()
 		self.file = nil
 	}
-}
-
-func (self *logWorker) Part() {
-	self.Disable()
-}
-
-func (self *logWorker) Shutdown() {
-	self.Disable()
 }
 
 func (self *logWorker) Permissions() []string {

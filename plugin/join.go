@@ -8,6 +8,8 @@ import (
 )
 
 type JoinPlugin struct {
+	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
+
 	bot    *bot.Kabukibot
 	prefix string
 	home   string
@@ -28,26 +30,6 @@ func (self *JoinPlugin) Setup(bot *bot.Kabukibot) {
 
 func (self *JoinPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
-}
-
-func (self *JoinPlugin) Enable() {
-	// nothing to do for us
-}
-
-func (self *JoinPlugin) Disable() {
-	// nothing to do for us
-}
-
-func (self *JoinPlugin) Part() {
-	// nothing to do for us
-}
-
-func (self *JoinPlugin) Shutdown() {
-	// nothing to do for us
-}
-
-func (self *JoinPlugin) Permissions() []string {
-	return []string{}
 }
 
 func (self *JoinPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
