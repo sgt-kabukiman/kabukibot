@@ -1,0 +1,29 @@
+plugin blacklist
+
+connect
+
+join #chan
+
+< [#chan] op: !k_blacklist foobar
+> [#chan] bot: op, foobar has been blacklisted.
+
+< [#chan] op: !k_blacklist foobar
+> [#chan] bot: op, foobar is already on the blacklist.
+
+< [#chan] op: !k_unblacklist foobar
+> [#chan] bot: op, foobar has been un-blacklisted.
+
+< [#chan] op: !k_unblacklist foobar
+> [#chan] bot: op, foobar is not blacklisted.
+
+< [#chan] op: !k_blacklist bot
+> [#chan] bot: op, you cannot blacklist me.
+
+< [#chan] op: !k_blacklist op
+> [#chan] bot: op, you cannot blacklist yourself.
+
+< [#chan] op: !k_blacklist
+> [#chan] bot: op, you have to give a username.
+
+< [#chan] op: !k_blacklist §($%&"//")
+> [#chan] bot: op, the given username is invalid.

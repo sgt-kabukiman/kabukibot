@@ -1,0 +1,13 @@
+# this configuration is used for the tests
+
+account:
+  username: bot
+  password: foobar
+operator: op
+database:
+  DSN: 'develop:develop@/kabukibot_test'
+commandPrefix: k_
+plugins: {}
+irc:
+  host: irc.twitch.tv
+  port: 6667

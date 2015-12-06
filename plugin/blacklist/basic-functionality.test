@@ -1,0 +1,30 @@
+plugin blacklist
+plugin acl
+plugin troll
+plugin plugin_control
+
+connect
+
+join #chan
+join #other
+
+< [#chan] op: !k_enable troll
+> [#chan] bot: op, the plugin troll has been enabled.
+
+< [#chan] op: !k_allow trolling victim
+> [#chan] bot: op, granted permission for trolling to victim.
+
+< [#chan] victim: !system
+> [#chan] bot: victim, .+
+
+< [#other] op: !k_blacklist victim
+> [#other] bot: op, .+
+
+< [#chan] victim: !system
+silence
+
+< [#other] op: !k_unblacklist victim
+> [#other] bot: op, .+
+
+< [#chan] victim: !system
+> [#chan] bot: victim, .+
