@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin"
 	"github.com/sgt-kabukiman/kabukibot/plugin/blacklist"
@@ -15,7 +16,7 @@ import (
 
 func main() {
 	// load configuration
-	config, err := bot.LoadConfiguration()
+	config, err := bot.LoadConfiguration("config.yaml")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -28,8 +29,15 @@ func main() {
 	server := net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
 	twitch := twitch.NewTwitchClient(server, config.Account.Username, config.Account.Password, 2*time.Second)
 
+	// connect to database
+	db, err := sqlx.Connect("mysql", config.Database.DSN)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	// build the bot
-	kabukibot, err := bot.NewKabukibot(twitch, logger, config)
+	kabukibot, err := bot.NewKabukibot(twitch, logger, db, config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

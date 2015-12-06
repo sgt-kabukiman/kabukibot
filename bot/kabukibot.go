@@ -23,9 +23,10 @@ type Kabukibot struct {
 	alive         chan struct{}
 }
 
-func NewKabukibot(client twitch.Client, log Logger, config *Configuration) (*Kabukibot, error) {
+func NewKabukibot(client twitch.Client, log Logger, db *sqlx.DB, config *Configuration) (*Kabukibot, error) {
 	// create the bot
 	bot := Kabukibot{}
+	bot.database = db
 	bot.configuration = config
 	bot.workers = make(map[string]*channelWorker)
 	bot.channelMutex = sync.Mutex{}
@@ -37,17 +38,9 @@ func NewKabukibot(client twitch.Client, log Logger, config *Configuration) (*Kab
 }
 
 func (bot *Kabukibot) Connect() error {
-	// connect to database
-	db, err := sqlx.Connect("mysql", bot.configuration.Database.DSN)
-	if err != nil {
-		return err
-	}
-
-	bot.database = db
-
 	// load dictionary elements
 	bot.logger.Debug("Loading dictionary...")
-	bot.dictionary = NewDictionary(db, bot.logger)
+	bot.dictionary = NewDictionary(bot.database, bot.logger)
 	bot.dictionary.load()
 
 	// setup plugins
@@ -59,7 +52,7 @@ func (bot *Kabukibot) Connect() error {
 	client := bot.twitch
 
 	bot.logger.Info("Connecting to %s:%d...", bot.configuration.IRC.Host, bot.configuration.IRC.Port)
-	err = client.Connect()
+	err := client.Connect()
 	if err != nil {
 		return err
 	}

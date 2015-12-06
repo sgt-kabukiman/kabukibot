@@ -24,8 +24,8 @@ type Configuration struct {
 	Plugins map[string]interface{}
 }
 
-func LoadConfiguration() (*Configuration, error) {
-	content, err := ioutil.ReadFile("config.yaml")
+func LoadConfiguration(filename string) (*Configuration, error) {
+	content, err := ioutil.ReadFile(filename)
 
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func LoadConfiguration() (*Configuration, error) {
 	config := Configuration{}
 
 	if yaml.Unmarshal(content, &config) != nil {
-		return &config, errors.New("Could not load configuration.")
+		return &config, errors.New("Could not load configuration file '" + filename + "'.")
 	}
 
 	if len(config.Operator) == 0 {
