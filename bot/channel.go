@@ -203,31 +203,49 @@ func (self *channelWorker) Work() {
 			}
 
 			// determine the plugins to hand this message to
-			for _, worker := range self.workers {
-				if !worker.Enabled {
-					continue
-				}
+			switch msg := newMsg.(type) {
+			case TextMessage:
+				for _, worker := range self.workers {
+					if !worker.Enabled {
+						continue
+					}
 
-				switch msg := newMsg.(type) {
-				case TextMessage:
 					asserted, okay := worker.Worker.(textMessageWorker)
 					if okay {
 						asserted.HandleTextMessage(&msg, self.sender.newResponder(&msg))
 					}
+				}
 
-				case twitch.RoomStateMessage:
+			case twitch.RoomStateMessage:
+				for _, worker := range self.workers {
+					if !worker.Enabled {
+						continue
+					}
+
 					asserted, okay := worker.Worker.(roomStateMessageWorker)
 					if okay {
 						asserted.HandleRoomStateMessage(&msg, self.sender)
 					}
+				}
 
-				case twitch.ClearChatMessage:
+			case twitch.ClearChatMessage:
+				for _, worker := range self.workers {
+					if !worker.Enabled {
+						continue
+					}
+
 					asserted, okay := worker.Worker.(clearChatMessageWorker)
 					if okay {
 						asserted.HandleClearChatMessage(&msg, self.sender)
 					}
+				}
 
-				case twitch.SubscriberNotificationMessage:
+			case twitch.SubscriberNotificationMessage:
+				for _, worker := range self.workers {
+					if !worker.Enabled {
+						continue
+					}
+
 					asserted, okay := worker.Worker.(subNotificationMessageWorker)
 					if okay {
 						asserted.HandleSubscriberNotificationMessage(&msg, self.sender)
