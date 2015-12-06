@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -297,8 +296,7 @@ func (test *tester) Run() {
 			received := false
 
 			select {
-			case msg := <-tc.outgoing:
-				fmt.Printf("bad: %#v\n", msg)
+			case <-tc.outgoing:
 				received = true
 			case <-timeout:
 				received = false
