@@ -1,11 +1,8 @@
 package bot
 
 import (
-	"net"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -14,7 +11,7 @@ import (
 )
 
 type Kabukibot struct {
-	twitch        *twitch.TwitchClient
+	twitch        twitch.Client
 	workers       map[string]*channelWorker
 	channelMutex  sync.Mutex
 	plugins       []Plugin
@@ -25,21 +22,14 @@ type Kabukibot struct {
 	alive         chan struct{}
 }
 
-func NewKabukibot(config *Configuration) (*Kabukibot, error) {
-	// setup our TwitchClient
-	server := net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
-	twitch := twitch.NewTwitchClient(server, config.Account.Username, config.Account.Password, 2*time.Second)
-
-	// create logger
-	logger := NewLogger(LOG_LEVEL_DEBUG)
-
+func NewKabukibot(client twitch.Client, log Logger, config *Configuration) (*Kabukibot, error) {
 	// create the bot
 	bot := Kabukibot{}
 	bot.configuration = config
 	bot.workers = make(map[string]*channelWorker)
 	bot.channelMutex = sync.Mutex{}
-	bot.logger = logger
-	bot.twitch = twitch
+	bot.logger = log
+	bot.twitch = client
 	bot.alive = make(chan struct{})
 
 	return &bot, nil

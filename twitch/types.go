@@ -10,6 +10,14 @@ import (
 	"github.com/sorcix/irc"
 )
 
+type Client interface {
+	Connect() error
+	Disconnect() error
+	Incoming() <-chan IncomingMessage
+	Ready() <-chan struct{}
+	Send(msg OutgoingMessage) <-chan bool
+}
+
 type IncomingMessage interface {
 	ChannelName() string
 }

@@ -19,11 +19,11 @@ type Sender interface {
 // If ever neccessary, this can be tied to a channelWorker
 // (e.g. if we were to have multiple IRC connections)
 type channelSender struct {
-	twitch  *twitch.TwitchClient
+	twitch  twitch.Client
 	channel string
 }
 
-func newChannelSender(client *twitch.TwitchClient, channel string) *channelSender {
+func newChannelSender(client twitch.Client, channel string) *channelSender {
 	return &channelSender{client, channel}
 }
 

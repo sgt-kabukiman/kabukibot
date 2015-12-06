@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"net"
 	"os"
-	"strings"
+	"strconv"
+	"time"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin"
+	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
 func main() {
@@ -18,8 +20,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// create logger
+	logger := bot.NewLogger(bot.LOG_LEVEL_DEBUG)
+
+	// setup our TwitchClient
+	server := net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
+	twitch := twitch.NewTwitchClient(server, config.Account.Username, config.Account.Password, 2*time.Second)
+
 	// build the bot
-	kabukibot, err := bot.NewKabukibot(config)
+	kabukibot, err := bot.NewKabukibot(twitch, logger, config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -54,12 +63,12 @@ func main() {
 	// do your thing, kabukibot
 	go kabukibot.Work()
 
-	data, _ := ioutil.ReadFile("channels.txt")
-	lines := strings.Split(string(data), "\n")
+	// data, _ := ioutil.ReadFile("channels.txt")
+	// lines := strings.Split(string(data), "\n")
 
-	for _, cn := range lines {
-		kabukibot.Join(cn)
-	}
+	// for _, cn := range lines {
+	// 	kabukibot.Join(cn)
+	// }
 
 	// wait for disconnect
 	<-kabukibot.Alive()
