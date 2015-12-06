@@ -8,17 +8,14 @@ import (
 )
 
 type DictionaryPlugin struct {
-	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
+	BasePlugin
+	NilWorker
 
 	dict *bot.Dictionary
 }
 
 func NewDictionaryPlugin() *DictionaryPlugin {
 	return &DictionaryPlugin{}
-}
-
-func (self *DictionaryPlugin) Name() string {
-	return ""
 }
 
 func (self *DictionaryPlugin) Setup(bot *bot.Kabukibot) {

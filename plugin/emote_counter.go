@@ -43,7 +43,7 @@ func (self *EmoteCounterPlugin) CreateWorker(channel bot.Channel) bot.PluginWork
 }
 
 type emoteCounterWorker struct {
-	nilWorker
+	NilWorker
 
 	channel     string
 	acl         *bot.ACL

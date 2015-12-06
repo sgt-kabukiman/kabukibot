@@ -60,7 +60,9 @@ var trollResponses = map[string][]string{
 	},
 }
 
-type TrollPlugin struct{}
+type TrollPlugin struct {
+	BasePlugin
+}
 
 func NewTrollPlugin() *TrollPlugin {
 	return &TrollPlugin{}
@@ -70,15 +72,12 @@ func (self *TrollPlugin) Name() string {
 	return "troll"
 }
 
-func (self *TrollPlugin) Setup(bot *bot.Kabukibot) {
-}
-
 func (self *TrollPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return &trollWorker{acl: channel.ACL()}
 }
 
 type trollWorker struct {
-	nilWorker
+	NilWorker
 
 	acl *bot.ACL
 }

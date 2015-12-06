@@ -1,0 +1,27 @@
+plugin blacklist
+
+connect
+
+< op !k_blacklist foobar
+> op, foobar has been blacklisted.
+
+< op !k_blacklist foobar
+> op, foobar is already on the blacklist.
+
+< op !k_unblacklist foobar
+> op, foobar has been un-blacklisted.
+
+< op !k_unblacklist foobar
+> op, foobar is not blacklisted.
+
+< op !k_blacklist bot
+> op, you cannot blacklist me.
+
+< op !k_blacklist op
+> op, you cannot blacklist yourself.
+
+< op !k_blacklist
+> op, you have to give a username.
+
+< op !k_blacklist §($%&"//")
+> op, the given username is invalid.

@@ -48,7 +48,7 @@ func (self *LogPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 }
 
 type logWorker struct {
-	nilWorker
+	NilWorker
 
 	directory string
 	channel   string

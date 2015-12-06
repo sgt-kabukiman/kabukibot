@@ -9,6 +9,7 @@ import (
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin"
+	"github.com/sgt-kabukiman/kabukibot/plugin/blacklist"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
@@ -35,7 +36,7 @@ func main() {
 	}
 
 	// add plugins
-	kabukibot.AddPlugin(plugin.NewBlacklistPlugin()) // load this as early as possible, because users will only be blacklisted for all following plugins
+	kabukibot.AddPlugin(blacklist.NewPlugin()) // load this as early as possible, because users will only be blacklisted for all following plugins
 	kabukibot.AddPlugin(plugin.NewLogPlugin())
 	kabukibot.AddPlugin(plugin.NewPingPlugin())
 	kabukibot.AddPlugin(plugin.NewJoinPlugin())

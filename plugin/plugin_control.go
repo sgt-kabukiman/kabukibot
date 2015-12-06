@@ -8,6 +8,8 @@ import (
 )
 
 type PluginControlPlugin struct {
+	BasePlugin
+
 	bot     *bot.Kabukibot
 	prefix  string
 	plugins []bot.Plugin
@@ -15,10 +17,6 @@ type PluginControlPlugin struct {
 
 func NewPluginControlPlugin() *PluginControlPlugin {
 	return &PluginControlPlugin{}
-}
-
-func (self *PluginControlPlugin) Name() string {
-	return ""
 }
 
 func (self *PluginControlPlugin) Setup(bot *bot.Kabukibot) {
@@ -37,7 +35,7 @@ func (self *PluginControlPlugin) CreateWorker(channel bot.Channel) bot.PluginWor
 }
 
 type pluginControlWorker struct {
-	nilWorker
+	NilWorker
 
 	bot     *bot.Kabukibot
 	prefix  string

@@ -7,18 +7,12 @@ import (
 )
 
 type EchoPlugin struct {
-	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
+	BasePlugin
+	NilWorker
 }
 
 func NewEchoPlugin() *EchoPlugin {
 	return &EchoPlugin{}
-}
-
-func (self *EchoPlugin) Name() string {
-	return ""
-}
-
-func (self *EchoPlugin) Setup(bot *bot.Kabukibot) {
 }
 
 func (self *EchoPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {

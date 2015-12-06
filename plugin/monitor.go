@@ -15,15 +15,13 @@ type monitorConfig struct {
 }
 
 type MonitorPlugin struct {
+	BasePlugin
+
 	config monitorConfig
 }
 
 func NewMonitorPlugin() *MonitorPlugin {
 	return &MonitorPlugin{}
-}
-
-func (self *MonitorPlugin) Name() string {
-	return ""
 }
 
 func (self *MonitorPlugin) Setup(bot *bot.Kabukibot) {
@@ -47,12 +45,12 @@ func (self *MonitorPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 			stopPlaying: make(chan struct{}),
 		}
 	} else {
-		return &nilWorker{}
+		return &NilWorker{}
 	}
 }
 
 type monitorWorker struct {
-	nilWorker
+	NilWorker
 
 	config      monitorConfig
 	channel     string

@@ -8,15 +8,13 @@ import (
 )
 
 type ACLPlugin struct {
+	BasePlugin
+
 	bot *bot.Kabukibot
 }
 
 func NewACLPlugin() *ACLPlugin {
 	return &ACLPlugin{}
-}
-
-func (self *ACLPlugin) Name() string {
-	return ""
 }
 
 func (self *ACLPlugin) Setup(bot *bot.Kabukibot) {
@@ -31,7 +29,7 @@ func (self *ACLPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 }
 
 type aclPluginWorker struct {
-	nilWorker
+	NilWorker
 
 	bot     *bot.Kabukibot
 	channel bot.Channel

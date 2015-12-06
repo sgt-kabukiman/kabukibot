@@ -31,7 +31,7 @@ func (self *SubHypePlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 }
 
 type subhypeWorker struct {
-	nilWorker
+	NilWorker
 
 	dict    *bot.Dictionary
 	message string

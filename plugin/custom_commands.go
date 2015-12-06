@@ -35,7 +35,7 @@ func (self *CustomCommandsPlugin) CreateWorker(channel bot.Channel) bot.PluginWo
 }
 
 type customCmdWorker struct {
-	nilWorker
+	NilWorker
 
 	channel   bot.Channel
 	acl       *bot.ACL

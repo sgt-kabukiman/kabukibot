@@ -15,6 +15,8 @@ import (
 // channels and a counter goroutine
 
 type SysInfoPlugin struct {
+	BasePlugin
+
 	bot      *bot.Kabukibot
 	startup  time.Time
 	messages int
@@ -23,10 +25,6 @@ type SysInfoPlugin struct {
 
 func NewSysInfoPlugin() *SysInfoPlugin {
 	return &SysInfoPlugin{}
-}
-
-func (self *SysInfoPlugin) Name() string {
-	return ""
 }
 
 func (self *SysInfoPlugin) Setup(bot *bot.Kabukibot) {
@@ -41,7 +39,7 @@ func (self *SysInfoPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 }
 
 type sysInfoWorker struct {
-	nilWorker
+	NilWorker
 
 	plugin *SysInfoPlugin
 }

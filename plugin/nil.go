@@ -1,23 +1,34 @@
 package plugin
 
-type nilWorker struct{}
+import "github.com/sgt-kabukiman/kabukibot/bot"
 
-func (nw *nilWorker) Enable() {
+type BasePlugin struct{}
+
+func (p *BasePlugin) Name() string {
+	return ""
+}
+
+func (p *BasePlugin) Setup(bot *bot.Kabukibot) {
+}
+
+type NilWorker struct{}
+
+func (nw *NilWorker) Enable() {
 	// do nothing
 }
 
-func (nw *nilWorker) Disable() {
+func (nw *NilWorker) Disable() {
 	// do nothing
 }
 
-func (nw *nilWorker) Part() {
+func (nw *NilWorker) Part() {
 	nw.Disable()
 }
 
-func (nw *nilWorker) Shutdown() {
+func (nw *NilWorker) Shutdown() {
 	nw.Disable()
 }
 
-func (nw *nilWorker) Permissions() []string {
+func (nw *NilWorker) Permissions() []string {
 	return []string{}
 }

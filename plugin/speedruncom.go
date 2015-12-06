@@ -91,7 +91,7 @@ func (self *SpeedrunComPlugin) CreateWorker(channel bot.Channel) bot.PluginWorke
 }
 
 type speedruncomWorker struct {
-	nilWorker
+	NilWorker
 
 	channel string
 	acl     *bot.ACL

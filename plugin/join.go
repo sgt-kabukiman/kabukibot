@@ -8,7 +8,8 @@ import (
 )
 
 type JoinPlugin struct {
-	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
+	BasePlugin
+	NilWorker
 
 	bot    *bot.Kabukibot
 	prefix string
@@ -17,10 +18,6 @@ type JoinPlugin struct {
 
 func NewJoinPlugin() *JoinPlugin {
 	return &JoinPlugin{}
-}
-
-func (self *JoinPlugin) Name() string {
-	return ""
 }
 
 func (self *JoinPlugin) Setup(bot *bot.Kabukibot) {

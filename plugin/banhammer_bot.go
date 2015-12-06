@@ -6,7 +6,8 @@ import (
 )
 
 type BanhammerBotPlugin struct {
-	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
+	BasePlugin
+	NilWorker
 }
 
 func NewBanhammerBotPlugin() *BanhammerBotPlugin {
@@ -15,9 +16,6 @@ func NewBanhammerBotPlugin() *BanhammerBotPlugin {
 
 func (self *BanhammerBotPlugin) Name() string {
 	return "banhammer_bot"
-}
-
-func (self *BanhammerBotPlugin) Setup(bot *bot.Kabukibot) {
 }
 
 func (self *BanhammerBotPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {

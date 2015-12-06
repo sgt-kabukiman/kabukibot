@@ -46,7 +46,7 @@ type ban struct {
 }
 
 type domainBanWorker struct {
-	nilWorker
+	NilWorker
 
 	channel     string
 	acl         *bot.ACL

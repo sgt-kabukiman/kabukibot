@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"errors"
 	"strings"
 	"sync"
 
@@ -143,6 +144,19 @@ func (bot *Kabukibot) Logger() Logger {
 
 func (bot *Kabukibot) Dictionary() *Dictionary {
 	return bot.dictionary
+}
+
+func (bot *Kabukibot) Channel(name string) (Channel, error) {
+	bot.channelMutex.Lock()
+	defer bot.channelMutex.Unlock()
+
+	for cn, worker := range bot.workers {
+		if cn == name {
+			return worker, nil
+		}
+	}
+
+	return nil, errors.New("Channel not found")
 }
 
 func (bot *Kabukibot) Channels() []string {

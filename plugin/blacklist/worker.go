@@ -1,46 +1,13 @@
-package plugin
+package blacklist
 
 import (
 	"regexp"
 	"strings"
-	"sync"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
 )
 
-type BlacklistPlugin struct {
-	nilWorker // yes, the worker, we want to borrow the Enable/Disable/... functions
-
-	db    *sqlx.DB
-	log   bot.Logger
-	users []string
-	bot   string
-	mutex sync.RWMutex
-}
-
-func NewBlacklistPlugin() *BlacklistPlugin {
-	return &BlacklistPlugin{}
-}
-
-func (self *BlacklistPlugin) Name() string {
-	return ""
-}
-
-func (self *BlacklistPlugin) Setup(bot *bot.Kabukibot) {
-	self.db = bot.Database()
-	self.log = bot.Logger()
-	self.bot = strings.ToLower(bot.BotUsername())
-	self.mutex = sync.RWMutex{}
-
-	self.loadBlacklist()
-}
-
-func (self *BlacklistPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return self
-}
-
-func (self *BlacklistPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *Plugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() {
 		return
 	}
@@ -110,7 +77,7 @@ func (self *BlacklistPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.
 	}
 }
 
-func (self *BlacklistPlugin) blacklist(username string) bool {
+func (self *Plugin) blacklist(username string) bool {
 	// use a read-lock around the isBlacklisted check
 	self.mutex.RLock()
 
@@ -133,7 +100,7 @@ func (self *BlacklistPlugin) blacklist(username string) bool {
 	return true
 }
 
-func (self *BlacklistPlugin) unblacklist(username string) bool {
+func (self *Plugin) unblacklist(username string) bool {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
 
@@ -160,7 +127,7 @@ func (self *BlacklistPlugin) unblacklist(username string) bool {
 	return true
 }
 
-func (self *BlacklistPlugin) isBlacklisted(username string) bool {
+func (self *Plugin) isBlacklisted(username string) bool {
 	self.mutex.RLock()
 	defer self.mutex.RUnlock()
 
@@ -177,7 +144,7 @@ type blacklistUser struct {
 	Username string
 }
 
-func (self *BlacklistPlugin) loadBlacklist() {
+func (self *Plugin) loadBlacklist() {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
 
