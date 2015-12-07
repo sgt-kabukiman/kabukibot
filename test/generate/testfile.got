@@ -31,9 +31,9 @@ func init() {
 		panic(err)
 	}
 }
-{{range .testcases}}
-func Test{{.Function}}(t *testing.T) {
-	file, err := os.Open("{{.Filename}}")
+
+func runScript(t *testing.T, filename string) {
+	file, err := os.Open(filename)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,5 +43,9 @@ func Test{{.Function}}(t *testing.T) {
 	initTester(tester)
 	tester.WipeDatabase()
 	tester.Run(t)
+}
+{{range .testcases}}
+func Test{{.Function}}(t *testing.T) {
+	runScript(t, "{{.Filename}}")
 }
 {{end}}

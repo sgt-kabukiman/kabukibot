@@ -32,8 +32,8 @@ func init() {
 	}
 }
 
-func TestBlacklistBasicCommands(t *testing.T) {
-	file, err := os.Open("plugin/blacklist/basic-commands.test")
+func runScript(t *testing.T, filename string) {
+	file, err := os.Open(filename)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,57 +43,25 @@ func TestBlacklistBasicCommands(t *testing.T) {
 	initTester(tester)
 	tester.WipeDatabase()
 	tester.Run(t)
+}
+
+func TestBlacklistBasicCommands(t *testing.T) {
+	runScript(t, "plugin/blacklist/basic-commands.test")
 }
 
 func TestBlacklistBasicFunctionality(t *testing.T) {
-	file, err := os.Open("plugin/blacklist/basic-functionality.test")
-	if err != nil {
-		t.Error(err)
-	}
-	defer file.Close()
-
-	tester := test.NewTester(file, config, db)
-	initTester(tester)
-	tester.WipeDatabase()
-	tester.Run(t)
+	runScript(t, "plugin/blacklist/basic-functionality.test")
 }
 
 func TestJoinJoin(t *testing.T) {
-	file, err := os.Open("plugin/join/join.test")
-	if err != nil {
-		t.Error(err)
-	}
-	defer file.Close()
-
-	tester := test.NewTester(file, config, db)
-	initTester(tester)
-	tester.WipeDatabase()
-	tester.Run(t)
+	runScript(t, "plugin/join/join.test")
 }
 
 func TestJoinLeave(t *testing.T) {
-	file, err := os.Open("plugin/join/leave.test")
-	if err != nil {
-		t.Error(err)
-	}
-	defer file.Close()
-
-	tester := test.NewTester(file, config, db)
-	initTester(tester)
-	tester.WipeDatabase()
-	tester.Run(t)
+	runScript(t, "plugin/join/leave.test")
 }
 
 func TestTrollCommands(t *testing.T) {
-	file, err := os.Open("plugin/troll/commands.test")
-	if err != nil {
-		t.Error(err)
-	}
-	defer file.Close()
-
-	tester := test.NewTester(file, config, db)
-	initTester(tester)
-	tester.WipeDatabase()
-	tester.Run(t)
+	runScript(t, "plugin/troll/commands.test")
 }
 
