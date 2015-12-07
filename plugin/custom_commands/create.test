@@ -1,0 +1,28 @@
+plugin plugin_control
+plugin custom_commands
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable custom_commands
+> [#chan] bot: op, .+
+
+< [#chan] op: !cc_set
+> [#chan] bot: op, no command name given.
+
+< [#chan] op: !cc_set §)$&("&(")
+> [#chan] bot: op, invalid command name given.
+
+< [#chan] op: !cc_set foobar
+> [#chan] bot: op, you did not give any response text for the new !foobar command.
+
+< [#chan] op: !cc_set foobar hello world
+> [#chan] bot: op, command !foobar has been created. .+
+
+< [#chan] op: !foobar
+> [#chan] bot: hello world
+
+< [#chan] op: !cc_set CC_sEt foobar
+> [#chan] bot: op, you cannot overwrite cc_\* commands.

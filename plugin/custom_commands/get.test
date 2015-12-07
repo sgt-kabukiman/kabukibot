@@ -1,0 +1,25 @@
+plugin plugin_control
+plugin custom_commands
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable custom_commands
+> [#chan] bot: op, .+
+
+< [#chan] op: !cc_get
+> [#chan] bot: op, no command name given.
+
+< [#chan] op: !cc_get §)$&("&(")
+> [#chan] bot: op, invalid command name given.
+
+< [#chan] op: !cc_get foobar
+> [#chan] bot: op, there is no custom command named 'foobar'.
+
+< [#chan] op: !cc_set foobar hello world
+> [#chan] bot: op, command !foobar has been created. .+
+
+< [#chan] op: !cc_get foobar
+> [#chan] bot: op, !foobar = hello world

@@ -53,6 +53,30 @@ func TestBlacklistBasicFunctionality(t *testing.T) {
 	runScript(t, "plugin/blacklist/basic-functionality.test")
 }
 
+func TestCustomCommandsAcl(t *testing.T) {
+	runScript(t, "plugin/custom_commands/acl.test")
+}
+
+func TestCustomCommandsCreate(t *testing.T) {
+	runScript(t, "plugin/custom_commands/create.test")
+}
+
+func TestCustomCommandsDelete(t *testing.T) {
+	runScript(t, "plugin/custom_commands/delete.test")
+}
+
+func TestCustomCommandsGet(t *testing.T) {
+	runScript(t, "plugin/custom_commands/get.test")
+}
+
+func TestCustomCommandsList(t *testing.T) {
+	runScript(t, "plugin/custom_commands/list.test")
+}
+
+func TestCustomCommandsUpdate(t *testing.T) {
+	runScript(t, "plugin/custom_commands/update.test")
+}
+
 func TestJoinJoin(t *testing.T) {
 	runScript(t, "plugin/join/join.test")
 }

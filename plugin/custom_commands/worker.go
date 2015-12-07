@@ -37,17 +37,17 @@ func (self *worker) Enable() {
 		self.commands[item.Command] = item.Message
 	}
 
-	worker, err := self.channel.WorkerByName("acl")
-	if err != nil {
+	for _, w := range self.channel.Workers() {
+		asserted, okay := w.(*acl.Worker)
+		if okay {
+			self.aclWorker = asserted
+			break
+		}
+	}
+
+	if self.aclWorker == nil {
 		panic("Cannot run the custom commands plugin without the ACL plugin.")
 	}
-
-	asserted, okay := worker.(*acl.Worker)
-	if !okay {
-		panic("Expected a acl.Worker as the worker for the acl plugin.")
-	}
-
-	self.aclWorker = asserted
 }
 
 func (self *worker) Permissions() []string {
@@ -88,8 +88,14 @@ func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 		self.respondList(sender)
 
 	case "cc_allow":
+		fallthrough
 	case "cc_deny":
+		fallthrough
 	case "cc_get":
+		fallthrough
+	case "cc_set":
+		fallthrough
+	case "cc_del":
 		args := msg.Arguments()
 		if len(args) < 1 {
 			sender.Respond("no command name given.")
@@ -110,7 +116,7 @@ func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 		case "cc_get":
 			self.respondGet(cc, sender)
 		case "cc_set":
-			self.respondSet(cc, args, sender)
+			self.respondSet(cc, args[1:], sender)
 		case "cc_del":
 			self.respondDelete(cc, sender)
 		}
@@ -124,7 +130,7 @@ func (self *worker) respondList(sender bot.Sender) {
 	var commands []string
 
 	for cmd, _ := range self.commands {
-		commands = append(commands, cmd)
+		commands = append(commands, "!"+cmd)
 	}
 
 	if len(commands) == 0 {
@@ -196,7 +202,7 @@ func (self *worker) respondDelete(cmd string, sender bot.Sender) {
 		return
 	}
 
-	sender.Respond("!" + cmd + " has neen deleted.")
+	sender.Respond("!" + cmd + " has been deleted.")
 
 	delete(self.commands, cmd)
 

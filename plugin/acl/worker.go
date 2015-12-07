@@ -139,9 +139,9 @@ func (self *Worker) HandleAllowDeny(allow bool, permission string, args []string
 	if len(processed) == 0 {
 		sender.Respond("no changes needed.")
 	} else if allow {
-		sender.Respond("granted permission for " + permisionName + " to " + strings.Join(processed, ", ") + ".")
+		sender.Respond("granted permission for " + permisionName + " to " + bot.HumanJoin(processed, ", ") + ".")
 	} else {
-		sender.Respond("revoked permission for " + permisionName + " from " + strings.Join(processed, ", ") + ".")
+		sender.Respond("revoked permission for " + permisionName + " from " + bot.HumanJoin(processed, ", ") + ".")
 	}
 }
 

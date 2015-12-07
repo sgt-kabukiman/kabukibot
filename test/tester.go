@@ -146,7 +146,7 @@ func (test *Tester) Run(t *testing.T) {
 					t.Errorf("[line %d] expected to message in %s, but got one in %s instead.", lineNr, matched[1], asserted.Channel)
 				}
 
-				regex := regexp.MustCompile(matched[3])
+				regex := regexp.MustCompile("^" + matched[3] + "$")
 				if !regex.MatchString(asserted.Text) {
 					t.Errorf("[line %d] expected match `%s`, but got '%s' instead.", lineNr, matched[3], asserted.Text)
 				}

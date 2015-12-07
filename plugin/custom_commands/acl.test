@@ -1,0 +1,28 @@
+plugin plugin_control
+plugin custom_commands
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable custom_commands
+> [#chan] bot: op, .+
+
+< [#chan] op: !cc_set foobar test response
+> [#chan] bot: op, command !foobar has been created. .+
+
+< [#chan] kevin: !foobar
+silence
+
+< [#chan] op: !cc_allow foobar $mods,tom kevin $subs
+> [#chan] bot: op, granted permission for !foobar to \$mods, tom, kevin and \$subs.
+
+< [#chan] kevin: !foobar
+> [#chan] bot: test response
+
+< [#chan] op: !cc_deny foobar kevin
+> [#chan] bot: op, revoked permission for !foobar from kevin.
+
+< [#chan] kevin: !foobar
+silence

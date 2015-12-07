@@ -3,10 +3,11 @@ default: build
 build: fix
 	go build -v .
 
-test: fix
+buildtests: fix
 	cd test/generate && make
 	test/generate/generate
-	go test -v
+
+test: buildtests quicktest
 
 quicktest: fix
 	go test -v

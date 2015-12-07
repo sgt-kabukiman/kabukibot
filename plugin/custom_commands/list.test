@@ -1,0 +1,19 @@
+plugin plugin_control
+plugin custom_commands
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable custom_commands
+> [#chan] bot: op, .+
+
+< [#chan] op: !cc_list
+> [#chan] bot: op, no custom commands have been defined yet.
+
+< [#chan] op: !cc_set foobar hello world
+> [#chan] bot: op, command !foobar has been created. .+
+
+< [#chan] op: !cc_list
+> [#chan] bot: op, this channel's custom commands are: !foobar
