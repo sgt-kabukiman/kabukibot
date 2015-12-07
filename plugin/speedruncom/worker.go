@@ -1,4 +1,4 @@
-package plugin
+package speedruncom
 
 import (
 	"fmt"
@@ -7,101 +7,22 @@ import (
 	"time"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 	"github.com/sgt-kabukiman/srapi"
 )
 
-type speedruncomConfig struct {
-	Interval int
-	Mapping  map[string]map[string]string
-}
-
-type SpeedrunComPlugin struct {
-	config speedruncomConfig
-	dict   *bot.Dictionary
-}
-
-func NewSpeedrunComPlugin() *SpeedrunComPlugin {
-	return &SpeedrunComPlugin{}
-}
-
-func (self *SpeedrunComPlugin) Name() string {
-	return "speedruncom"
-}
-
-func (self *SpeedrunComPlugin) Setup(bot *bot.Kabukibot) {
-	self.config = speedruncomConfig{}
-	self.dict = bot.Dictionary()
-
-	err := bot.Configuration().PluginConfig(self.Name(), &self.config)
-	if err != nil {
-		bot.Logger().Warn("Could not load 'speedruncom' plugin configuration: %s", err)
-	}
-
-	go self.updater()
-}
-
-func (self *SpeedrunComPlugin) updater() {
-	interval := time.Duration(self.config.Interval * int(time.Minute))
-
-	for {
-		for gameID, catList := range self.config.Mapping {
-			game, err := srapi.GameByID(gameID, srapi.NoEmbeds)
-			if err != nil {
-				continue
-			}
-
-			leaderboards, err := game.Records(nil, "players,regions,platforms,category")
-			if err != nil {
-				continue
-			}
-
-			leaderboards.Walk(func(lb *srapi.Leaderboard) bool {
-				if len(lb.Runs) == 0 {
-					return true
-				}
-
-				cat, err := lb.Category(srapi.NoEmbeds)
-				if err != nil {
-					return true
-				}
-
-				dictKey, okay := catList[cat.ID]
-				if !okay {
-					return true
-				}
-
-				wr := lb.Runs[0]
-				formatted := formatWorldRecord(&wr.Run, game, cat, nil, nil, nil)
-
-				self.dict.Set(dictKey, formatted)
-
-				return true
-			})
-		}
-
-		time.Sleep(interval)
-	}
-}
-
-func (self *SpeedrunComPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &speedruncomWorker{
-		channel: channel.Name(),
-		acl:     channel.ACL(),
-	}
-}
-
-type speedruncomWorker struct {
-	NilWorker
+type worker struct {
+	plugin.NilWorker
 
 	channel string
 	acl     *bot.ACL
 }
 
-func (self *speedruncomWorker) Permissions() []string {
+func (self *worker) Permissions() []string {
 	return []string{"use_speedruncom_commands"}
 }
 
-func (self *speedruncomWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() || msg.IsFromBot() {
 		return
 	}
@@ -114,7 +35,7 @@ func (self *speedruncomWorker) HandleTextMessage(msg *bot.TextMessage, sender bo
 
 var cleanerRegexp = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
-func (self *speedruncomWorker) handleWorldRecordCommand(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) handleWorldRecordCommand(msg *bot.TextMessage, sender bot.Sender) {
 	if !self.acl.IsAllowed(msg.User, "use_speedrun_commands") {
 		return
 	}

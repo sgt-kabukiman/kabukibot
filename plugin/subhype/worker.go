@@ -1,43 +1,21 @@
-package plugin
+package subhype
 
 import (
 	"strings"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
-type SubHypePlugin struct {
-	dict *bot.Dictionary
-}
-
-func NewSubHypePlugin() *SubHypePlugin {
-	return &SubHypePlugin{nil}
-}
-
-func (self *SubHypePlugin) Name() string {
-	return "subhype"
-}
-
-func (self *SubHypePlugin) Setup(bot *bot.Kabukibot) {
-	self.dict = bot.Dictionary()
-}
-
-func (self *SubHypePlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &subhypeWorker{
-		dict:    self.dict,
-		message: self.dict.Get(subhypeKey(channel.Name())),
-	}
-}
-
-type subhypeWorker struct {
-	NilWorker
+type worker struct {
+	plugin.NilWorker
 
 	dict    *bot.Dictionary
 	message string
 }
 
-func (self *subhypeWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() {
 		return
 	}
@@ -66,7 +44,7 @@ func (self *subhypeWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Se
 	sender.Respond("the subscriber notification has been updated.")
 }
 
-func (self *subhypeWorker) HandleSubscriberNotificationMessage(msg *twitch.SubscriberNotificationMessage, sender bot.Sender) {
+func (self *worker) HandleSubscriberNotificationMessage(msg *twitch.SubscriberNotificationMessage, sender bot.Sender) {
 	uname := msg.User
 	message := self.message
 

@@ -54,8 +54,8 @@ func TestBlacklistBasicFunctionality(t *testing.T) {
 	tester.Run(t)
 }
 
-func TestJoin(t *testing.T) {
-	file, err := os.Open("plugin/join.test")
+func TestJoinJoin(t *testing.T) {
+	file, err := os.Open("plugin/join/join.test")
 	if err != nil {
 		t.Error(err)
 	}
@@ -66,3 +66,30 @@ func TestJoin(t *testing.T) {
 	tester.WipeDatabase()
 	tester.Run(t)
 }
+
+func TestJoinLeave(t *testing.T) {
+	file, err := os.Open("plugin/join/leave.test")
+	if err != nil {
+		t.Error(err)
+	}
+	defer file.Close()
+
+	tester := test.NewTester(file, config, db)
+	initTester(tester)
+	tester.WipeDatabase()
+	tester.Run(t)
+}
+
+func TestTrollCommands(t *testing.T) {
+	file, err := os.Open("plugin/troll/commands.test")
+	if err != nil {
+		t.Error(err)
+	}
+	defer file.Close()
+
+	tester := test.NewTester(file, config, db)
+	initTester(tester)
+	tester.WipeDatabase()
+	tester.Run(t)
+}
+

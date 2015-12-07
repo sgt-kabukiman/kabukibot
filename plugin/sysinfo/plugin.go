@@ -1,23 +1,24 @@
-package blacklist
+package sysinfo
 
 import (
-	"strings"
 	"sync"
+	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
+
+// TODO: At some point, maybe don't use a mutex for the counter, but some
+// channels and a counter goroutine
 
 type pluginStruct struct {
 	plugin.BasePlugin
 	plugin.NilWorker
 
-	db    *sqlx.DB
-	log   bot.Logger
-	users []string
-	bot   string
-	mutex sync.RWMutex
+	bot      *bot.Kabukibot
+	startup  time.Time
+	messages int
+	mutex    sync.Mutex
 }
 
 func NewPlugin() *pluginStruct {
@@ -25,12 +26,10 @@ func NewPlugin() *pluginStruct {
 }
 
 func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
-	self.db = bot.Database()
-	self.log = bot.Logger()
-	self.bot = strings.ToLower(bot.BotUsername())
-	self.mutex = sync.RWMutex{}
-
-	self.loadBlacklist()
+	self.bot = bot
+	self.startup = time.Now()
+	self.mutex = sync.Mutex{}
+	self.messages = 0
 }
 
 func (self *pluginStruct) CreateWorker(channel bot.Channel) bot.PluginWorker {

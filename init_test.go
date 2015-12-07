@@ -2,8 +2,23 @@ package main
 
 import (
 	"github.com/sgt-kabukiman/kabukibot/bot"
-	"github.com/sgt-kabukiman/kabukibot/plugin"
+	"github.com/sgt-kabukiman/kabukibot/plugin/acl"
+	"github.com/sgt-kabukiman/kabukibot/plugin/banhammer_bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin/blacklist"
+	"github.com/sgt-kabukiman/kabukibot/plugin/custom_commands"
+	"github.com/sgt-kabukiman/kabukibot/plugin/dictionary"
+	"github.com/sgt-kabukiman/kabukibot/plugin/domain_ban"
+	"github.com/sgt-kabukiman/kabukibot/plugin/echo"
+	"github.com/sgt-kabukiman/kabukibot/plugin/emote_counter"
+	"github.com/sgt-kabukiman/kabukibot/plugin/join"
+	"github.com/sgt-kabukiman/kabukibot/plugin/log"
+	"github.com/sgt-kabukiman/kabukibot/plugin/monitor"
+	"github.com/sgt-kabukiman/kabukibot/plugin/ping"
+	"github.com/sgt-kabukiman/kabukibot/plugin/plugin_control"
+	"github.com/sgt-kabukiman/kabukibot/plugin/speedruncom"
+	"github.com/sgt-kabukiman/kabukibot/plugin/subhype"
+	"github.com/sgt-kabukiman/kabukibot/plugin/sysinfo"
+	"github.com/sgt-kabukiman/kabukibot/plugin/troll"
 	"github.com/sgt-kabukiman/kabukibot/test"
 )
 
@@ -13,66 +28,66 @@ func initTester(t *test.Tester) {
 	})
 
 	t.AddPlugin("log", func() bot.Plugin {
-		return plugin.NewLogPlugin()
+		return log.NewPlugin()
 	})
 
 	t.AddPlugin("ping", func() bot.Plugin {
-		return plugin.NewPingPlugin()
+		return ping.NewPlugin()
 	})
 
 	t.AddPlugin("join", func() bot.Plugin {
-		return plugin.NewJoinPlugin()
+		return join.NewPlugin()
 	})
 
 	t.AddPlugin("acl", func() bot.Plugin {
-		return plugin.NewACLPlugin()
+		return acl.NewPlugin()
 	})
 
 	t.AddPlugin("plugin_control", func() bot.Plugin {
-		return plugin.NewPluginControlPlugin()
+		return plugin_control.NewPlugin()
 	})
 
 	t.AddPlugin("speedruncom", func() bot.Plugin {
-		return plugin.NewSpeedrunComPlugin()
+		return speedruncom.NewPlugin()
 	})
 
 	t.AddPlugin("echo", func() bot.Plugin {
-		return plugin.NewEchoPlugin()
+		return echo.NewPlugin()
 	})
 
 	t.AddPlugin("sysinfo", func() bot.Plugin {
-		return plugin.NewSysInfoPlugin()
+		return sysinfo.NewPlugin()
 	})
 
 	t.AddPlugin("dictionary", func() bot.Plugin {
-		return plugin.NewDictionaryPlugin()
+		return dictionary.NewPlugin()
 	})
 
 	t.AddPlugin("domain_ban", func() bot.Plugin {
-		return plugin.NewDomainBanPlugin()
+		return domain_ban.NewPlugin()
 	})
 
 	t.AddPlugin("banhammer_bot", func() bot.Plugin {
-		return plugin.NewBanhammerBotPlugin()
+		return banhammer_bot.NewPlugin()
 	})
 
 	t.AddPlugin("emote_counter", func() bot.Plugin {
-		return plugin.NewEmoteCounterPlugin()
+		return emote_counter.NewPlugin()
 	})
 
 	t.AddPlugin("subhype", func() bot.Plugin {
-		return plugin.NewSubHypePlugin()
+		return subhype.NewPlugin()
 	})
 
 	t.AddPlugin("troll", func() bot.Plugin {
-		return plugin.NewTrollPlugin()
+		return troll.NewPlugin()
 	})
 
 	t.AddPlugin("monitor", func() bot.Plugin {
-		return plugin.NewMonitorPlugin()
+		return monitor.NewPlugin()
 	})
 
 	t.AddPlugin("custom_commands", func() bot.Plugin {
-		return plugin.NewCustomCommandsPlugin()
+		return custom_commands.NewPlugin()
 	})
 }

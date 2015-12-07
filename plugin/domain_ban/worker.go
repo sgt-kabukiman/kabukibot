@@ -1,4 +1,4 @@
-package plugin
+package domain_ban
 
 import (
 	"fmt"
@@ -12,32 +12,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mvdan/xurls"
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
-
-type DomainBanPlugin struct {
-	db *sqlx.DB
-}
-
-func NewDomainBanPlugin() *DomainBanPlugin {
-	return &DomainBanPlugin{}
-}
-
-func (self *DomainBanPlugin) Name() string {
-	return "domain_ban"
-}
-
-func (self *DomainBanPlugin) Setup(bot *bot.Kabukibot) {
-	self.db = bot.Database()
-}
-
-func (self *DomainBanPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &domainBanWorker{
-		channel: channel.Name(),
-		acl:     channel.ACL(),
-		db:      self.db,
-	}
-}
 
 type ban struct {
 	Type    string
@@ -45,8 +22,8 @@ type ban struct {
 	Counter int
 }
 
-type domainBanWorker struct {
-	NilWorker
+type worker struct {
+	plugin.NilWorker
 
 	channel     string
 	acl         *bot.ACL
@@ -63,7 +40,7 @@ type domainBanDbStruct struct {
 	Counter int
 }
 
-func (self *domainBanWorker) Enable() {
+func (self *worker) Enable() {
 	list := make([]domainBanDbStruct, 0)
 	self.db.Select(&list, "SELECT domain, bantype, counter FROM domain_ban WHERE channel = ? ORDER BY domain", self.channel)
 
@@ -105,16 +82,16 @@ func (self *domainBanWorker) Enable() {
 	go self.worker()
 }
 
-func (self *domainBanWorker) Disable() {
+func (self *worker) Disable() {
 	close(self.stopSyncing)
 	<-self.syncing
 }
 
-func (self *domainBanWorker) Permissions() []string {
+func (self *worker) Permissions() []string {
 	return []string{"configure_domain_bans"}
 }
 
-func (self *domainBanWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() || msg.IsFromBot() {
 		return
 	}
@@ -151,7 +128,7 @@ func (self *domainBanWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 	}
 }
 
-func (self *domainBanWorker) bannedDomains(sender bot.Sender) {
+func (self *worker) bannedDomains(sender bot.Sender) {
 	var bans []string
 
 	self.mutex.RLock()
@@ -177,7 +154,7 @@ func (self *domainBanWorker) bannedDomains(sender bot.Sender) {
 	}
 }
 
-func (self *domainBanWorker) banDomain(domain string, args []string, sender bot.Sender) {
+func (self *worker) banDomain(domain string, args []string, sender bot.Sender) {
 	bantype := "ban"
 	timeout := 0
 
@@ -215,7 +192,7 @@ func (self *domainBanWorker) banDomain(domain string, args []string, sender bot.
 	// let the worker take care of writing this to the database
 }
 
-func (self *domainBanWorker) unbanDomain(domain string, sender bot.Sender) {
+func (self *worker) unbanDomain(domain string, sender bot.Sender) {
 	self.mutex.Lock()
 
 	b, exists := self.bans[domain]
@@ -237,7 +214,7 @@ func (self *domainBanWorker) unbanDomain(domain string, sender bot.Sender) {
 	// let the worker take care of writing this to the database
 }
 
-func (self *domainBanWorker) textMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) textMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if len(self.bans) == 0 || msg.IsFromBroadcaster() || msg.IsFromOperator() || msg.IsFromBot() {
 		return
 	}
@@ -324,7 +301,7 @@ func (self *domainBanWorker) textMessage(msg *bot.TextMessage, sender bot.Sender
 	self.bans[worstDomain] = action
 }
 
-func (self *domainBanWorker) worker() {
+func (self *worker) worker() {
 	defer close(self.syncing)
 
 	for {
@@ -339,7 +316,7 @@ func (self *domainBanWorker) worker() {
 	}
 }
 
-func (self *domainBanWorker) sync() {
+func (self *worker) sync() {
 	self.mutex.RLock()
 	defer self.mutex.RUnlock()
 

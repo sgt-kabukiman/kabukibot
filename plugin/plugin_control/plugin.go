@@ -1,23 +1,16 @@
-package blacklist
+package plugin_control
 
 import (
-	"strings"
-	"sync"
-
-	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
 type pluginStruct struct {
 	plugin.BasePlugin
-	plugin.NilWorker
 
-	db    *sqlx.DB
-	log   bot.Logger
-	users []string
-	bot   string
-	mutex sync.RWMutex
+	bot     *bot.Kabukibot
+	prefix  string
+	plugins []bot.Plugin
 }
 
 func NewPlugin() *pluginStruct {
@@ -25,14 +18,16 @@ func NewPlugin() *pluginStruct {
 }
 
 func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
-	self.db = bot.Database()
-	self.log = bot.Logger()
-	self.bot = strings.ToLower(bot.BotUsername())
-	self.mutex = sync.RWMutex{}
-
-	self.loadBlacklist()
+	self.bot = bot
+	self.prefix = bot.Configuration().CommandPrefix
+	self.plugins = bot.Plugins()
 }
 
 func (self *pluginStruct) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return self
+	return &worker{
+		bot:     self.bot,
+		prefix:  self.prefix,
+		channel: channel,
+		plugins: self.plugins,
+	}
 }

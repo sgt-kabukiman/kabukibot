@@ -1,38 +1,36 @@
-package blacklist
+package emote_counter
 
 import (
-	"strings"
 	"sync"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
-	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
 type pluginStruct struct {
-	plugin.BasePlugin
-	plugin.NilWorker
-
-	db    *sqlx.DB
-	log   bot.Logger
-	users []string
-	bot   string
-	mutex sync.RWMutex
+	db *sqlx.DB
 }
 
 func NewPlugin() *pluginStruct {
 	return &pluginStruct{}
 }
 
+func (self *pluginStruct) Name() string {
+	return "emote_counter"
+}
+
 func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
 	self.db = bot.Database()
-	self.log = bot.Logger()
-	self.bot = strings.ToLower(bot.BotUsername())
-	self.mutex = sync.RWMutex{}
-
-	self.loadBlacklist()
 }
 
 func (self *pluginStruct) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return self
+	return &worker{
+		channel:     channel.Name(),
+		acl:         channel.ACL(),
+		db:          self.db,
+		syncing:     nil,
+		stopSyncing: nil,
+		queue:       make(chan *bot.TextMessage, 50),
+		mutex:       sync.RWMutex{},
+	}
 }

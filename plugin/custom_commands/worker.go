@@ -1,4 +1,4 @@
-package plugin
+package custom_commands
 
 import (
 	"fmt"
@@ -8,38 +8,16 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
+	"github.com/sgt-kabukiman/kabukibot/plugin/acl"
 )
 
-type CustomCommandsPlugin struct {
-	db *sqlx.DB
-}
-
-func NewCustomCommandsPlugin() *CustomCommandsPlugin {
-	return &CustomCommandsPlugin{}
-}
-
-func (self *CustomCommandsPlugin) Name() string {
-	return "custom_commands"
-}
-
-func (self *CustomCommandsPlugin) Setup(bot *bot.Kabukibot) {
-	self.db = bot.Database()
-}
-
-func (self *CustomCommandsPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &customCmdWorker{
-		channel: channel,
-		acl:     channel.ACL(),
-		db:      self.db,
-	}
-}
-
-type customCmdWorker struct {
-	NilWorker
+type worker struct {
+	plugin.NilWorker
 
 	channel   bot.Channel
 	acl       *bot.ACL
-	aclWorker *aclPluginWorker
+	aclWorker *acl.Worker
 	db        *sqlx.DB
 	commands  map[string]string
 }
@@ -49,7 +27,7 @@ type ccDbStruct struct {
 	Message string
 }
 
-func (self *customCmdWorker) Enable() {
+func (self *worker) Enable() {
 	list := make([]ccDbStruct, 0)
 	self.db.Select(&list, "SELECT command, message FROM custom_commands WHERE channel = ? ORDER BY command", self.channel.Name())
 
@@ -64,15 +42,15 @@ func (self *customCmdWorker) Enable() {
 		panic("Cannot run the custom commands plugin without the ACL plugin.")
 	}
 
-	asserted, okay := worker.(*aclPluginWorker)
+	asserted, okay := worker.(*acl.Worker)
 	if !okay {
-		panic("Expected a aclPluginWorker as the worker for the acl plugin.")
+		panic("Expected a acl.Worker as the worker for the acl plugin.")
 	}
 
 	self.aclWorker = asserted
 }
 
-func (self *customCmdWorker) Permissions() []string {
+func (self *worker) Permissions() []string {
 	permissions := []string{"configure_custom_commands", "configure_custom_commands_acl", "list_custom_commands"}
 
 	for cmd := range self.commands {
@@ -82,7 +60,7 @@ func (self *customCmdWorker) Permissions() []string {
 	return permissions
 }
 
-func (self *customCmdWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() || msg.IsFromBot() {
 		return
 	}
@@ -142,7 +120,7 @@ func (self *customCmdWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.
 	}
 }
 
-func (self *customCmdWorker) respondList(sender bot.Sender) {
+func (self *worker) respondList(sender bot.Sender) {
 	var commands []string
 
 	for cmd, _ := range self.commands {
@@ -156,7 +134,7 @@ func (self *customCmdWorker) respondList(sender bot.Sender) {
 	}
 }
 
-func (self *customCmdWorker) respondAllowDeny(kind string, cmd string, args []string, sender bot.Sender) {
+func (self *worker) respondAllowDeny(kind string, cmd string, args []string, sender bot.Sender) {
 	_, exists := self.commands[cmd]
 	if !exists {
 		sender.Respond("there is no custom command named '" + cmd + "'.")
@@ -168,7 +146,7 @@ func (self *customCmdWorker) respondAllowDeny(kind string, cmd string, args []st
 	self.aclWorker.HandleAllowDeny(kind == "allow", permission, args, sender, "!"+cmd)
 }
 
-func (self *customCmdWorker) respondGet(cmd string, sender bot.Sender) {
+func (self *worker) respondGet(cmd string, sender bot.Sender) {
 	response, exists := self.commands[cmd]
 	if !exists {
 		sender.Respond("there is no custom command named '" + cmd + "'.")
@@ -178,7 +156,7 @@ func (self *customCmdWorker) respondGet(cmd string, sender bot.Sender) {
 	sender.Respond("!" + cmd + " = " + response)
 }
 
-func (self *customCmdWorker) respondSet(cmd string, args []string, sender bot.Sender) {
+func (self *worker) respondSet(cmd string, args []string, sender bot.Sender) {
 	if len(args) < 1 {
 		sender.Respond("you did not give any response text for the new !" + cmd + " command.")
 		return
@@ -211,7 +189,7 @@ func (self *customCmdWorker) respondSet(cmd string, args []string, sender bot.Se
 	}
 }
 
-func (self *customCmdWorker) respondDelete(cmd string, sender bot.Sender) {
+func (self *worker) respondDelete(cmd string, sender bot.Sender) {
 	_, exists := self.commands[cmd]
 	if !exists {
 		sender.Respond("there is no custom command named '" + cmd + "'.")

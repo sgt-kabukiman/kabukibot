@@ -1,41 +1,15 @@
-package plugin
+package plugin_control
 
 import (
 	"sort"
 	"strings"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
-type PluginControlPlugin struct {
-	BasePlugin
-
-	bot     *bot.Kabukibot
-	prefix  string
-	plugins []bot.Plugin
-}
-
-func NewPluginControlPlugin() *PluginControlPlugin {
-	return &PluginControlPlugin{}
-}
-
-func (self *PluginControlPlugin) Setup(bot *bot.Kabukibot) {
-	self.bot = bot
-	self.prefix = bot.Configuration().CommandPrefix
-	self.plugins = bot.Plugins()
-}
-
-func (self *PluginControlPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &pluginControlWorker{
-		bot:     self.bot,
-		prefix:  self.prefix,
-		channel: channel,
-		plugins: self.plugins,
-	}
-}
-
-type pluginControlWorker struct {
-	NilWorker
+type worker struct {
+	plugin.NilWorker
 
 	bot     *bot.Kabukibot
 	prefix  string
@@ -43,7 +17,7 @@ type pluginControlWorker struct {
 	plugins []bot.Plugin
 }
 
-func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() {
 		return
 	}
@@ -109,7 +83,7 @@ func (self *pluginControlWorker) HandleTextMessage(msg *bot.TextMessage, sender 
 	sender.Respond(message)
 }
 
-func (self *pluginControlWorker) respondToListCommand(args []string, sender bot.Sender) {
+func (self *worker) respondToListCommand(args []string, sender bot.Sender) {
 	plugins := self.pluginStates()
 	enabledOnly := len(args) > 0 && strings.ToLower(args[0]) == "enabled"
 	nameList := make([]string, 0)
@@ -142,7 +116,7 @@ func (self *pluginControlWorker) respondToListCommand(args []string, sender bot.
 	}
 }
 
-func (self *pluginControlWorker) pluginKeys(includeOpOnly bool) []string {
+func (self *worker) pluginKeys(includeOpOnly bool) []string {
 	keys := make([]string, 0)
 
 	for _, plugin := range self.plugins {
@@ -163,7 +137,7 @@ func (self *pluginControlWorker) pluginKeys(includeOpOnly bool) []string {
 	return keys
 }
 
-func (self *pluginControlWorker) pluginStates() map[string]bool {
+func (self *worker) pluginStates() map[string]bool {
 	result := make(map[string]bool)
 
 	for _, plugin := range self.plugins {

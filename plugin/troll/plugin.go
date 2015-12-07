@@ -1,9 +1,8 @@
-package plugin
+package troll
 
 import (
-	"math/rand"
-
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
 var trollResponses = map[string][]string{
@@ -60,51 +59,18 @@ var trollResponses = map[string][]string{
 	},
 }
 
-type TrollPlugin struct {
-	BasePlugin
+type pluginStruct struct {
+	plugin.BasePlugin
 }
 
-func NewTrollPlugin() *TrollPlugin {
-	return &TrollPlugin{}
+func NewPlugin() *pluginStruct {
+	return &pluginStruct{}
 }
 
-func (self *TrollPlugin) Name() string {
+func (self *pluginStruct) Name() string {
 	return "troll"
 }
 
-func (self *TrollPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &trollWorker{acl: channel.ACL()}
-}
-
-type trollWorker struct {
-	NilWorker
-
-	acl *bot.ACL
-}
-
-func (self *trollWorker) Permissions() []string {
-	return []string{"trolling"}
-}
-
-func (self *trollWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
-	if msg.IsProcessed() || msg.IsFromBot() {
-		return
-	}
-
-	cmd := msg.Command()
-	if len(cmd) == 0 {
-		return
-	}
-
-	responses, okay := trollResponses[cmd]
-	if !okay {
-		return
-	}
-
-	if self.acl.IsAllowed(msg.User, "trolling") {
-		pos := rand.Intn(len(responses))
-		sender.Respond(responses[pos])
-	}
-
-	msg.SetProcessed()
+func (self *pluginStruct) CreateWorker(channel bot.Channel) bot.PluginWorker {
+	return &worker{acl: channel.ACL()}
 }

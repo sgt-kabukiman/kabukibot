@@ -1,32 +1,33 @@
-package plugin
+package dictionary
 
 import (
 	"sort"
 	"strings"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
-type DictionaryPlugin struct {
-	BasePlugin
-	NilWorker
+type pluginStruct struct {
+	plugin.BasePlugin
+	plugin.NilWorker
 
 	dict *bot.Dictionary
 }
 
-func NewDictionaryPlugin() *DictionaryPlugin {
-	return &DictionaryPlugin{}
+func NewPlugin() *pluginStruct {
+	return &pluginStruct{}
 }
 
-func (self *DictionaryPlugin) Setup(bot *bot.Kabukibot) {
+func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
 	self.dict = bot.Dictionary()
 }
 
-func (self *DictionaryPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
+func (self *pluginStruct) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 
-func (self *DictionaryPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	// op-only
 	if !msg.IsFromOperator() {
 		return
@@ -41,7 +42,7 @@ func (self *DictionaryPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot
 	}
 }
 
-func (self *DictionaryPlugin) handleSet(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) handleSet(msg *bot.TextMessage, sender bot.Sender) {
 	args := msg.Arguments()
 
 	if len(args) < 2 {
@@ -62,7 +63,7 @@ func (self *DictionaryPlugin) handleSet(msg *bot.TextMessage, sender bot.Sender)
 	}
 }
 
-func (self *DictionaryPlugin) handleGet(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) handleGet(msg *bot.TextMessage, sender bot.Sender) {
 	args := msg.Arguments()
 
 	if len(args) < 1 {
@@ -79,7 +80,7 @@ func (self *DictionaryPlugin) handleGet(msg *bot.TextMessage, sender bot.Sender)
 	}
 }
 
-func (self *DictionaryPlugin) handleKeys(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) handleKeys(msg *bot.TextMessage, sender bot.Sender) {
 	keys := self.dict.Keys()
 
 	sort.Strings(keys)

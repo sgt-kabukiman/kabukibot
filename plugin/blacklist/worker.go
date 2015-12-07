@@ -7,7 +7,7 @@ import (
 	"github.com/sgt-kabukiman/kabukibot/bot"
 )
 
-func (self *Plugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() {
 		return
 	}
@@ -77,7 +77,7 @@ func (self *Plugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	}
 }
 
-func (self *Plugin) blacklist(username string) bool {
+func (self *pluginStruct) blacklist(username string) bool {
 	// use a read-lock around the isBlacklisted check
 	self.mutex.RLock()
 
@@ -100,7 +100,7 @@ func (self *Plugin) blacklist(username string) bool {
 	return true
 }
 
-func (self *Plugin) unblacklist(username string) bool {
+func (self *pluginStruct) unblacklist(username string) bool {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
 
@@ -127,7 +127,7 @@ func (self *Plugin) unblacklist(username string) bool {
 	return true
 }
 
-func (self *Plugin) isBlacklisted(username string) bool {
+func (self *pluginStruct) isBlacklisted(username string) bool {
 	self.mutex.RLock()
 	defer self.mutex.RUnlock()
 
@@ -144,7 +144,7 @@ type blacklistUser struct {
 	Username string
 }
 
-func (self *Plugin) loadBlacklist() {
+func (self *pluginStruct) loadBlacklist() {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
 

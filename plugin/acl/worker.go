@@ -1,35 +1,15 @@
-package plugin
+package acl
 
 import (
 	"regexp"
 	"strings"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
-type ACLPlugin struct {
-	BasePlugin
-
-	bot *bot.Kabukibot
-}
-
-func NewACLPlugin() *ACLPlugin {
-	return &ACLPlugin{}
-}
-
-func (self *ACLPlugin) Setup(bot *bot.Kabukibot) {
-	self.bot = bot
-}
-
-func (self *ACLPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &aclPluginWorker{
-		bot:     self.bot,
-		channel: channel,
-	}
-}
-
-type aclPluginWorker struct {
-	NilWorker
+type Worker struct {
+	plugin.NilWorker
 
 	bot     *bot.Kabukibot
 	channel bot.Channel
@@ -37,7 +17,7 @@ type aclPluginWorker struct {
 
 var permRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
-func (self *aclPluginWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *Worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() {
 		return
 	}
@@ -123,7 +103,7 @@ var userIdentRegex = regexp.MustCompile(`[^a-zA-Z0-9_$,]`)
 var userNameRegex = regexp.MustCompile(`[^a-z0-9_]`)
 
 // HandleAllowDeny is exported because the custom commands plugin re-uses it. #cheating
-func (self *aclPluginWorker) HandleAllowDeny(allow bool, permission string, args []string, sender bot.Sender, permisionName string) {
+func (self *Worker) HandleAllowDeny(allow bool, permission string, args []string, sender bot.Sender, permisionName string) {
 	// normalize the arguments into a single array of (possibly bogus) idents
 	args = strings.Split(strings.ToLower(userIdentRegex.ReplaceAllString(strings.Join(args, ","), "")), ",")
 
@@ -165,7 +145,7 @@ func (self *aclPluginWorker) HandleAllowDeny(allow bool, permission string, args
 	}
 }
 
-func (self *aclPluginWorker) collectPermissions() []string {
+func (self *Worker) collectPermissions() []string {
 	result := make([]string, 0)
 
 	for _, worker := range self.channel.Workers() {

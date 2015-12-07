@@ -1,4 +1,4 @@
-package plugin
+package emote_counter
 
 import (
 	"fmt"
@@ -10,40 +10,13 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
 type emoteCountMap map[string]int
 
-type EmoteCounterPlugin struct {
-	db *sqlx.DB
-}
-
-func NewEmoteCounterPlugin() *EmoteCounterPlugin {
-	return &EmoteCounterPlugin{}
-}
-
-func (self *EmoteCounterPlugin) Name() string {
-	return "emote_counter"
-}
-
-func (self *EmoteCounterPlugin) Setup(bot *bot.Kabukibot) {
-	self.db = bot.Database()
-}
-
-func (self *EmoteCounterPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &emoteCounterWorker{
-		channel:     channel.Name(),
-		acl:         channel.ACL(),
-		db:          self.db,
-		syncing:     nil,
-		stopSyncing: nil,
-		queue:       make(chan *bot.TextMessage, 50),
-		mutex:       sync.RWMutex{},
-	}
-}
-
-type emoteCounterWorker struct {
-	NilWorker
+type worker struct {
+	plugin.NilWorker
 
 	channel     string
 	acl         *bot.ACL
@@ -60,7 +33,7 @@ type emoteDbStruct struct {
 	Counter int
 }
 
-func (self *emoteCounterWorker) Enable() {
+func (self *worker) Enable() {
 	list := make([]emoteDbStruct, 0)
 	self.db.Select(&list, "SELECT emote, counter FROM emote_counter WHERE channel = ?", self.channel)
 
@@ -81,16 +54,16 @@ func (self *emoteCounterWorker) Enable() {
 	go self.worker()
 }
 
-func (self *emoteCounterWorker) Disable() {
+func (self *worker) Disable() {
 	close(self.stopSyncing)
 	<-self.syncing
 }
 
-func (self *emoteCounterWorker) Permissions() []string {
+func (self *worker) Permissions() []string {
 	return []string{"use_emote_counter"}
 }
 
-func (self *emoteCounterWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() || msg.IsFromBot() {
 		return
 	}
@@ -109,7 +82,7 @@ func (self *emoteCounterWorker) HandleTextMessage(msg *bot.TextMessage, sender b
 	}
 }
 
-func (self *emoteCounterWorker) handleTopEmotesCommand(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) handleTopEmotesCommand(msg *bot.TextMessage, sender bot.Sender) {
 	if !self.acl.IsAllowed(msg.User, "use_emote_counter") {
 		return
 	}
@@ -150,7 +123,7 @@ func (self *emoteCounterWorker) handleTopEmotesCommand(msg *bot.TextMessage, sen
 	}
 }
 
-func (self *emoteCounterWorker) handleEmoteCountCommand(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) handleEmoteCountCommand(msg *bot.TextMessage, sender bot.Sender) {
 	if !self.acl.IsAllowed(msg.User, "use_emote_counter") {
 		return
 	}
@@ -174,7 +147,7 @@ func (self *emoteCounterWorker) handleEmoteCountCommand(msg *bot.TextMessage, se
 	}
 }
 
-func (self *emoteCounterWorker) handleResetCommand(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) handleResetCommand(msg *bot.TextMessage, sender bot.Sender) {
 	if !self.acl.IsAllowed(msg.User, "use_emote_counter") {
 		return
 	}
@@ -188,13 +161,13 @@ func (self *emoteCounterWorker) handleResetCommand(msg *bot.TextMessage, sender 
 	sender.Respond("the emote counter has been reset.")
 }
 
-func (self *emoteCounterWorker) handleRegularText(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) handleRegularText(msg *bot.TextMessage, sender bot.Sender) {
 	// anticipating that finding emotes will be complex when taking FFZ into account, we put
 	// this into the worker goroutine
 	self.queue <- msg
 }
 
-func (self *emoteCounterWorker) worker() {
+func (self *worker) worker() {
 	defer close(self.syncing)
 
 	for {
@@ -212,7 +185,7 @@ func (self *emoteCounterWorker) worker() {
 	}
 }
 
-func (self *emoteCounterWorker) sync() {
+func (self *worker) sync() {
 	self.mutex.RLock()
 	defer self.mutex.RUnlock()
 
@@ -223,7 +196,7 @@ func (self *emoteCounterWorker) sync() {
 	}
 }
 
-func (self *emoteCounterWorker) countEmotes(msg *bot.TextMessage) {
+func (self *worker) countEmotes(msg *bot.TextMessage) {
 	self.mutex.Lock()
 
 	for _, occurences := range msg.User.Emotes {
@@ -256,7 +229,7 @@ func (a emoteSorter) Less(i, j int) bool {
 	return a[i].count > a[j].count
 }
 
-func (self *emoteCounterWorker) topEmotes(max int) []emoteFlat {
+func (self *worker) topEmotes(max int) []emoteFlat {
 	self.mutex.RLock()
 
 	result := make([]emoteFlat, 0, len(self.stats))

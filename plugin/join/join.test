@@ -14,13 +14,3 @@ silence
 # check that we are listening in the channel
 < [#somebody] somebody: !k_permissions
 > [#somebody] bot: somebody, .+
-
-# leave it again
-< [#somebody] somebody: !k_leave
-> [#somebody] bot: somebody, .+
-
-wait 200ms
-
-# this message should not do anything (in real life, we wouldn't even receive it)
-< [#somebody] somebody: !k_permissions
-silence

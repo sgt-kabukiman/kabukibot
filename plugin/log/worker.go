@@ -1,4 +1,4 @@
-package plugin
+package log
 
 // TODO: This is not terribly performant, as it uses unbuffered writes. On high-frequency
 // channels, this will slow down a bit, but thankfully only the goroutines for those
@@ -12,50 +12,19 @@ import (
 	"time"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
-type logConfig struct {
-	Directory string
-}
-
-type LogPlugin struct {
-	config logConfig
-}
-
-func NewLogPlugin() *LogPlugin {
-	return &LogPlugin{}
-}
-
-func (self *LogPlugin) Name() string {
-	return "LOG"
-}
-
-func (self *LogPlugin) Setup(bot *bot.Kabukibot) {
-	self.config = logConfig{}
-
-	err := bot.Configuration().PluginConfig(self.Name(), &self.config)
-	if err != nil {
-		bot.Logger().Warn("Could not load 'log' plugin configuration: %s", err)
-	}
-}
-
-func (self *LogPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
-	return &logWorker{
-		directory: self.config.Directory,
-		channel:   channel.Name(),
-	}
-}
-
-type logWorker struct {
-	NilWorker
+type worker struct {
+	plugin.NilWorker
 
 	directory string
 	channel   string
 	file      *os.File
 }
 
-func (self *logWorker) Enable() {
+func (self *worker) Enable() {
 	self.Disable() // cleanup
 
 	filename := filepath.Join(self.directory, strings.TrimPrefix(self.channel, "#")+".log")
@@ -66,18 +35,18 @@ func (self *logWorker) Enable() {
 	}
 }
 
-func (self *logWorker) Disable() {
+func (self *worker) Disable() {
 	if self.file != nil {
 		_ = self.file.Close()
 		self.file = nil
 	}
 }
 
-func (self *logWorker) Permissions() []string {
+func (self *worker) Permissions() []string {
 	return []string{}
 }
 
-func (self *logWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if self.file != nil {
 		now := time.Now().Format("2006-Jan-02 15:04:05")
 		line := fmt.Sprintf("%s%s: %s", self.userPrefix(msg), msg.User.Name, msg.Text)
@@ -88,7 +57,7 @@ func (self *logWorker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender
 	}
 }
 
-func (self *logWorker) HandleClearChatMessage(msg *twitch.ClearChatMessage, sender bot.Sender) {
+func (self *worker) HandleClearChatMessage(msg *twitch.ClearChatMessage, sender bot.Sender) {
 	if self.file != nil {
 		var line string
 
@@ -106,7 +75,7 @@ func (self *logWorker) HandleClearChatMessage(msg *twitch.ClearChatMessage, send
 	}
 }
 
-func (self *logWorker) HandleSubscriberNotificationMessage(msg *twitch.SubscriberNotificationMessage, sender bot.Sender) {
+func (self *worker) HandleSubscriberNotificationMessage(msg *twitch.SubscriberNotificationMessage, sender bot.Sender) {
 	if self.file != nil {
 		now := time.Now().Format("2006-Jan-02 15:04:05")
 
@@ -116,7 +85,7 @@ func (self *logWorker) HandleSubscriberNotificationMessage(msg *twitch.Subscribe
 	}
 }
 
-func (self *logWorker) userPrefix(msg *bot.TextMessage) string {
+func (self *worker) userPrefix(msg *bot.TextMessage) string {
 	prefix := ""
 	user := msg.User
 

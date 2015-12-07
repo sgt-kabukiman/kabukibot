@@ -1,35 +1,36 @@
-package plugin
+package join
 
 import (
 	"regexp"
 	"strings"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/plugin"
 )
 
-type JoinPlugin struct {
-	BasePlugin
-	NilWorker
+type pluginStruct struct {
+	plugin.BasePlugin
+	plugin.NilWorker
 
 	bot    *bot.Kabukibot
 	prefix string
 	home   string
 }
 
-func NewJoinPlugin() *JoinPlugin {
-	return &JoinPlugin{}
+func NewPlugin() *pluginStruct {
+	return &pluginStruct{}
 }
 
-func (self *JoinPlugin) Setup(bot *bot.Kabukibot) {
+func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
 	self.bot = bot
 	self.home = "#" + strings.ToLower(bot.BotUsername())
 }
 
-func (self *JoinPlugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
+func (self *pluginStruct) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return self
 }
 
-func (self *JoinPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsProcessed() {
 		return
 	}
@@ -41,7 +42,7 @@ func (self *JoinPlugin) HandleTextMessage(msg *bot.TextMessage, sender bot.Sende
 	}
 }
 
-func (self *JoinPlugin) handleJoin(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) handleJoin(msg *bot.TextMessage, sender bot.Sender) {
 	args := msg.Arguments()
 	sentOn := msg.Channel
 	user := msg.User.Name
@@ -70,7 +71,7 @@ func (self *JoinPlugin) handleJoin(msg *bot.TextMessage, sender bot.Sender) {
 	}
 }
 
-func (self *JoinPlugin) handlePart(msg *bot.TextMessage, sender bot.Sender) {
+func (self *pluginStruct) handlePart(msg *bot.TextMessage, sender bot.Sender) {
 	args := msg.Arguments()
 	sentOn := msg.Channel
 	user := msg.User.Name

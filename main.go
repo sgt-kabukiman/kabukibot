@@ -9,8 +9,23 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
-	"github.com/sgt-kabukiman/kabukibot/plugin"
+	"github.com/sgt-kabukiman/kabukibot/plugin/acl"
+	"github.com/sgt-kabukiman/kabukibot/plugin/banhammer_bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin/blacklist"
+	"github.com/sgt-kabukiman/kabukibot/plugin/custom_commands"
+	"github.com/sgt-kabukiman/kabukibot/plugin/dictionary"
+	"github.com/sgt-kabukiman/kabukibot/plugin/domain_ban"
+	"github.com/sgt-kabukiman/kabukibot/plugin/echo"
+	"github.com/sgt-kabukiman/kabukibot/plugin/emote_counter"
+	"github.com/sgt-kabukiman/kabukibot/plugin/join"
+	"github.com/sgt-kabukiman/kabukibot/plugin/log"
+	"github.com/sgt-kabukiman/kabukibot/plugin/monitor"
+	"github.com/sgt-kabukiman/kabukibot/plugin/ping"
+	"github.com/sgt-kabukiman/kabukibot/plugin/plugin_control"
+	"github.com/sgt-kabukiman/kabukibot/plugin/speedruncom"
+	"github.com/sgt-kabukiman/kabukibot/plugin/subhype"
+	"github.com/sgt-kabukiman/kabukibot/plugin/sysinfo"
+	"github.com/sgt-kabukiman/kabukibot/plugin/troll"
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
@@ -45,22 +60,22 @@ func main() {
 
 	// add plugins
 	kabukibot.AddPlugin(blacklist.NewPlugin()) // load this as early as possible, because users will only be blacklisted for all following plugins
-	kabukibot.AddPlugin(plugin.NewLogPlugin())
-	kabukibot.AddPlugin(plugin.NewPingPlugin())
-	kabukibot.AddPlugin(plugin.NewJoinPlugin())
-	kabukibot.AddPlugin(plugin.NewACLPlugin())
-	kabukibot.AddPlugin(plugin.NewPluginControlPlugin())
-	kabukibot.AddPlugin(plugin.NewSpeedrunComPlugin())
-	kabukibot.AddPlugin(plugin.NewEchoPlugin())
-	kabukibot.AddPlugin(plugin.NewSysInfoPlugin())
-	kabukibot.AddPlugin(plugin.NewDictionaryPlugin())
-	kabukibot.AddPlugin(plugin.NewDomainBanPlugin())
-	kabukibot.AddPlugin(plugin.NewBanhammerBotPlugin())
-	kabukibot.AddPlugin(plugin.NewEmoteCounterPlugin())
-	kabukibot.AddPlugin(plugin.NewSubHypePlugin())
-	kabukibot.AddPlugin(plugin.NewTrollPlugin())
-	kabukibot.AddPlugin(plugin.NewMonitorPlugin())
-	kabukibot.AddPlugin(plugin.NewCustomCommandsPlugin())
+	kabukibot.AddPlugin(log.NewPlugin())
+	kabukibot.AddPlugin(ping.NewPlugin())
+	kabukibot.AddPlugin(join.NewPlugin())
+	kabukibot.AddPlugin(acl.NewPlugin())
+	kabukibot.AddPlugin(plugin_control.NewPlugin())
+	kabukibot.AddPlugin(speedruncom.NewPlugin())
+	kabukibot.AddPlugin(echo.NewPlugin())
+	kabukibot.AddPlugin(sysinfo.NewPlugin())
+	kabukibot.AddPlugin(dictionary.NewPlugin())
+	kabukibot.AddPlugin(domain_ban.NewPlugin())
+	kabukibot.AddPlugin(banhammer_bot.NewPlugin())
+	kabukibot.AddPlugin(emote_counter.NewPlugin())
+	kabukibot.AddPlugin(subhype.NewPlugin())
+	kabukibot.AddPlugin(troll.NewPlugin())
+	kabukibot.AddPlugin(monitor.NewPlugin())
+	kabukibot.AddPlugin(custom_commands.NewPlugin())
 
 	// here we go
 	err = kabukibot.Connect()
