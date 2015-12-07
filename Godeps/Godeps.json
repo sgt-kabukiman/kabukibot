@@ -1,0 +1,42 @@
+{
+	"ImportPath": "github.com/sgt-kabukiman/kabukibot",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "github.com/dchest/validator",
+			"Rev": "6e75c8ee02d3b9e46121fe1e0dbee699b5523ca3"
+		},
+		{
+			"ImportPath": "github.com/dustin/go-humanize",
+			"Rev": "64dbdae0d393b7d71480a6dace78456396b55286"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-88-ga197e5d",
+			"Rev": "a197e5d40516f2e9f74dcee085a5f2d4604e94df"
+		},
+		{
+			"ImportPath": "github.com/jmoiron/sqlx",
+			"Comment": "sqlx-v1.1-44-gae682dc",
+			"Rev": "ae682dc5c71d087ef97d506ec543320fdd7b0ff1"
+		},
+		{
+			"ImportPath": "github.com/mvdan/xurls",
+			"Comment": "v0.8.0-9-g7a44eeb",
+			"Rev": "7a44eebbc916471821eca01e8989af0a031c1bee"
+		},
+		{
+			"ImportPath": "github.com/sgt-kabukiman/srapi",
+			"Rev": "0ea25725a4c2ef3d740187f2e5df7570f88f079d"
+		},
+		{
+			"ImportPath": "github.com/sorcix/irc",
+			"Comment": "v1.1.2-5-g8b734cc",
+			"Rev": "8b734cce17cf972ee0f6ab6e56a1fca59920e404"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "53feefa2559fb8dfa8d81baad31be332c97d6c77"
+		}
+	]
+}
