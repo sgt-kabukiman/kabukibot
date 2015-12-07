@@ -1,0 +1,26 @@
+plugin join
+plugin acl
+
+connect
+
+# ensure that we are not yet listening in #somebody
+< [#somebody] somebody: !k_permissions
+silence
+
+# just make the bot join
+< [#bot] somebody: !k_join
+> [#bot] bot: somebody, .+
+
+# check that we are listening in the channel
+< [#somebody] somebody: !k_permissions
+> [#somebody] bot: somebody, .+
+
+# leave it again
+< [#somebody] somebody: !k_leave
+> [#somebody] bot: somebody, .+
+
+wait 200ms
+
+# this message should not do anything (in real life, we wouldn't even receive it)
+< [#somebody] somebody: !k_permissions
+silence

@@ -1,0 +1,43 @@
+package main
+
+import (
+	"os"
+	"testing"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/sgt-kabukiman/kabukibot/bot"
+	"github.com/sgt-kabukiman/kabukibot/test"
+)
+
+var config *bot.Configuration
+var db *sqlx.DB
+
+func init() {
+	var err error
+
+	// load configuration
+	config, err = bot.LoadConfiguration("config-test.yaml")
+	if err != nil {
+		panic(err)
+	}
+
+	// connect to database
+	db, err = sqlx.Connect("mysql", config.Database.DSN)
+	if err != nil {
+		panic(err)
+	}
+}
+{{range .testcases}}
+func Test{{.Function}}(t *testing.T) {
+	file, err := os.Open("{{.Filename}}")
+	if err != nil {
+		t.Error(err)
+	}
+	defer file.Close()
+
+	tester := test.NewTester(file, config, db)
+	initTester(tester)
+	tester.WipeDatabase()
+	tester.Run(t)
+}
+{{end}}
