@@ -79,7 +79,7 @@ func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 
 	msg.SetProcessed()
 
-	if !self.acl.IsAllowed(msg.User, permissionForCommand(command)) {
+	if !self.acl.IsAllowed(msg.User, requiredPermission(command)) {
 		return
 	}
 

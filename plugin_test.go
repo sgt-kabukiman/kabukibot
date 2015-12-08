@@ -45,6 +45,14 @@ func runScript(t *testing.T, filename string) {
 	tester.Run(t)
 }
 
+func TestAclAllow(t *testing.T) {
+	runScript(t, "plugin/acl/allow.test")
+}
+
+func TestAclDeny(t *testing.T) {
+	runScript(t, "plugin/acl/deny.test")
+}
+
 func TestBlacklistBasicCommands(t *testing.T) {
 	runScript(t, "plugin/blacklist/basic-commands.test")
 }

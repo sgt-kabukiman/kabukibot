@@ -1,0 +1,40 @@
+plugin plugin_control
+plugin custom_commands
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable custom_commands
+> [#chan] bot: op, .+
+
+< [#chan] op: !k_allow
+> [#chan] bot: op, no permission name given.
+
+< [#chan] op: !k_allow $%(/$)
+> [#chan] bot: op, invalid \(no\) permission given.
+
+< [#chan] op: !k_allow foobar
+> [#chan] bot: op, invalid permission \(foobar\) given.
+
+< [#chan] op: !k_allow list_custom_commands
+> [#chan] bot: op, no groups/usernames given. Group names are \$all, \$mods, \$subs, \$turbos, \$staff and \$admins.
+
+< [#chan] bob: !cc_list
+silence
+
+< [#chan] op: !k_allow list_custom_commands bob somebody
+> [#chan] bot: op, granted permission for list_custom_commands to bob and somebody.
+
+< [#chan] bob: !cc_list
+> [#chan] bot: bob, .+
+
+< [#chan] op: !k_allow list_custom_commands kevin
+> [#chan] bot: op, granted permission for list_custom_commands to kevin.
+
+< [#chan] bob: !cc_list
+> [#chan] bot: bob, .+
+
+< [#chan] kevin: !cc_list
+> [#chan] bot: kevin, .+

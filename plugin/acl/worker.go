@@ -39,7 +39,7 @@ func (self *Worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 		if len(permissions) == 0 {
 			sender.Respond("there are no permissions available to be configured.")
 		} else {
-			sender.Respond("available permissions are: " + strings.Join(permissions, ", "))
+			sender.Respond("available permissions are: " + bot.HumanJoin(permissions, ", "))
 		}
 
 		return
@@ -84,7 +84,7 @@ func (self *Worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 		if len(permissions) == 0 {
 			sender.Respond("\"" + permission + "\" is granted to nobody at the moment, only you can use it.")
 		} else {
-			sender.Respond("\"" + permission + "\" is granted to " + strings.Join(users, ", "))
+			sender.Respond("\"" + permission + "\" is granted to " + bot.HumanJoin(users, ", "))
 		}
 
 		return
@@ -92,7 +92,7 @@ func (self *Worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 
 	// no user ident(s) given
 	if len(args) == 1 {
-		sender.Respond("no groups/usernames given. Group names are " + strings.Join(bot.ACLGroups(), ", ") + ".")
+		sender.Respond("no groups/usernames given. Group names are " + bot.HumanJoin(bot.ACLGroups(), ", ") + ".")
 		return
 	}
 
