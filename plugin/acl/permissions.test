@@ -1,0 +1,16 @@
+plugin plugin_control
+plugin custom_commands
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_permissions
+> [#chan] bot: op, there are no permissions available to be configured.
+
+< [#chan] op: !k_enable custom_commands
+> [#chan] bot: op, .+
+
+< [#chan] op: !k_permissions
+> [#chan] bot: op, available permissions are: configure_custom_commands, configure_custom_commands_acl and list_custom_commands

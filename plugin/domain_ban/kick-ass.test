@@ -1,0 +1,33 @@
+plugin plugin_control
+plugin domain_ban
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable domain_ban
+> [#chan] bot: op, .+
+
+< [#chan] op: !ban_domain microsoft.com
+wait 250ms
+> [#chan] bot: op, links to microsoft.com will be \*banned\*.
+
+< [#chan] plebs: http://microsoft.com/ is my homepage.
+> [#chan] bot: .ban plebs
+> [#chan] bot: plebs, posting that link was a bad idea and got you permanently banned.
+
+< [#chan] op: !ban_domain microsoft.com timeout 60
+wait 250ms
+> [#chan] bot: op, links to microsoft.com will be timed out for 60 seconds.
+
+< [#chan] plebs: you can get windows on microsoft.com
+> [#chan] bot: .timeout plebs 60
+> [#chan] bot: plebs, posting that link was a bad idea and got you timed out for 60 seconds.
+
+< [#chan] op: !ban_domain google.com
+wait 250ms
+> [#chan] bot: op, links to google.com will be \*banned\*.
+
+< [#chan] plebs: you can get windows on google.com
+> [#chan] bot: .ban plebs
+> [#chan] bot: plebs, posting that link was a bad idea and got you permanently banned.

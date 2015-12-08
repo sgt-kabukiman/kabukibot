@@ -49,8 +49,16 @@ func TestAclAllow(t *testing.T) {
 	runScript(t, "plugin/acl/allow.test")
 }
 
+func TestAclAllowed(t *testing.T) {
+	runScript(t, "plugin/acl/allowed.test")
+}
+
 func TestAclDeny(t *testing.T) {
 	runScript(t, "plugin/acl/deny.test")
+}
+
+func TestAclPermissions(t *testing.T) {
+	runScript(t, "plugin/acl/permissions.test")
 }
 
 func TestBlacklistBasicCommands(t *testing.T) {
@@ -83,6 +91,34 @@ func TestCustomCommandsList(t *testing.T) {
 
 func TestCustomCommandsUpdate(t *testing.T) {
 	runScript(t, "plugin/custom_commands/update.test")
+}
+
+func TestDictionaryGet(t *testing.T) {
+	runScript(t, "plugin/dictionary/get.test")
+}
+
+func TestDictionaryKeys(t *testing.T) {
+	runScript(t, "plugin/dictionary/keys.test")
+}
+
+func TestDictionarySet(t *testing.T) {
+	runScript(t, "plugin/dictionary/set.test")
+}
+
+func TestDomainBanBan(t *testing.T) {
+	runScript(t, "plugin/domain_ban/ban.test")
+}
+
+func TestDomainBanBanned(t *testing.T) {
+	runScript(t, "plugin/domain_ban/banned.test")
+}
+
+func TestDomainBanKickAss(t *testing.T) {
+	runScript(t, "plugin/domain_ban/kick-ass.test")
+}
+
+func TestDomainBanUnban(t *testing.T) {
+	runScript(t, "plugin/domain_ban/unban.test")
 }
 
 func TestJoinJoin(t *testing.T) {

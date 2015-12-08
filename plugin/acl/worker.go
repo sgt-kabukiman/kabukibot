@@ -81,10 +81,10 @@ func (self *Worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	if msg.IsGlobalCommand("allowed") {
 		users := acl.AllowedUsers(permission)
 
-		if len(permissions) == 0 {
+		if len(users) == 0 {
 			sender.Respond("\"" + permission + "\" is granted to nobody at the moment, only you can use it.")
 		} else {
-			sender.Respond("\"" + permission + "\" is granted to " + bot.HumanJoin(users, ", "))
+			sender.Respond("\"" + permission + "\" is granted to " + bot.HumanJoin(users, ", ") + ".")
 		}
 
 		return

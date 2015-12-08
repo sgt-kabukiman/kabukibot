@@ -47,11 +47,11 @@ func (self *channelSender) Respond(text string) <-chan bool {
 }
 
 func (self *channelSender) Ban(user string) <-chan bool {
-	return self.SendText(".ban" + user)
+	return self.SendText(".ban " + user)
 }
 
 func (self *channelSender) Timeout(user string, seconds int) <-chan bool {
-	return self.SendText(fmt.Sprintf(".timeout %d %s", user, seconds))
+	return self.SendText(fmt.Sprintf(".timeout %s %d", user, seconds))
 }
 
 // a sender that is tied to a received message and can be used to transparently address the
@@ -74,9 +74,9 @@ func (self *responder) Respond(text string) <-chan bool {
 }
 
 func (self *responder) Ban(user string) <-chan bool {
-	return self.SendText(".ban" + user)
+	return self.SendText(".ban " + user)
 }
 
 func (self *responder) Timeout(user string, seconds int) <-chan bool {
-	return self.SendText(fmt.Sprintf(".timeout %d %s", user, seconds))
+	return self.SendText(fmt.Sprintf(".timeout %s %d", user, seconds))
 }

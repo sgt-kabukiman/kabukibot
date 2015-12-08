@@ -256,8 +256,9 @@ func (self *worker) textMessage(msg *bot.TextMessage, sender bot.Sender) {
 		}
 	}
 
+	self.mutex.RUnlock()
+
 	if len(evilDomains) == 0 {
-		self.mutex.RUnlock()
 		return
 	}
 

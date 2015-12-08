@@ -82,8 +82,12 @@ func (self *pluginStruct) handleGet(msg *bot.TextMessage, sender bot.Sender) {
 
 func (self *pluginStruct) handleKeys(msg *bot.TextMessage, sender bot.Sender) {
 	keys := self.dict.Keys()
+	if len(keys) == 0 {
+		sender.Respond("there are no keys yet.")
+		return
+	}
 
 	sort.Strings(keys)
 
-	sender.Respond("keys are: " + strings.Join(keys, ", "))
+	sender.Respond("keys are: " + bot.HumanJoin(keys, ", "))
 }

@@ -1,0 +1,17 @@
+plugin dictionary
+
+connect
+
+join #chan
+
+< [#chan] op: !k_dict_set
+> [#chan] bot: op, you have not given any text.
+
+< [#chan] op: !k_dict_set foo
+> [#chan] bot: op, you have not given any text.
+
+< [#chan] op: !k_dict_set foo bar
+> [#chan] bot: op, added 'foo' with 'bar'.
+
+< [#chan] op: !k_dict_set foo bla
+> [#chan] bot: op, replaced 'foo' with 'bla'.

@@ -1,0 +1,17 @@
+plugin dictionary
+
+connect
+
+join #chan
+
+< [#chan] op: !k_dict_get
+> [#chan] bot: op, you have not given a key.
+
+< [#chan] op: !k_dict_get foo
+> [#chan] bot: op, the key 'foo' does not exist.
+
+< [#chan] op: !k_dict_set foo bar
+> [#chan] bot: op, added 'foo' with 'bar'.
+
+< [#chan] op: !k_dict_get foo
+> [#chan] bot: op, foo = bar

@@ -73,97 +73,20 @@ func (test *Tester) Run(t *testing.T) {
 		parts := strings.SplitN(line, " ", 2)
 
 		switch parts[0] {
-		// load a plugin
 		case "plugin":
-			builder, exists := test.pluginBuilders[parts[1]]
-			if !exists {
-				t.Errorf("[line %d] plugin could not be found: %s", lineNr, parts[1])
-			}
-
-			testBot.AddPlugin(builder())
-
-		// connect to the chat, join initial chats
+			test.pluginCommand(t, testBot, lineNr, parts[1:])
 		case "connect":
-			err := testBot.Connect()
-			if err != nil {
-				t.Errorf("[line %d] could not connect: %s", lineNr, err.Error())
-			}
-
-			go testBot.Work()
-
-			// wait a bit for everything to settle, especially the join on the bot channel
-			<-time.After(50 * time.Millisecond)
-
-		// join a channel
+			test.connectCommand(t, testBot, lineNr)
 		case "join":
-			<-testBot.Join(parts[1])
-			<-time.After(50 * time.Millisecond)
-
-		// wait a bit (for operations that naturally take a few milliseconds)
+			test.joinCommand(t, testBot, lineNr, parts[1:])
 		case "wait":
-			duration := 50 * time.Millisecond
-
-			if len(parts) > 1 {
-				d, err := time.ParseDuration(parts[1])
-				if err != nil {
-					t.Error(err)
-				}
-
-				duration = d
-			}
-
-			<-time.After(duration)
-
-		// inject a message, aka the bot receives a message
+			test.waitCommand(t, testBot, lineNr, parts[1:])
 		case "<":
-			matched := injectedMessage.FindStringSubmatch(line)
-			if len(matched) != 4 {
-				t.Errorf("[line %d] invalid line: '%s'", lineNr, line)
-			}
-
-			tc.incoming <- twitch.TextMessage{
-				Channel: matched[1],
-				User:    twitch.User{Name: matched[2]},
-				Text:    matched[3],
-			}
-
-		// assert a response
+			test.sendCommand(t, testBot, lineNr, line, tc)
 		case ">":
-			timeout := time.After(50 * time.Millisecond)
-			matched := expectedMessage.FindStringSubmatch(line)
-			if len(matched) != 4 {
-				t.Errorf("[line %d] invalid line: '%s'", lineNr, line)
-			}
-
-			select {
-			case actual := <-tc.outgoing:
-				asserted, okay := actual.(twitch.TextMessage)
-				if !okay {
-					t.Errorf("[line %d] expected to receive '%s', but did not get a text message. Got %t instead.", lineNr, line, actual)
-				}
-
-				if asserted.Channel != matched[1] {
-					t.Errorf("[line %d] expected to message in %s, but got one in %s instead.", lineNr, matched[1], asserted.Channel)
-				}
-
-				regex := regexp.MustCompile("^" + matched[3] + "$")
-				if !regex.MatchString(asserted.Text) {
-					t.Errorf("[line %d] expected match `%s`, but got '%s' instead.", lineNr, matched[3], asserted.Text)
-				}
-
-			case <-timeout:
-				t.Errorf("[line %d] expected to receive '%s', but got no message at all.", lineNr, line)
-			}
-
-		// expect silence
+			test.receiveCommand(t, testBot, lineNr, line, tc)
 		case "silence":
-			timeout := time.After(100 * time.Millisecond)
-
-			select {
-			case l := <-tc.outgoing:
-				t.Errorf("[line %d] expected silence in response to '%s', but got a message: '%#v'", lineNr, lastLine, l)
-			case <-timeout:
-			}
+			test.silenceCommand(t, testBot, lineNr, lastLine, tc)
 		}
 
 		lastLine = line
@@ -171,4 +94,98 @@ func (test *Tester) Run(t *testing.T) {
 
 	// shutdown
 	testBot.Shutdown()
+}
+
+func (test *Tester) pluginCommand(t *testing.T, bot *bot.Kabukibot, lineNr int, args []string) {
+	plugin := args[0]
+
+	builder, exists := test.pluginBuilders[plugin]
+	if !exists {
+		t.Errorf("[line %d] plugin could not be found: %s", lineNr, plugin)
+	}
+
+	bot.AddPlugin(builder())
+}
+
+func (test *Tester) connectCommand(t *testing.T, bot *bot.Kabukibot, lineNr int) {
+	err := bot.Connect()
+	if err != nil {
+		t.Errorf("[line %d] could not connect: %s", lineNr, err.Error())
+	}
+
+	go bot.Work()
+
+	// wait a bit for everything to settle, especially the join on the bot channel
+	<-time.After(50 * time.Millisecond)
+}
+
+func (test *Tester) joinCommand(t *testing.T, bot *bot.Kabukibot, lineNr int, args []string) {
+	<-bot.Join(args[0])
+	<-time.After(50 * time.Millisecond)
+}
+
+func (test *Tester) waitCommand(t *testing.T, bot *bot.Kabukibot, lineNr int, args []string) {
+	duration := 50 * time.Millisecond
+
+	if len(args) > 0 {
+		d, err := time.ParseDuration(args[0])
+		if err != nil {
+			t.Error(err)
+		}
+
+		duration = d
+	}
+
+	<-time.After(duration)
+}
+
+func (test *Tester) sendCommand(t *testing.T, bot *bot.Kabukibot, lineNr int, line string, client *fakeClient) {
+	matched := injectedMessage.FindStringSubmatch(line)
+	if len(matched) != 4 {
+		t.Errorf("[line %d] invalid line: '%s'", lineNr, line)
+	}
+
+	client.incoming <- twitch.TextMessage{
+		Channel: matched[1],
+		User:    twitch.User{Name: matched[2]},
+		Text:    matched[3],
+	}
+}
+
+func (test *Tester) receiveCommand(t *testing.T, bot *bot.Kabukibot, lineNr int, line string, client *fakeClient) {
+	timeout := time.After(50 * time.Millisecond)
+	matched := expectedMessage.FindStringSubmatch(line)
+	if len(matched) != 4 {
+		t.Errorf("[line %d] invalid line: '%s'", lineNr, line)
+	}
+
+	select {
+	case actual := <-client.outgoing:
+		asserted, okay := actual.(twitch.TextMessage)
+		if !okay {
+			t.Errorf("[line %d] expected to receive '%s', but did not get a text message. Got %t instead.", lineNr, line, actual)
+		}
+
+		if asserted.Channel != matched[1] {
+			t.Errorf("[line %d] expected to message in %s, but got one in %s instead.", lineNr, matched[1], asserted.Channel)
+		}
+
+		regex := regexp.MustCompile("^" + matched[3] + "$")
+		if !regex.MatchString(asserted.Text) {
+			t.Errorf("[line %d] expected match `%s`, but got '%s' instead.", lineNr, matched[3], asserted.Text)
+		}
+
+	case <-timeout:
+		t.Errorf("[line %d] expected to receive '%s', but got no message at all.", lineNr, line)
+	}
+}
+
+func (test *Tester) silenceCommand(t *testing.T, bot *bot.Kabukibot, lineNr int, lastLine string, client *fakeClient) {
+	timeout := time.After(100 * time.Millisecond)
+
+	select {
+	case l := <-client.outgoing:
+		t.Errorf("[line %d] expected silence in response to '%s', but got a message: '%#v'", lineNr, lastLine, l)
+	case <-timeout:
+	}
 }

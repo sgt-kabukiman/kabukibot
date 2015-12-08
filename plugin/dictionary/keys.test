@@ -1,0 +1,17 @@
+plugin dictionary
+
+connect
+
+join #chan
+
+< [#chan] op: !k_dict_keys
+> [#chan] bot: op, there are no keys yet.
+
+< [#chan] op: !k_dict_set foo bar
+> [#chan] bot: op, added 'foo' with 'bar'.
+
+< [#chan] op: !k_dict_set baz bla
+> [#chan] bot: op, added 'baz' with 'bla'.
+
+< [#chan] op: !k_dict_keys
+> [#chan] bot: op, keys are: baz and foo

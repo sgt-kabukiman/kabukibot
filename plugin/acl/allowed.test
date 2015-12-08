@@ -1,0 +1,28 @@
+plugin plugin_control
+plugin custom_commands
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable custom_commands
+> [#chan] bot: op, .+
+
+< [#chan] op: !k_allowed
+> [#chan] bot: op, no permission name given.
+
+< [#chan] op: !k_allowed $%(/$)
+> [#chan] bot: op, invalid \(no\) permission given.
+
+< [#chan] op: !k_allowed foobar
+> [#chan] bot: op, invalid permission \(foobar\) given.
+
+< [#chan] op: !k_allowed list_custom_commands
+> [#chan] bot: op, "list_custom_commands" is granted to nobody at the moment, only you can use it.
+
+< [#chan] op: !k_allow list_custom_commands bob somebody
+> [#chan] bot: op, granted permission for list_custom_commands to bob and somebody.
+
+< [#chan] op: !k_allowed list_custom_commands
+> [#chan] bot: op, "list_custom_commands" is granted to bob and somebody.

@@ -1,0 +1,23 @@
+plugin plugin_control
+plugin domain_ban
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable domain_ban
+> [#chan] bot: op, .+
+
+< [#chan] op: !banned_domains
+> [#chan] bot: op, no domains are banned yet.
+
+< [#chan] op: !ban_domain microsoft.com
+wait 250ms
+> [#chan] bot: op, links to microsoft.com will be \*banned\*.
+
+< [#chan] op: !ban_domain google.com
+wait 250ms
+> [#chan] bot: op, links to google.com will be \*banned\*.
+
+< [#chan] op: !banned_domains
+> [#chan] bot: op, the following domains are forbidden: .*?com \(ban\) and .*?com \(ban\)

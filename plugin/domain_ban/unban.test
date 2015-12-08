@@ -1,0 +1,36 @@
+plugin plugin_control
+plugin domain_ban
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable domain_ban
+> [#chan] bot: op, .+
+
+< [#chan] op: !unban_domain
+> [#chan] bot: op, no domain given.
+
+< [#chan] op: !unban_domain %
+wait 250ms
+> [#chan] bot: op, this domain name seems invalid to me.
+
+< [#chan] op: !unban_domain microsoft.com
+wait 250ms
+> [#chan] bot: op, microsoft.com was not banned in the first place.
+
+< [#chan] op: !ban_domain microsoft.com
+wait 250ms
+> [#chan] bot: op, .+
+
+< [#chan] op: !unban_domain microsoft.com
+wait 250ms
+> [#chan] bot: op, links to microsoft.com will no longer be banned.
+
+< [#chan] op: !ban_domain microsoft.com timeout 100
+wait 250ms
+> [#chan] bot: op, .+
+
+< [#chan] op: !unban_domain microsoft.com
+wait 250ms
+> [#chan] bot: op, links to microsoft.com will no longer be timed out.
