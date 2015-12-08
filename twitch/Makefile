@@ -1,9 +1,3 @@
-default: build
-
-build: fix
-	go build -v .
-
-fix: *.go
+build:
 	goimports -l -w .
 	gofmt -l -w .
-	# go generate
