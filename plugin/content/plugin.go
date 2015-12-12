@@ -53,6 +53,10 @@ func NewSDAPlugin() *pluginStruct {
 	return newPlugin("sda", "sda_commands", false, "")
 }
 
+func NewEGGSPlugin() *pluginStruct {
+	return newPlugin("eggs", "eggs_commands", false, "")
+}
+
 func (self *pluginStruct) Name() string {
 	return self.name
 }
