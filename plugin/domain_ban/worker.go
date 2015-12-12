@@ -3,7 +3,6 @@ package domain_ban
 import (
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,9 +15,13 @@ import (
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
+var nilTimeout = 0 * time.Second
+var minTimeout = 1 * time.Second
+var maxTimeout = 365 * 24 * time.Hour
+
 type ban struct {
 	Type    string
-	Timeout int
+	Timeout time.Duration
 	Counter int
 }
 
@@ -47,24 +50,21 @@ func (self *worker) Enable() {
 	self.bans = make(map[string]ban)
 
 	for _, item := range list {
-		b := ban{Type: item.Bantype, Timeout: 0, Counter: item.Counter}
+		b := ban{
+			Type:    item.Bantype,
+			Timeout: nilTimeout,
+			Counter: item.Counter,
+		}
 
 		// type is either "ban" or "timeout:N", with N being the number of seconds to time out
 		if b.Type != "ban" {
 			parts := strings.Split(b.Type, ":")
 
 			if len(parts) == 2 && parts[0] == "timeout" {
-				seconds, err := strconv.Atoi(parts[1])
-				if err == nil {
-					b.Type = "timeout"
-					b.Timeout = seconds
-				} else {
-					b.Type = "ban"
-					b.Timeout = 0
-				}
+				b.Type = "timeout"
+				b.Timeout = *bot.ParseDuration(parts[1], &minTimeout, &maxTimeout)
 			} else {
 				b.Type = "ban"
-				b.Timeout = 0
 			}
 		}
 
@@ -137,7 +137,7 @@ func (self *worker) bannedDomains(sender bot.Sender) {
 		var t string
 
 		if ban.Type == "timeout" {
-			t = fmt.Sprintf("%s (%ds t/o)", domain, ban.Timeout)
+			t = fmt.Sprintf("%s (%s t/o)", domain, ban.Timeout.String())
 		} else {
 			t = fmt.Sprintf("%s (ban)", domain)
 		}
@@ -156,17 +156,23 @@ func (self *worker) bannedDomains(sender bot.Sender) {
 
 func (self *worker) banDomain(domain string, args []string, sender bot.Sender) {
 	bantype := "ban"
-	timeout := 0
+	timeout := nilTimeout
 
 	if len(args) >= 2 && (args[0] == "timeout" || args[0] == "to") {
-		parsed, err := strconv.Atoi(args[1])
-		if err != nil || parsed < 1 {
-			sender.Respond("invalid timeout time given. Expected a number of seconds.")
+		parsed := bot.ParseDuration(strings.Join(args[1:], ""), nil, nil)
+		if parsed == nil || *parsed < minTimeout {
+			sender.Respond("invalid timeout time given. Expected a value like 50s or 3d.")
 			return
 		}
 
+		if *parsed > maxTimeout {
+			sender.Respond(fmt.Sprintf("invalid timeout time given. Use values smaller than %s.", maxTimeout.String()))
+			return
+		}
+
+		// round to seconds, just in case
 		bantype = "timeout"
-		timeout = parsed
+		timeout = time.Duration(parsed.Seconds() * float64(time.Second))
 	}
 
 	self.mutex.Lock()
@@ -184,7 +190,7 @@ func (self *worker) banDomain(domain string, args []string, sender bot.Sender) {
 	self.mutex.Unlock()
 
 	if timeout > 0 {
-		sender.Respond(fmt.Sprintf("links to %s will be timed out for %d seconds.", domain, timeout))
+		sender.Respond(fmt.Sprintf("links to %s will be timed out for %s.", domain, bot.FormatDuration(timeout, true)))
 	} else {
 		sender.Respond(fmt.Sprintf("links to %s will be *banned*.", domain))
 	}
@@ -202,7 +208,7 @@ func (self *worker) unbanDomain(domain string, sender bot.Sender) {
 		return
 	}
 
-	if b.Timeout > 0 {
+	if b.Type == "timeout" {
 		sender.Respond(fmt.Sprintf("links to %s will no longer be timed out.", domain))
 	} else {
 		sender.Respond(fmt.Sprintf("links to %s will no longer be banned.", domain))
@@ -290,10 +296,10 @@ func (self *worker) textMessage(msg *bot.TextMessage, sender bot.Sender) {
 		sender.Ban(name)
 		sender.Respond("posting that link was a bad idea and got you permanently banned.")
 	} else {
-		sender.Timeout(name, action.Timeout)
+		sender.Timeout(name, int(action.Timeout.Seconds()))
 		sender.Respond(fmt.Sprintf(
-			"posting that link was a bad idea and got you timed out for %d seconds.",
-			action.Timeout,
+			"posting that link was a bad idea and got you timed out for %s.",
+			bot.FormatDuration(action.Timeout, true),
 		))
 	}
 
@@ -327,7 +333,7 @@ func (self *worker) sync() {
 		t := ban.Type
 
 		if t == "timeout" {
-			t += strconv.Itoa(ban.Timeout)
+			t += ":" + bot.FormatDuration(ban.Timeout, false)
 		}
 
 		self.db.Exec("INSERT INTO domain_ban (channel, domain, bantype, counter) VALUES (?, ?, ?)", self.channel, domain, t, ban.Counter)

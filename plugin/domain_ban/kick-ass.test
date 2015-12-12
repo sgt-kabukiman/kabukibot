@@ -16,13 +16,13 @@ wait 250ms
 > [#chan] bot: .ban plebs
 > [#chan] bot: plebs, posting that link was a bad idea and got you permanently banned.
 
-< [#chan] op: !ban_domain microsoft.com timeout 60
+< [#chan] op: !ban_domain microsoft.com timeout 60s
 wait 250ms
-> [#chan] bot: op, links to microsoft.com will be timed out for 60 seconds.
+> [#chan] bot: op, links to microsoft.com will be timed out for 1 minute.
 
 < [#chan] plebs: you can get windows on microsoft.com
 > [#chan] bot: .timeout plebs 60
-> [#chan] bot: plebs, posting that link was a bad idea and got you timed out for 60 seconds.
+> [#chan] bot: plebs, posting that link was a bad idea and got you timed out for 1 minute.
 
 < [#chan] op: !ban_domain google.com
 wait 250ms

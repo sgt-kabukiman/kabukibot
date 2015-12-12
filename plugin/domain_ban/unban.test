@@ -27,7 +27,7 @@ wait 250ms
 wait 250ms
 > [#chan] bot: op, links to microsoft.com will no longer be banned.
 
-< [#chan] op: !ban_domain microsoft.com timeout 100
+< [#chan] op: !ban_domain microsoft.com timeout 100s
 wait 250ms
 > [#chan] bot: op, .+
 

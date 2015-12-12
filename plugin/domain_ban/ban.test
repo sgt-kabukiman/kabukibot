@@ -25,8 +25,12 @@ wait 250ms
 
 < [#chan] op: !ban_domain microsoft.com timeout foo
 wait 250ms
-> [#chan] bot: op, invalid timeout time given. Expected a number of seconds.
+> [#chan] bot: op, invalid timeout time given. Expected a value like 50s or 3d.
 
-< [#chan] op: !ban_domain microsoft.com timeout 100
+< [#chan] op: !ban_domain microsoft.com timeout 100s
 wait 250ms
-> [#chan] bot: op, links to microsoft.com will be timed out for 100 seconds.
+> [#chan] bot: op, links to microsoft.com will be timed out for 1 minute and 40 seconds.
+
+< [#chan] op: !ban_domain microsoft.com timeout 5h 30m
+wait 250ms
+> [#chan] bot: op, links to microsoft.com will be timed out for 5 hours and 30 minutes.

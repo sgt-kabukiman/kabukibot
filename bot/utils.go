@@ -1,6 +1,9 @@
 package bot
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 import "strconv"
 import "strings"
@@ -13,6 +16,95 @@ const (
 	ONE_DAY    = 24 * ONE_HOUR
 	ONE_WEEK   = 7 * ONE_DAY
 )
+
+var oneDay = 24 * time.Hour
+var handyDay = regexp.MustCompile(`[0-9]+d`)
+var groupMatcher = regexp.MustCompile(`([0-9]+)([a-z]+)`)
+
+var extUnits = map[string][]string{
+	"d": []string{"day", "days"},
+	"h": []string{"hour", "hours"},
+	"m": []string{"minute", "minutes"},
+	"s": []string{"second", "seconds"},
+}
+
+func ParseDuration(val string, min *time.Duration, max *time.Duration) *time.Duration {
+	val = handyDay.ReplaceAllStringFunc(val, func(match string) string {
+		num, err := strconv.Atoi(match[:len(match)-1])
+		if err == nil {
+			return strconv.Itoa(num*24) + "h"
+		}
+
+		return match
+	})
+
+	parsed, err := time.ParseDuration(val)
+	if err != nil {
+		return min
+	}
+
+	if min != nil && parsed < *min {
+		return min
+	}
+
+	if max != nil && parsed > *max {
+		return max
+	}
+
+	return &parsed
+}
+
+func FormatDuration(d time.Duration, extended bool) string {
+	result := ""
+
+	if d >= oneDay {
+		days := int(d.Hours()) / int(oneDay.Hours())
+		d -= time.Duration(float64(days) * 24 * float64(time.Hour))
+
+		result = strconv.Itoa(days) + "d"
+	}
+
+	duration := d.String()
+	if duration != "" && duration != "0" {
+		result += duration
+	}
+
+	// remove trailing zero values, like in "1m0s"
+	if !extended {
+		shortened := ""
+
+		for _, match := range groupMatcher.FindAllStringSubmatch(result, -1) {
+			if match[1] != "0" {
+				shortened += match[0]
+			}
+		}
+
+		return shortened
+	} else {
+		var shortened []string
+
+		for _, match := range groupMatcher.FindAllStringSubmatch(result, -1) {
+			if match[1] != "0" {
+				unit, okay := extUnits[match[2]]
+				if okay {
+					var u string
+
+					if match[1] == "1" {
+						u = unit[0]
+					} else {
+						u = unit[1]
+					}
+
+					shortened = append(shortened, match[1]+" "+u)
+				} else {
+					shortened = append(shortened, match[0])
+				}
+			}
+		}
+
+		return HumanJoin(shortened, ", ")
+	}
+}
 
 func twodigit(n int) string {
 	if n < 10 {
