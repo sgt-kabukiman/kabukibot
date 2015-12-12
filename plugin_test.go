@@ -69,6 +69,14 @@ func TestBlacklistBasicFunctionality(t *testing.T) {
 	runScript(t, "plugin/blacklist/basic-functionality.test")
 }
 
+func TestContentDefine(t *testing.T) {
+	runScript(t, "plugin/content/define.test")
+}
+
+func TestContentUndefine(t *testing.T) {
+	runScript(t, "plugin/content/undefine.test")
+}
+
 func TestCustomCommandsAcl(t *testing.T) {
 	runScript(t, "plugin/custom_commands/acl.test")
 }
@@ -140,3 +148,4 @@ func TestPingPing(t *testing.T) {
 func TestTrollCommands(t *testing.T) {
 	runScript(t, "plugin/troll/commands.test")
 }
+

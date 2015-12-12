@@ -1,31 +1,39 @@
 package speedruncom
 
 import (
+	"strings"
 	"time"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/srapi"
 )
 
-type speedruncomConfig struct {
-	Interval int
-	Mapping  map[string]map[string]string
+type categoryConfig struct {
+	DictKey  string `yaml:"dict"`
+	Commands []string
 }
 
-type pluginStruct struct {
+type gameConfig map[string]categoryConfig
+
+type speedruncomConfig struct {
+	Interval int
+	Mapping  map[string]gameConfig
+}
+
+type Plugin struct {
 	config speedruncomConfig
 	dict   *bot.Dictionary
 }
 
-func NewPlugin() *pluginStruct {
-	return &pluginStruct{}
+func NewPlugin() *Plugin {
+	return &Plugin{}
 }
 
-func (self *pluginStruct) Name() string {
+func (self *Plugin) Name() string {
 	return "speedruncom"
 }
 
-func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
+func (self *Plugin) Setup(bot *bot.Kabukibot) {
 	self.config = speedruncomConfig{}
 	self.dict = bot.Dictionary()
 
@@ -37,7 +45,7 @@ func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
 	go self.updater()
 }
 
-func (self *pluginStruct) updater() {
+func (self *Plugin) updater() {
 	interval := time.Duration(self.config.Interval * int(time.Minute))
 
 	for {
@@ -62,7 +70,7 @@ func (self *pluginStruct) updater() {
 					return true
 				}
 
-				dictKey, okay := catList[cat.ID]
+				catConfig, okay := catList[cat.ID]
 				if !okay {
 					return true
 				}
@@ -70,7 +78,7 @@ func (self *pluginStruct) updater() {
 				wr := lb.Runs[0]
 				formatted := formatWorldRecord(&wr.Run, game, cat, nil, nil, nil)
 
-				self.dict.Set(dictKey, formatted)
+				self.dict.Set(catConfig.DictKey, formatted)
 
 				return true
 			})
@@ -82,9 +90,25 @@ func (self *pluginStruct) updater() {
 	}
 }
 
-func (self *pluginStruct) CreateWorker(channel bot.Channel) bot.PluginWorker {
+func (self *Plugin) CreateWorker(channel bot.Channel) bot.PluginWorker {
 	return &worker{
 		channel: channel.Name(),
 		acl:     channel.ACL(),
 	}
+}
+
+func (self *Plugin) CollectCommands(dictKeyPrefix string) map[string]string {
+	result := make(map[string]string)
+
+	for _, catList := range self.config.Mapping {
+		for _, catConfig := range catList {
+			if len(dictKeyPrefix) == 0 || strings.HasPrefix(catConfig.DictKey, dictKeyPrefix) {
+				for _, cmd := range catConfig.Commands {
+					result[cmd] = catConfig.DictKey
+				}
+			}
+		}
+	}
+
+	return result
 }

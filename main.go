@@ -10,6 +10,7 @@ import (
 	"github.com/sgt-kabukiman/kabukibot/plugin/acl"
 	"github.com/sgt-kabukiman/kabukibot/plugin/banhammer_bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin/blacklist"
+	"github.com/sgt-kabukiman/kabukibot/plugin/content"
 	"github.com/sgt-kabukiman/kabukibot/plugin/custom_commands"
 	"github.com/sgt-kabukiman/kabukibot/plugin/dictionary"
 	"github.com/sgt-kabukiman/kabukibot/plugin/domain_ban"
@@ -73,6 +74,11 @@ func main() {
 	kabukibot.AddPlugin(troll.NewPlugin())
 	kabukibot.AddPlugin(monitor.NewPlugin())
 	kabukibot.AddPlugin(custom_commands.NewPlugin())
+	kabukibot.AddPlugin(content.NewGTAPlugin())
+	kabukibot.AddPlugin(content.NewCrashPlugin())
+	kabukibot.AddPlugin(content.NewChattyPlugin())
+	kabukibot.AddPlugin(content.NewSDAPlugin())
+	kabukibot.AddPlugin(content.NewESAPlugin())
 
 	// here we go
 	err = kabukibot.Connect()

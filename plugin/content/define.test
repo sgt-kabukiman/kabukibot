@@ -1,0 +1,53 @@
+plugin dictionary
+plugin plugin_control
+plugin speedruncom
+plugin gta
+plugin acl
+
+connect
+
+join #chan
+
+< [#chan] op: !k_enable gta
+> [#chan] bot: op, .+
+
+< [#chan] op: !k_gta_define
+> [#chan] bot: op, you must specify the new command name and the dictionary key it points to.
+
+< [#chan] op: !k_gta_define foo
+> [#chan] bot: op, you must specify the new command name and the dictionary key it points to.
+
+# we give no text, so we expect no response even from allowed users
+< [#chan] op: !k_gta_define foo bar
+> [#chan] bot: op, new command !foo has been created.
+
+< [#chan] op: !foo
+silence
+
+# now define the response text
+< [#chan] op: !k_dict_set bar the response
+> [#chan] bot: op, .+
+
+< [#chan] op: !foo
+> [#chan] bot: the response
+
+< [#chan] kevin: !foo
+silence
+
+# and now grant kevin the right to use all gta commands, including the new !foo
+< [#chan] op: !k_allow gta_commands kevin
+> [#chan] bot: op, .+
+
+< [#chan] kevin: !foo
+> [#chan] bot: the response
+
+# define another command pointing to the same dict key
+< [#chan] op: !k_gta_define umse bar
+> [#chan] bot: op, new command !umse has been created.
+
+< [#chan] kevin: !umse
+> [#chan] bot: the response
+
+# there is already a !wr_test, so this should fail
+< [#chan] op: !k_gta_define wr_test blafasel
+> [#chan] bot: op, !wr_test already exists and points to 'gta_wr_london61_any'.

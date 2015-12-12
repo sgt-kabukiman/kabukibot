@@ -7,7 +7,12 @@ operator: op
 database:
   DSN: 'develop:develop@/kabukibot_test'
 commandPrefix: k_
-plugins: {}
+plugins:
+  speedruncom:
+    mapping:
+      Grand_Theft_Auto_London_1961:
+        zjdzpgkv: { dict: gta_wr_london61_any, commands: [wr_test] }
+
 irc:
   host: irc.twitch.tv
   port: 6667

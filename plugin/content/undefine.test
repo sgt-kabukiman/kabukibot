@@ -1,0 +1,51 @@
+plugin dictionary
+plugin plugin_control
+plugin speedruncom
+plugin gta
+plugin acl
+
+connect
+
+join #chan
+
+# define the response text
+< [#chan] op: !k_dict_set bar the response
+> [#chan] bot: op, .+
+
+< [#chan] op: !k_enable gta
+> [#chan] bot: op, .+
+
+< [#chan] op: !k_gta_undefine
+> [#chan] bot: op, you must specify the command to remove.
+
+< [#chan] op: !k_gta_undefine foo
+> [#chan] bot: op, !foo does not exist or cannot be removed.
+
+# define !foo
+< [#chan] op: !k_gta_define foo bar
+> [#chan] bot: op, new command !foo has been created.
+
+< [#chan] op: !foo
+> [#chan] bot: the response
+
+# define another command pointing to the same dict key
+< [#chan] op: !k_gta_define umse bar
+> [#chan] bot: op, new command !umse has been created.
+
+< [#chan] op: !umse
+> [#chan] bot: the response
+
+# kill the foo command again
+< [#chan] op: !k_gta_undefine foo
+> [#chan] bot: op, the command !foo has been removed.
+
+< [#chan] op: !foo
+silence
+
+< [#chan] op: !umse
+> [#chan] bot: the response
+
+# this is a sr.com-mapped command, we should not be able to delete it
+< [#chan] op: !k_gta_undefine wr_test
+> [#chan] bot: op, !wr_test does not exist or cannot be removed.
+

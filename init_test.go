@@ -5,6 +5,7 @@ import (
 	"github.com/sgt-kabukiman/kabukibot/plugin/acl"
 	"github.com/sgt-kabukiman/kabukibot/plugin/banhammer_bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin/blacklist"
+	"github.com/sgt-kabukiman/kabukibot/plugin/content"
 	"github.com/sgt-kabukiman/kabukibot/plugin/custom_commands"
 	"github.com/sgt-kabukiman/kabukibot/plugin/dictionary"
 	"github.com/sgt-kabukiman/kabukibot/plugin/domain_ban"
@@ -89,5 +90,9 @@ func initTester(t *test.Tester) {
 
 	t.AddPlugin("custom_commands", func() bot.Plugin {
 		return custom_commands.NewPlugin()
+	})
+
+	t.AddPlugin("gta", func() bot.Plugin {
+		return content.NewGTAPlugin()
 	})
 }
