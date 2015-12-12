@@ -1,0 +1,14 @@
+plugin ping
+
+connect
+
+join #chan
+
+< [#chan] somebody: !k_ping
+silence
+
+< [#chan] op: !k_ping
+> [#chan] bot: Pong!
+
+< [#chan] op: !k_ping my response!
+> [#chan] bot: Pong!

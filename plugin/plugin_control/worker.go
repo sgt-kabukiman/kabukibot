@@ -63,6 +63,11 @@ func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 		return
 	}
 
+	if isOpOnlyPlugin(pluginKey) && !msg.IsFromOperator() {
+		sender.Respond("only the bot operator can toggle this plugin.")
+		return
+	}
+
 	message := ""
 
 	// enable a plugin
@@ -153,4 +158,8 @@ func (self *worker) pluginStates() map[string]bool {
 	}
 
 	return result
+}
+
+func isOpOnlyPlugin(name string) bool {
+	return strings.ToUpper(name) == name
 }

@@ -1,0 +1,17 @@
+plugin echo
+
+connect
+
+join #chan
+
+< [#chan] somebody: !k_echo
+silence
+
+< [#chan] op: !k_echo
+> [#chan] bot: err... echo\?
+
+< [#chan] op: !k_echo my response!
+> [#chan] bot: my response!
+
+< [#chan] op: !k_echo !k_echo foo!
+> [#chan] bot: !k_echo foo!

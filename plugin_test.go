@@ -121,12 +121,20 @@ func TestDomainBanUnban(t *testing.T) {
 	runScript(t, "plugin/domain_ban/unban.test")
 }
 
+func TestEchoEcho(t *testing.T) {
+	runScript(t, "plugin/echo/echo.test")
+}
+
 func TestJoinJoin(t *testing.T) {
 	runScript(t, "plugin/join/join.test")
 }
 
 func TestJoinLeave(t *testing.T) {
 	runScript(t, "plugin/join/leave.test")
+}
+
+func TestPingPing(t *testing.T) {
+	runScript(t, "plugin/ping/ping.test")
 }
 
 func TestTrollCommands(t *testing.T) {
