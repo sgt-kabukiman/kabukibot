@@ -43,19 +43,19 @@ func (self *worker) Disable() {
 }
 
 type monitorStatus struct {
-	Uptime   string
-	Channels int
+	Uptime   string `json:"uptime"`
+	Channels int    `json:"channels"`
 	Memory   struct {
 		Residential uint64 `json:"rss"`
 		HeapTotal   uint64 `json:"heapTotal"`
 		HeapUsed    uint64 `json:"heapUsed"`
-	}
+	} `json:"memory"`
 	Messages struct {
-		Received int
-		Sent     int
-	}
-	Queue     int
-	Heartbeat int
+		Received int `json:"received"`
+		Sent     int `json:"sent"`
+	} `json:"messages"`
+	Queue     int `json:"queue"`
+	Heartbeat int `json:"heartbeat"`
 }
 
 func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
