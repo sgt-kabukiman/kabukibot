@@ -58,7 +58,7 @@ func (self *logger) Fatal(format string, args ...interface{}) {
 
 func (self *logger) printLine(level int, format string, args ...interface{}) {
 	if level >= self.level {
-		line := fmt.Sprintf("[%s] %s\n", time.Now().Format("Mon Jan 2 2006 15:04:05 MST"), format)
+		line := fmt.Sprintf("[%s] %s\n", time.Now().Format(time.RFC1123), format)
 
 		fmt.Printf(line, args...)
 	}
