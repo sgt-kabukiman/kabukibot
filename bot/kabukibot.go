@@ -288,6 +288,6 @@ func (bot *Kabukibot) joinInitialChannels() {
 	db.Select(&list, "SELECT name FROM channel ORDER BY name")
 
 	for _, channel := range list {
-		bot.Join(channel.Name)
+		<-bot.Join(channel.Name)
 	}
 }
