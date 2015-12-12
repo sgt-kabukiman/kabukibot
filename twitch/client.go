@@ -59,8 +59,8 @@ type TwitchClient struct {
 	queueSize  int
 	queueMutex sync.Mutex
 
-	msgSent     int
-	msgReceived int
+	msgSent     uint64
+	msgReceived uint64
 }
 
 func NewTwitchClient(server string, username string, password string, delay time.Duration) *TwitchClient {
@@ -161,11 +161,11 @@ func (client *TwitchClient) QueueLen() int {
 	return client.queueLen
 }
 
-func (client *TwitchClient) MessagesSent() int {
+func (client *TwitchClient) MessagesSent() uint64 {
 	return client.msgSent
 }
 
-func (client *TwitchClient) MessagesReceived() int {
+func (client *TwitchClient) MessagesReceived() uint64 {
 	return client.msgReceived
 }
 

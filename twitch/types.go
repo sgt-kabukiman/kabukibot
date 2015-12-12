@@ -16,8 +16,8 @@ type Client interface {
 	Incoming() <-chan IncomingMessage
 	Ready() <-chan struct{}
 	QueueLen() int
-	MessagesSent() int
-	MessagesReceived() int
+	MessagesSent() uint64
+	MessagesReceived() uint64
 	Send(msg OutgoingMessage) <-chan bool
 }
 

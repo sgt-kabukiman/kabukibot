@@ -34,11 +34,11 @@ func (c *fakeClient) QueueLen() int {
 	return 0
 }
 
-func (c *fakeClient) MessagesSent() int {
+func (c *fakeClient) MessagesSent() uint64 {
 	return 0
 }
 
-func (c *fakeClient) MessagesReceived() int {
+func (c *fakeClient) MessagesReceived() uint64 {
 	return 0
 }
 

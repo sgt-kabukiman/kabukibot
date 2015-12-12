@@ -277,11 +277,11 @@ func (bot *Kabukibot) QueueLen() int {
 	return bot.twitch.QueueLen()
 }
 
-func (bot *Kabukibot) MessagesSent() int {
+func (bot *Kabukibot) MessagesSent() uint64 {
 	return bot.twitch.MessagesSent()
 }
 
-func (bot *Kabukibot) MessagesReceived() int {
+func (bot *Kabukibot) MessagesReceived() uint64 {
 	return bot.twitch.MessagesReceived()
 }
 

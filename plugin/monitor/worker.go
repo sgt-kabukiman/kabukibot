@@ -27,6 +27,8 @@ type worker struct {
 	stopPlaying chan struct{}
 	dumping     chan struct{}
 	stopDumping chan struct{}
+	sent        uint64
+	received    uint64
 }
 
 func (self *worker) Enable() {
@@ -51,8 +53,8 @@ type monitorStatus struct {
 		HeapUsed    uint64 `json:"heapUsed"`
 	} `json:"memory"`
 	Messages struct {
-		Received int `json:"received"`
-		Sent     int `json:"sent"`
+		Received uint64 `json:"received"`
+		Sent     uint64 `json:"sent"`
 	} `json:"messages"`
 	Queue     int `json:"queue"`
 	Heartbeat int `json:"heartbeat"`
@@ -94,14 +96,17 @@ func (self *worker) dumper() {
 			memStats := runtime.MemStats{}
 			runtime.ReadMemStats(&memStats)
 
+			s := self.bot.MessagesSent()
+			r := self.bot.MessagesReceived()
+
 			status := monitorStatus{}
 			status.Uptime = time.Since(self.startup).String()
 			status.Channels = len(self.bot.Channels())
 			status.Memory.Residential = memStats.Sys
 			status.Memory.HeapTotal = memStats.HeapSys
 			status.Memory.HeapUsed = memStats.HeapInuse
-			status.Messages.Received = self.bot.MessagesReceived()
-			status.Messages.Sent = self.bot.MessagesSent()
+			status.Messages.Received = r - self.received
+			status.Messages.Sent = s - self.sent
 			status.Queue = self.bot.QueueLen()
 			status.Heartbeat = int(self.delay.Nanoseconds() / int64(time.Millisecond))
 
@@ -117,6 +122,9 @@ func (self *worker) dumper() {
 
 				file.Close()
 			}
+
+			self.sent = s
+			self.received = r
 
 		case <-self.stopDumping:
 			return
