@@ -140,4 +140,3 @@ func TestPingPing(t *testing.T) {
 func TestTrollCommands(t *testing.T) {
 	runScript(t, "plugin/troll/commands.test")
 }
-

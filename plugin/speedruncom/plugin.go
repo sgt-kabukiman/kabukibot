@@ -31,7 +31,7 @@ func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
 
 	err := bot.Configuration().PluginConfig(self.Name(), &self.config)
 	if err != nil {
-		bot.Logger().Warn("Could not load 'speedruncom' plugin configuration: %s", err)
+		bot.Logger().Warning("Could not load 'speedruncom' plugin configuration: %s", err)
 	}
 
 	go self.updater()

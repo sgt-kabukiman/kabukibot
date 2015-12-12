@@ -29,7 +29,7 @@ func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
 
 	err := bot.Configuration().PluginConfig("monitor", &self.config)
 	if err != nil {
-		bot.Logger().Warn("Could not load 'monitor' plugin configuration: %s", err)
+		bot.Logger().Warning("Could not load 'monitor' plugin configuration: %s", err)
 	}
 
 	self.config.ExpectedBy = strings.ToLower(self.config.ExpectedBy)

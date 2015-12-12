@@ -27,7 +27,7 @@ func (self *pluginStruct) Setup(bot *bot.Kabukibot) {
 
 	err := bot.Configuration().PluginConfig(self.Name(), &self.config)
 	if err != nil {
-		bot.Logger().Warn("Could not load 'log' plugin configuration: %s", err)
+		bot.Logger().Warning("Could not load 'log' plugin configuration: %s", err)
 	}
 }
 

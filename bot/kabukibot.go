@@ -44,6 +44,7 @@ func (bot *Kabukibot) Connect() error {
 	bot.dictionary.load()
 
 	// setup plugins
+	bot.logger.Debug("Setting up plugins...")
 	for _, plugin := range bot.plugins {
 		plugin.Setup(bot)
 	}
@@ -51,7 +52,7 @@ func (bot *Kabukibot) Connect() error {
 	// connect to Twitch
 	client := bot.twitch
 
-	bot.logger.Info("Connecting to %s:%d...", bot.configuration.IRC.Host, bot.configuration.IRC.Port)
+	bot.logger.Info("Connecting to Twitch chat @ %s:%d...", bot.configuration.IRC.Host, bot.configuration.IRC.Port)
 	err := client.Connect()
 	if err != nil {
 		return err
@@ -68,6 +69,8 @@ func (bot *Kabukibot) Shutdown() {
 	// shutdown all channel workers
 	bot.channelMutex.Lock()
 
+	bot.logger.Info("Beginning shutdown procedure...")
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(bot.workers))
 
@@ -83,12 +86,16 @@ func (bot *Kabukibot) Shutdown() {
 	wg.Wait()
 	bot.channelMutex.Unlock()
 
+	bot.logger.Info("All channel workers have shut down.")
+
 	// disconnect from IRC;
 	// This will close the twitch client's incoming channel and hence stop .Work(),
 	// which will close self.alive eventually.
+	bot.logger.Info("Disconnecting from IRC...")
 	bot.twitch.Disconnect()
 
 	<-bot.alive
+	bot.logger.Info("It's dead, Jim.")
 }
 
 func (bot *Kabukibot) Work() {
@@ -191,6 +198,8 @@ func (bot *Kabukibot) Join(channel string) <-chan bool {
 		return dummy
 	}
 
+	bot.logger.Info("Joining %s...", channel)
+
 	// prepare the channelWorker
 	worker := newChannelWorker(channel, bot)
 
@@ -229,6 +238,8 @@ func (bot *Kabukibot) Part(channel string) <-chan bool {
 
 		return dummy
 	}
+
+	bot.logger.Info("Leaving %s...", channel)
 
 	bot.Database().Exec("DELETE FROM channel WHERE name = ?", channel)
 

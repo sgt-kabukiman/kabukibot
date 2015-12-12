@@ -1,13 +1,16 @@
 package bot
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 import "os"
 
 const (
-	LOG_LEVEL_DEBUG   = 1
-	LOG_LEVEL_INFO    = 2
-	LOG_LEVEL_WARNING = 3
-	LOG_LEVEL_ERROR   = 4
+	LogLevelDebug = iota
+	LogLevelInfo
+	LogLevelWarning
+	LogLevelError
 )
 
 type Logger interface {
@@ -16,7 +19,6 @@ type Logger interface {
 	Debug(string, ...interface{})
 	Info(string, ...interface{})
 	Warning(string, ...interface{})
-	Warn(string, ...interface{})
 	Error(string, ...interface{})
 	Fatal(string, ...interface{})
 }
@@ -34,33 +36,30 @@ func (self *logger) SetLevel(level int) {
 }
 
 func (self *logger) Debug(format string, args ...interface{}) {
-	self.printLine(LOG_LEVEL_DEBUG, "[dbg] "+format, args...)
+	self.printLine(LogLevelDebug, "[d] "+format, args...)
 }
 
 func (self *logger) Info(format string, args ...interface{}) {
-	self.printLine(LOG_LEVEL_INFO, "[inf] "+format, args...)
+	self.printLine(LogLevelInfo, "[i] "+format, args...)
 }
 
 func (self *logger) Warning(format string, args ...interface{}) {
-	self.printLine(LOG_LEVEL_WARNING, "[wrn] "+format, args...)
-}
-
-// satisfy the goirc library's Logger interface
-func (self *logger) Warn(format string, args ...interface{}) {
-	self.Warning(format, args...)
+	self.printLine(LogLevelWarning, "[W] "+format, args...)
 }
 
 func (self *logger) Error(format string, args ...interface{}) {
-	self.printLine(LOG_LEVEL_ERROR, "[err] "+format, args...)
+	self.printLine(LogLevelError, "[!] "+format, args...)
 }
 
 func (self *logger) Fatal(format string, args ...interface{}) {
-	self.printLine(LOG_LEVEL_ERROR, "[ftl] "+format, args...)
+	self.printLine(LogLevelError, "[F] "+format, args...)
 	os.Exit(1)
 }
 
 func (self *logger) printLine(level int, format string, args ...interface{}) {
 	if level >= self.level {
-		fmt.Printf(format+"\n", args...)
+		line := fmt.Sprintf("[%s] %s\n", time.Now().Format("Mon Jan 2 2006 15:04:05 MST"), format)
+
+		fmt.Printf(line, args...)
 	}
 }

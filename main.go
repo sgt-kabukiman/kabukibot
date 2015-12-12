@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"net"
-	"os"
 	"strconv"
 	"time"
 
@@ -30,32 +28,31 @@ import (
 )
 
 func main() {
+	// create logger
+	logger := bot.NewLogger(bot.LogLevelDebug)
+
 	// load configuration
+	logger.Info("Loading configuration file @ config.yaml...")
 	config, err := bot.LoadConfiguration("config.yaml")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logger.Fatal(err.Error())
 	}
 
-	// create logger
-	logger := bot.NewLogger(bot.LOG_LEVEL_DEBUG)
+	// connect to database
+	logger.Info("Connecting to database @ %s...", config.Database.DSN)
+	db, err := sqlx.Connect("mysql", config.Database.DSN)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 
 	// setup our TwitchClient
 	server := net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
 	twitch := twitch.NewTwitchClient(server, config.Account.Username, config.Account.Password, 2*time.Second)
 
-	// connect to database
-	db, err := sqlx.Connect("mysql", config.Database.DSN)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
 	// build the bot
 	kabukibot, err := bot.NewKabukibot(twitch, logger, db, config)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logger.Fatal(err.Error())
 	}
 
 	// add plugins
@@ -80,11 +77,11 @@ func main() {
 	// here we go
 	err = kabukibot.Connect()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		logger.Fatal(err.Error())
 	}
 
 	// do your thing, kabukibot
+	logger.Info("Letting the magic happen...")
 	go kabukibot.Work()
 
 	// data, _ := ioutil.ReadFile("channels.txt")

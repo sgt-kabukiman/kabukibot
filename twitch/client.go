@@ -2,7 +2,6 @@ package twitch
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -179,7 +178,7 @@ func (client *TwitchClient) sender() {
 		select {
 		case msg := <-client.outgoing:
 			ircMsg := msg.message.IrcMessage()
-			fmt.Println("< " + ircMsg.String())
+			// fmt.Println("< " + ircMsg.String())
 			client.writer.Encode(ircMsg)
 
 			// signal to the one who sent the message that it was in fact sent
@@ -235,7 +234,7 @@ func (client *TwitchClient) receiver() {
 	for {
 		select {
 		case rawLine := <-buffer:
-			fmt.Println("> " + strings.TrimSpace(rawLine))
+			// fmt.Println("> " + strings.TrimSpace(rawLine))
 
 			// if the message begins with a '@', we have some tags (IRCv3). The default
 			// IRC decoder will not have properly detected it and mangled its output.
