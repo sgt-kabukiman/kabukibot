@@ -15,6 +15,9 @@ type Client interface {
 	Disconnect() error
 	Incoming() <-chan IncomingMessage
 	Ready() <-chan struct{}
+	QueueLen() int
+	MessagesSent() int
+	MessagesReceived() int
 	Send(msg OutgoingMessage) <-chan bool
 }
 

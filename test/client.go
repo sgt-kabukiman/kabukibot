@@ -30,6 +30,18 @@ func (c *fakeClient) Ready() <-chan struct{} {
 	return c.ready
 }
 
+func (c *fakeClient) QueueLen() int {
+	return 0
+}
+
+func (c *fakeClient) MessagesSent() int {
+	return 0
+}
+
+func (c *fakeClient) MessagesReceived() int {
+	return 0
+}
+
 func (c *fakeClient) Send(msg twitch.OutgoingMessage) <-chan bool {
 	asserted, okay := msg.(twitch.JoinMessage)
 	if okay {

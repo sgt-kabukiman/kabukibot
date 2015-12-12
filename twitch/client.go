@@ -58,6 +58,9 @@ type TwitchClient struct {
 	queueLen   int
 	queueSize  int
 	queueMutex sync.Mutex
+
+	msgSent     int
+	msgReceived int
 }
 
 func NewTwitchClient(server string, username string, password string, delay time.Duration) *TwitchClient {
@@ -154,6 +157,18 @@ func (client *TwitchClient) Disconnect() error {
 	return client.conn.Close()
 }
 
+func (client *TwitchClient) QueueLen() int {
+	return client.queueLen
+}
+
+func (client *TwitchClient) MessagesSent() int {
+	return client.msgSent
+}
+
+func (client *TwitchClient) MessagesReceived() int {
+	return client.msgReceived
+}
+
 func (client *TwitchClient) Send(msg OutgoingMessage) <-chan bool {
 	signal := make(chan bool, 1)
 
@@ -180,6 +195,8 @@ func (client *TwitchClient) sender() {
 			ircMsg := msg.message.IrcMessage()
 			// fmt.Println("< " + ircMsg.String())
 			client.writer.Encode(ircMsg)
+
+			client.msgSent++
 
 			// signal to the one who sent the message that it was in fact sent
 			msg.signal <- true
@@ -251,6 +268,8 @@ func (client *TwitchClient) receiver() {
 			} else {
 				msg = irc.ParseMessage(rawLine)
 			}
+
+			client.msgReceived++
 
 			// hand it over to the message handler;
 			// this could be done in goroutines by simply doing "go handler(...)",

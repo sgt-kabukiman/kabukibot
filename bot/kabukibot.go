@@ -273,6 +273,18 @@ func (bot *Kabukibot) IsOperator(username string) bool {
 	return bot.OpUsername() == username
 }
 
+func (bot *Kabukibot) QueueLen() int {
+	return bot.twitch.QueueLen()
+}
+
+func (bot *Kabukibot) MessagesSent() int {
+	return bot.twitch.MessagesSent()
+}
+
+func (bot *Kabukibot) MessagesReceived() int {
+	return bot.twitch.MessagesReceived()
+}
+
 type initialChannel struct {
 	Name string `db:"name"`
 }
