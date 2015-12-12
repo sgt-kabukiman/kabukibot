@@ -74,6 +74,8 @@ func (self *pluginStruct) updater() {
 
 				return true
 			})
+
+			time.Sleep(5 * time.Second)
 		}
 
 		time.Sleep(interval)
