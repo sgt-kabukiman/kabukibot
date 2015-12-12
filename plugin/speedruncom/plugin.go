@@ -83,7 +83,7 @@ func (self *Plugin) updater() {
 				return true
 			})
 
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 
 		time.Sleep(interval)
