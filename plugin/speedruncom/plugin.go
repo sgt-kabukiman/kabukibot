@@ -55,7 +55,8 @@ func (self *Plugin) updater() {
 				continue
 			}
 
-			leaderboards, err := game.Records(nil, "players,regions,platforms,category")
+			filter := srapi.LeaderboardFilter{Top: 1}
+			leaderboards, err := game.Records(&filter, "players,regions,platforms,category,game")
 			if err != nil {
 				continue
 			}
@@ -75,15 +76,11 @@ func (self *Plugin) updater() {
 					return true
 				}
 
-				wr := lb.Runs[0]
-				formatted := formatWorldRecord(&wr.Run, game, cat, nil, nil, nil)
-
+				formatted := formatWorldRecord(lb, 0)
 				self.dict.Set(catConfig.DictKey, formatted)
 
 				return true
 			})
-
-			time.Sleep(10 * time.Second)
 		}
 
 		time.Sleep(interval)

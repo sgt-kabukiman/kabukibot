@@ -1,10 +1,8 @@
 package speedruncom
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin"
@@ -96,7 +94,7 @@ func (self *worker) handleWorldRecordCommand(msg *bot.TextMessage, sender bot.Se
 
 	// fetch the leaderboard, if possible (only available for games with full-game categories by default)
 	if category == nil {
-		lb, err = game.PrimaryLeaderboard(&srapi.LeaderboardOptions{Top: 1}, "players,platforms,regions,category")
+		lb, err = game.PrimaryLeaderboard(&srapi.LeaderboardOptions{Top: 1}, "players,regions,platforms,category,game")
 		if err != nil || lb == nil {
 			sender.Respond(game.Names.International + " does not use full-game categories by default, so I don't know what category or level you are referring to.")
 			return
@@ -108,7 +106,7 @@ func (self *worker) handleWorldRecordCommand(msg *bot.TextMessage, sender bot.Se
 			return
 		}
 	} else {
-		lb, err = category.PrimaryLeaderboard(&srapi.LeaderboardOptions{Top: 1}, "players,platforms,regions")
+		lb, err = category.PrimaryLeaderboard(&srapi.LeaderboardOptions{Top: 1}, "players,regions,platforms,category,game")
 		if err != nil || lb == nil {
 			sender.Respond(game.Names.International + " does not have runs for its \"" + category.Name + "\" category.")
 			return
@@ -122,108 +120,7 @@ func (self *worker) handleWorldRecordCommand(msg *bot.TextMessage, sender bot.Se
 	}
 
 	// show only the first WR
-	firstRun := lb.Runs[0].Run
-	formatted := formatWorldRecord(&firstRun, game, category, nil, nil, nil)
+	formatted := formatWorldRecord(lb, 0)
 
 	sender.SendText(formatted)
-}
-
-func formatWorldRecord(run *srapi.Run, game *srapi.Game, cat *srapi.Category, players *srapi.PlayerCollection, region *srapi.Region, platform *srapi.Platform) string {
-	var err *srapi.Error
-
-	if game == nil {
-		game, err = run.Game(srapi.NoEmbeds)
-		if err != nil {
-			return "Could not fetch game: " + err.Error()
-		}
-	}
-
-	if cat == nil {
-		cat, err = run.Category(srapi.NoEmbeds)
-		if err != nil {
-			return "Could not fetch category: " + err.Error()
-		}
-	}
-
-	if players == nil {
-		players, err = run.Players()
-		if err != nil {
-			return "Could not fetch players: " + err.Error()
-		}
-	}
-
-	formatted := fmt.Sprintf("WR for %s [%s] is %s", game.Names.International, cat.Name, run.Times.Primary.Format())
-
-	if run.Times.IngameTime.Duration > 0 {
-		formatted += " (" + run.Times.IngameTime.Format() + " IGT)"
-	}
-
-	// collect player names
-	names := []string{}
-
-	players.Walk(func(p *srapi.Player) bool {
-		names = append(names, p.Name())
-		return true
-	})
-
-	formatted += " by " + bot.HumanJoin(names, ", ")
-
-	if run.Date != nil {
-		now := time.Now()
-		duration := int(now.Sub(run.Date.Time).Hours() / 24)
-		date := ""
-
-		switch duration {
-		case 0:
-			date = "today"
-		case 1:
-			date = "yesterday"
-		case -1:
-			date = "tomorrow"
-		default:
-			if duration > 0 {
-				date = fmt.Sprintf("%d days ago", duration)
-			} else {
-				date = fmt.Sprintf("in %d days", -duration)
-			}
-		}
-
-		formatted += ", " + date
-	}
-
-	// append platform info
-	if platform == nil {
-		platform, err = run.Platform()
-		if err != nil {
-			return "Could not fetch platform."
-		}
-	}
-
-	showRegion := true
-
-	if platform != nil {
-		formatted = formatted + " (played on " + platform.Name
-		showRegion = platform.ID != "8zjwp7vo" // do not show on PC
-	}
-
-	// append region info
-
-	if showRegion {
-		if region == nil {
-			region, err = run.Region()
-			if err != nil {
-				return "Could not fetch region."
-			}
-		}
-
-		if region != nil {
-			formatted += ", " + region.Name
-		}
-	}
-
-	if platform != nil {
-		formatted += ")"
-	}
-
-	return formatted + "."
 }
