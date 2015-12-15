@@ -1,10 +1,13 @@
 package main
 
 import (
+	"io/ioutil"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/alecthomas/kingpin"
 	"github.com/jmoiron/sqlx"
 	"github.com/sgt-kabukiman/kabukibot/bot"
 	"github.com/sgt-kabukiman/kabukibot/plugin/acl"
@@ -28,15 +31,40 @@ import (
 	"github.com/sgt-kabukiman/kabukibot/twitch"
 )
 
+var (
+	configFile   = kingpin.Flag("config", "Path to the config file to use").Required().String()
+	channelsFile = kingpin.Flag("channels", "Path to a file of channels to join after connecting").String()
+	debug        = kingpin.Flag("debug", "Enable debug output").Bool()
+)
+
 func main() {
+	kingpin.Parse()
+
 	// create logger
-	logger := bot.NewLogger(bot.LogLevelDebug)
+	level := bot.LogLevelInfo
+	if *debug {
+		level = bot.LogLevelDebug
+	}
+
+	logger := bot.NewLogger(level)
 
 	// load configuration
-	logger.Info("Loading configuration file @ config.yaml...")
-	config, err := bot.LoadConfiguration("config.yaml")
+	logger.Info("Loading configuration file @ " + *configFile + "...")
+	config, err := bot.LoadConfiguration(*configFile)
 	if err != nil {
 		logger.Fatal(err.Error())
+	}
+
+	var channels []string
+
+	if channelsFile != nil {
+		logger.Info("Reading initial channel list @ " + *channelsFile + "...")
+		data, err := ioutil.ReadFile(*channelsFile)
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+
+		channels = strings.Split(string(data), "\n")
 	}
 
 	// connect to database
@@ -90,12 +118,9 @@ func main() {
 	logger.Info("Letting the magic happen...")
 	go kabukibot.Work()
 
-	// data, _ := ioutil.ReadFile("channels.txt")
-	// lines := strings.Split(string(data), "\n")
-
-	// for _, cn := range lines {
-	// 	kabukibot.Join(cn)
-	// }
+	for _, cn := range channels {
+		<-kabukibot.Join(cn)
+	}
 
 	// wait for disconnect
 	<-kabukibot.Alive()

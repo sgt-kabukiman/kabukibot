@@ -3,6 +3,19 @@
 	"GoVersion": "go1.5",
 	"Deps": [
 		{
+			"ImportPath": "github.com/alecthomas/kingpin",
+			"Comment": "v2.1.0-2-gaedd543",
+			"Rev": "aedd5430ecd39ba1396fee0c00308b494c552b1e"
+		},
+		{
+			"ImportPath": "github.com/alecthomas/template",
+			"Rev": "b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0"
+		},
+		{
+			"ImportPath": "github.com/alecthomas/units",
+			"Rev": "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
+		},
+		{
 			"ImportPath": "github.com/dchest/validator",
 			"Rev": "6e75c8ee02d3b9e46121fe1e0dbee699b5523ca3"
 		},
@@ -27,7 +40,7 @@
 		},
 		{
 			"ImportPath": "github.com/sgt-kabukiman/srapi",
-			"Rev": "1aed39a50a0f7963c89f67a63f83910d7d04daaa"
+			"Rev": "f35ecf10b7630e3d700b17f29f1718d131c9a76c"
 		},
 		{
 			"ImportPath": "github.com/sorcix/irc",
