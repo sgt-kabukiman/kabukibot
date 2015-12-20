@@ -62,6 +62,8 @@ func (self *Dictionary) Set(key string, value string) {
 		return
 	}
 
+	self.data[key] = value
+
 	_, err := self.db.Exec("UPDATE dictionary SET value = ? WHERE keyname = ?", value, key)
 	if err != nil {
 		self.log.Fatal("Could not update dictionary entry '" + key + "' in the database: " + err.Error())
