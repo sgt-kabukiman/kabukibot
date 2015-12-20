@@ -57,7 +57,7 @@ func main() {
 
 	var channels []string
 
-	if channelsFile != nil {
+	if *channelsFile != "" {
 		logger.Info("Reading initial channel list @ " + *channelsFile + "...")
 		data, err := ioutil.ReadFile(*channelsFile)
 		if err != nil {
