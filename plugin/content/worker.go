@@ -81,7 +81,9 @@ func (self *worker) HandleTextMessage(msg *bot.TextMessage, sender bot.Sender) {
 	response := self.dict.Get(dictKey)
 
 	if len(response) > 0 {
-		sender.SendText(response)
+		templater := bot.NewStringTemplater()
+
+		sender.SendText(templater.Render(response))
 	}
 
 	msg.SetProcessed()
