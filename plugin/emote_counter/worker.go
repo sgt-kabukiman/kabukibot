@@ -110,7 +110,7 @@ func (self *worker) handleTopEmotesCommand(msg *bot.TextMessage, sender bot.Send
 		return
 	}
 
-	output := make([]string, 0, len(top))
+	output := make([]string, len(top))
 
 	for idx, emote := range top {
 		output[idx] = fmt.Sprintf("%s (%s x)", emote.emote, humanize.FormatInteger("#,###.", emote.count))
