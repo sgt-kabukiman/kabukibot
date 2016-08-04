@@ -248,8 +248,7 @@ func (client *TwitchClient) receiver() {
 
 			default:
 				// set a 5min timeout
-				client.conn.SetDeadline(time.Now().Add(10 * time.Second))
-				// client.conn.SetDeadline(time.Now().Add(300 * time.Second))
+				client.conn.SetDeadline(time.Now().Add(300 * time.Second))
 
 				line, err := client.reader.ReadString('\n')
 				if err != nil {
