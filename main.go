@@ -76,7 +76,7 @@ func main() {
 
 	// setup our TwitchClient
 	server := net.JoinHostPort(config.IRC.Host, strconv.Itoa(config.IRC.Port))
-	twitch := twitch.NewTwitchClient(server, config.Account.Username, config.Account.Password, 2*time.Second)
+	twitch := twitch.NewTwitchClient(server, config.Account.Username, config.Account.Password, 2*time.Second, logger)
 
 	// build the bot
 	kabukibot, err := bot.NewKabukibot(twitch, logger, db, config)

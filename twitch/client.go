@@ -20,6 +20,14 @@ type queueItem struct {
 	signal  chan bool
 }
 
+type logger interface {
+	Debug(string, ...interface{})
+	Info(string, ...interface{})
+	Warning(string, ...interface{})
+	Error(string, ...interface{})
+	Fatal(string, ...interface{})
+}
+
 type TwitchClient struct {
 	server   string
 	username string
@@ -61,9 +69,11 @@ type TwitchClient struct {
 
 	msgSent     uint64
 	msgReceived uint64
+
+	logger logger
 }
 
-func NewTwitchClient(server string, username string, password string, delay time.Duration) *TwitchClient {
+func NewTwitchClient(server string, username string, password string, delay time.Duration, logger logger) *TwitchClient {
 	client := &TwitchClient{
 		server:           server,
 		username:         username,
@@ -83,6 +93,7 @@ func NewTwitchClient(server string, username string, password string, delay time
 		queueSize:        queueSize,
 		queueLen:         0,
 		queueMutex:       sync.Mutex{},
+		logger:           logger,
 	}
 
 	// setup vital message listeners
@@ -104,8 +115,11 @@ func (client *TwitchClient) Incoming() <-chan IncomingMessage {
 }
 
 func (client *TwitchClient) Connect() error {
+	client.logger.Debug("Establishing connection...")
+
 	conn, err := net.Dial("tcp", client.server)
 	if err != nil {
+		client.logger.Error("Connection failed: " + err.Error())
 		return err
 	}
 
@@ -234,10 +248,13 @@ func (client *TwitchClient) receiver() {
 
 			default:
 				// set a 5min timeout
-				client.conn.SetDeadline(time.Now().Add(300 * time.Second))
+				client.conn.SetDeadline(time.Now().Add(10 * time.Second))
+				// client.conn.SetDeadline(time.Now().Add(300 * time.Second))
 
 				line, err := client.reader.ReadString('\n')
 				if err != nil {
+					client.logger.Error("Connection died: " + err.Error())
+					client.Disconnect()
 					return
 				}
 
