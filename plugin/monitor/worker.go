@@ -110,7 +110,7 @@ func (self *worker) dumper() {
 			status.Queue = self.bot.QueueLen()
 			status.Heartbeat = int(self.delay.Nanoseconds() / int64(time.Millisecond))
 
-			file, err := os.OpenFile(self.config.Filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0660)
+			file, err := os.OpenFile(self.config.Filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 			if err != nil {
 				self.log.Error("Could not open monitor status file: %s", err.Error())
 			} else {
